@@ -21,6 +21,7 @@ define('SNAPPBOX_API_TOKEN', get_option('snappbox_api', ''));
 require_once(SNAPPBOX_DIR . 'includes/admin.php');
 require_once(SNAPPBOX_DIR . 'includes/woo-checkout-map.php');
 require_once(SNAPPBOX_DIR . 'includes/cities-class.php');
+require_once(SNAPPBOX_DIR . 'includes/wooCommerce-filter-class.php');
 
 
 function snappbox_init() {
@@ -33,6 +34,9 @@ function snappbox_init() {
    
     if( class_exists('SnappBoxCities') ){
         new SnappBoxCities();
+    }
+    if(class_exists('SnappBoxWooCommerceFilter')){
+        new SnappBoxWooCommerceFilter();
     }
     
     load_plugin_textdomain('sb-delivery', false, dirname(plugin_basename(__FILE__)) . '/languages/');
