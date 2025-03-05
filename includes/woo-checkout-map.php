@@ -15,6 +15,7 @@ class SnappBoxCheckout
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_location_in_order_admin']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_leaflet_scripts']);
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_map_in_admin_order'], 20);
+        add_action('woocommerce_admin_order_data_after_order_details', [$this, 'display_snappbox_order_button']);
     }
 
 
@@ -63,6 +64,11 @@ class SnappBoxCheckout
         if ($latitude && $longitude) {
             echo '<p><strong>' . __('Customer Location', 'sb-delivery') . ':</strong> ' . $latitude . ', ' . $longitude . '</p>';
         }
+    }
+
+
+    public function display_snappbox_order_button($order){
+        echo('<button>Click This button'.$order->get_id().'</button>');
     }
 
     public function display_map_in_admin_order($order)

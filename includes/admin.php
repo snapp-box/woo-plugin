@@ -139,6 +139,7 @@ class SnappBoxAdminPage
 
         $latitude = get_option('snappbox_latitude', '35.8037761');
         $longitude = get_option('snappbox_longitude', '51.4152466');
+        
 
         if ($latitude && $longitude) {
             $citiesObj = new SnappBoxCities();
