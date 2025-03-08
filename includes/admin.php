@@ -74,6 +74,8 @@ class SnappBoxAdminPage
         register_setting('snappbox-settings', 'snappbox_api');
         register_setting('snappbox-settings', 'snappbox_latitude');
         register_setting('snappbox-settings', 'snappbox_longitude');
+        register_setting('snappbox-settings', 'snappbox_store_phone');
+        register_setting('snappbox-settings', 'snappbox_store_name');
         register_setting('snappbox-settings', 'snappbox_cities', [
             'type' => 'array',
             'sanitize_callback' => function ($input) {
@@ -117,17 +119,49 @@ class SnappBoxAdminPage
             'snappbox-page',
             'snappbox-page-section'
         );
+        add_settings_field(
+            'snappbox_store_phone',
+            __('Phone Number', 'sb-delivery'),
+            array($this, 'snappbox_store_phone_callback'),
+            'snappbox-page',
+            'snappbox-page-section'
+        );
+        add_settings_field(
+            'snappbox_store_name',
+            __('Store Name', 'sb-delivery'),
+            array($this, 'snappbox_store_name_callback'),
+            'snappbox-page',
+            'snappbox-page-section'
+        );
     }
 
     public function snappbox_api_callback()
     {
-        $value = get_option('snappbox_api', '');
-        echo '<input type="text" name="snappbox_api" value="' . esc_attr($value) . '" />';
+        $snappbox_api = get_option('snappbox_api', '');
+        echo '<input type="text" name="snappbox_api" value="' . esc_attr($snappbox_api) . '" />';
     }
     public function snappbox_latitude_callback()
     {
-        $value = get_option('snappbox_latitude', '51.5077286');
-        echo '<input type="text" id="snappbox_latitude" name="snappbox_latitude" value="' . esc_attr($value) . '" readonly />';
+        $snappbox_latitude = get_option('snappbox_latitude', '51.5077286');
+        echo '<input type="text" id="snappbox_latitude" name="snappbox_latitude" value="' . esc_attr($snappbox_latitude) . '" readonly />';
+    }
+
+    public function snappbox_longitude_callback()
+    {
+        $snappbox_longitude = get_option('snappbox_longitude', '-0.1279688');
+        echo '<input type="text" id="snappbox_longitude" name="snappbox_longitude" value="' . esc_attr($snappbox_longitude) . '" readonly />';
+    }
+
+    public function snappbox_store_phone_callback()
+    {
+        $snappbox_store_phone = get_option('snappbox_store_phone', '');
+        echo '<input type="text" name="snappbox_store_phone" value="' . esc_attr($snappbox_store_phone) . '" />';
+    }
+
+    public function snappbox_store_name_callback()
+    {
+        $snappbox_store_name = get_option('snappbox_store_name', '');
+        echo '<input type="text" name="snappbox_store_name" value="' . esc_attr($snappbox_store_name) . '" />';
     }
 
     public function snappbox_cities_callback()
@@ -136,11 +170,8 @@ class SnappBoxAdminPage
         if (!is_array($stored_cities)) {
             $stored_cities = []; 
         }
-
         $latitude = get_option('snappbox_latitude', '35.8037761');
         $longitude = get_option('snappbox_longitude', '51.4152466');
-        
-
         if ($latitude && $longitude) {
             $citiesObj = new SnappBoxCities();
             $cities = $citiesObj->get_delivery_category($latitude, $longitude);
@@ -156,9 +187,5 @@ class SnappBoxAdminPage
         }
     }
 
-    public function snappbox_longitude_callback()
-    {
-        $value = get_option('snappbox_longitude', '-0.1279688');
-        echo '<input type="text" id="snappbox_longitude" name="snappbox_longitude" value="' . esc_attr($value) . '" readonly />';
-    }
+    
 }
