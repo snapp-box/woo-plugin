@@ -22,6 +22,7 @@ require_once(SNAPPBOX_DIR . 'includes/admin.php');
 require_once(SNAPPBOX_DIR . 'includes/woo-checkout-map.php');
 require_once(SNAPPBOX_DIR . 'includes/cities-class.php');
 require_once(SNAPPBOX_DIR . 'includes/wooCommerce-filter-class.php');
+require_once(SNAPPBOX_DIR . 'includes/order-admin-class.php');
 
 
 function snappbox_init() {
@@ -37,6 +38,9 @@ function snappbox_init() {
     }
     if(class_exists('SnappBoxWooCommerceFilter')){
         new SnappBoxWooCommerceFilter();
+    }
+    if(class_exists('SnappBoxOrderAdmin')){
+        new SnappBoxOrderAdmin();
     }
     
     load_plugin_textdomain('sb-delivery', false, dirname(plugin_basename(__FILE__)) . '/languages/');

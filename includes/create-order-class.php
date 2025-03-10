@@ -1,6 +1,6 @@
 <?php
 class SnappBoxCreateOrder {
-    private $api_url = SNAPPBOX_API_BASE_URL_STAGING."/v1/customer/create_order";
+    private $api_url = SNAPPBOX_API_BASE_URL_STAGING . "/v1/customer/create_order";
     private $api_key; 
 
     public function __construct($api_key = SNAPPBOX_API_TOKEN) {
@@ -9,9 +9,9 @@ class SnappBoxCreateOrder {
         add_action('wp_ajax_nopriv_snappbox_create_order', [$this, 'handleCreateOrder']);
     }
 
-    public function create_order($order_data) {
+    public function create_order($order_data, $order) {
         $args = [
-            'body'    => json_encode($order_data),
+            'body'    => json_encode($order_data, JSON_UNESCAPED_UNICODE),
             'headers' => [
                 'Content-Type'  => 'application/json',
                 'Accept'        => 'application/json',
@@ -19,9 +19,11 @@ class SnappBoxCreateOrder {
             'method'  => 'POST',
             'timeout' => 45,
         ];
+
         if ($this->api_key) {
             $args['headers']['Authorization'] = $this->api_key;
         }
+
         $response = wp_remote_post($this->api_url, $args);
 
         if (is_wp_error($response)) {
@@ -31,10 +33,20 @@ class SnappBoxCreateOrder {
             ];
         }
 
+        $decoded_response = json_decode(wp_remote_retrieve_body($response), true);
+        $this->storeOrderDetail($order, $decoded_response);
+
         return [
             'success' => true,
-            'response' => json_decode(wp_remote_retrieve_body($response), true),
+            'response' => $decoded_response,
         ];
+    }
+
+    private function storeOrderDetail($order, $response) {
+        if (isset($response['data']['details']['id'])) {
+            $snappbox_order_id = sanitize_text_field($response['data']['details']['id']);
+            update_post_meta($order->get_id(), '_snappbox_order_id', $snappbox_order_id);
+        }
     }
 
     public function handleCreateOrder() {
@@ -44,20 +56,21 @@ class SnappBoxCreateOrder {
 
         $order_id = intval($_POST['order_id']);
         $order = wc_get_order($order_id);
+
         if (!$order) {
             wp_send_json_error(['message' => 'Invalid order']);
         }
 
         $order_data = $this->prepareOrderData($order, $order_id);
-        $response = $this->create_order($order_data);
-        wp_send_json($response);
+        $response = $this->create_order($order_data, $order);
+        wp_send_json($response, '', JSON_UNESCAPED_UNICODE);
     }
 
     private function prepareOrderData($order, int $order_id): array {
         return [
             "data" => [
                 "timeSlotDTO" => [
-                    "startTimeSlot" => current_time( 'mysql' ),
+                    "startTimeSlot" => current_time('mysql'),
                     "endTimeSlot" => date('Y-m-d H:i:s', strtotime('+2 hours', current_time('timestamp')))
                 ],
                 "itemDetails" => $this->getItemDetails($order),
@@ -73,14 +86,14 @@ class SnappBoxCreateOrder {
         $items = [];
         foreach ($order->get_items() as $item) {
             $items[] = [
-            "pickedUpSequenceNumber" => 1,
-            "dropOffSequenceNumber" => 2,
-            "name" => $item->get_name(),
-            "quantity" => $item->get_quantity(),
-            "quantityMeasuringUnit" => "unit",
-            "packageValue" => $item->get_total(),
-            "externalRefType" => "INSURANCE",
-            "externalRefId" => 99
+                "pickedUpSequenceNumber" => 1,
+                "dropOffSequenceNumber" => 2,
+                "name" => $item->get_name(),
+                "quantity" => $item->get_quantity(),
+                "quantityMeasuringUnit" => "unit",
+                "packageValue" => $item->get_total(),
+                "externalRefType" => "INSURANCE",
+                "externalRefId" => 99
             ];
         }
         return $items;
@@ -110,7 +123,7 @@ class SnappBoxCreateOrder {
         return [[
             "id" => null,
             "contactName" => get_option('snappbox_store_name', ''),
-            "address" => WC()->countries->get_base_address() .' '. WC()->countries->get_base_address_2(),
+            "address" => WC()->countries->get_base_address() . ' ' . WC()->countries->get_base_address_2(),
             "contactPhoneNumber" => get_option('snappbox_store_phone'),
             "latitude" => get_option('snappbox_latitude', ''),
             "longitude" => get_option('snappbox_longitude', ''),
@@ -139,9 +152,5 @@ class SnappBoxCreateOrder {
             "terminalDetails" => [["verificationCode" => '']]
         ]];
     }
+
 }
-
-
-
-
-
