@@ -56,8 +56,8 @@ class SnappBoxAdminPage
 
                         marker.on('dragend', function(e) {
                             var latLng = marker.getLatLng();
-                            document.getElementById('snappbox_latitude').value = latLng.lat;
-                            document.getElementById('snappbox_longitude').value = latLng.lng;
+                            document.getElementById('snappbox_latitude').value = latLng.lat.toFixed(9);
+                            document.getElementById('snappbox_longitude').value = latLng.lng.toFixed(9);
                         });
                     });
                 </script>

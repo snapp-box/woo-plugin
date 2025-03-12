@@ -1,4 +1,5 @@
 <?php 
+require_once(SNAPPBOX_DIR . 'includes/create-order-class.php');
 
 class SnappBoxOrderAdmin
 {
@@ -61,6 +62,71 @@ class SnappBoxOrderAdmin
 
     public function display_snappbox_order_button($order)
     {
-        echo('<a href="#">Cancel Order</a>');
+        $snappboxOrder = get_post_meta($order->get_id(), '_snappbox_order_id', true);
+        if(!$snappboxOrder){
+            ?>
+            <div class="snappbox-order-container">
+                <button id="snappbox-create-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>" class="button button-primary">
+                    <?php _e('Send to SnappBox', 'sb-delivery');?>
+                </button>
+                <span id="snappbox-response"></span>
+            </div>
+            <script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    $('#snappbox-create-order').on('click', function(event) {
+                        var orderId = $(this).data('order-id');
+    
+                        $.ajax({
+                            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                            type: 'POST',
+                            data: {
+                                action: 'create_snappbox_order',
+                                order_id: orderId
+                            },
+                            beforeSend: function() {
+                                $('#snappbox-response').text('Sending...');
+                            },
+                            success: function(response) {
+                                if (response.response.status_code == 201) {
+                                    $('#snappbox-response').html('<span style="color:green;">' + response.response.data.finalCustomerFare + '</span>');
+                                } else {
+                                    $('#snappbox-response').html('<span style="color:red;">Error: ' + response.response.message + '</span>');
+                                }
+                            },
+                            error: function() {
+                                $('#snappbox-response').text('Error sending order.');
+                                console.log(response);
+                            }
+                        });
+                        event.preventDefault();
+                    });
+                });
+            </script>
+            <?php
+        }
+        else{
+            echo('<a href="">Cancle order</a>');
+        }
+        
+    }
+    public function handle_create_snappbox_order()
+    {
+        if (!isset($_POST['order_id'])) {
+            wp_send_json_error('Order ID missing');
+        }
+
+        $order_id = intval($_POST['order_id']);
+
+        if (!$order_id) {
+            wp_send_json_error('Invalid Order ID');
+        }
+
+        $snappbox_order = new SnappBoxCreateOrder();
+        $response = $snappbox_order->handleCreateOrder($order_id);
+        if ($response['success']) {
+            wp_send_json_success($response);
+        } else {
+            wp_send_json_error($response['message']);
+        }
     }
 }

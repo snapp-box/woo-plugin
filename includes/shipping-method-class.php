@@ -8,6 +8,7 @@ if ( ! class_exists( 'WooCommerce' ) ) {
     return;
 }
 
+
 class SnappBoxShippingMethod extends WC_Shipping_Method {
 
     public function __construct() {
@@ -78,6 +79,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
         $free_delivery = $this->get_option('free_delivery');
         $totalCard = floatval( preg_replace( '#[^\d.]#', '', $woocommerce->cart->get_cart_total() ) );
         $weight = 0;
+        
         if(empty($fixed_price)){
 
             foreach ( $package['contents'] as $item ) {
