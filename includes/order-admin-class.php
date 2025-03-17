@@ -1,5 +1,6 @@
-<?php 
+<?php
 require_once(SNAPPBOX_DIR . 'includes/create-order-class.php');
+require_once(SNAPPBOX_DIR . 'includes/cancel-order-class.php');
 
 class SnappBoxOrderAdmin
 {
@@ -10,6 +11,7 @@ class SnappBoxOrderAdmin
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_map_in_admin_order'], 20);
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'display_snappbox_order_button']);
         add_action('wp_ajax_create_snappbox_order', [$this, 'handle_create_snappbox_order']);
+        add_action('wp_ajax_cancel_snappbox_order', [$this, 'handle_cancel_snappbox_order']);
     }
 
     public function enqueue_admin_leaflet_scripts($hook)
@@ -41,9 +43,9 @@ class SnappBoxOrderAdmin
         $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
         if ($latitude && $longitude) {
             echo '<div id="admin-osm-map" style="height: 400px; margin-top: 20px;"></div>';
-            ?>
+?>
             <script>
-                document.addEventListener('DOMContentLoaded', function () {
+                document.addEventListener('DOMContentLoaded', function() {
                     var latitude = <?php echo esc_js($latitude); ?>;
                     var longitude = <?php echo esc_js($longitude); ?>;
                     var map = L.map('admin-osm-map').setView([latitude, longitude], 15);
@@ -56,75 +58,125 @@ class SnappBoxOrderAdmin
                         .openPopup();
                 });
             </script>
-            <?php
+        <?php
         }
     }
 
     public function display_snappbox_order_button($order)
     {
         $snappboxOrder = get_post_meta($order->get_id(), '_snappbox_order_id', true);
-        if(!$snappboxOrder){
-            ?>
+        if (!$snappboxOrder) {
+        ?>
             <div class="snappbox-order-container">
                 <button id="snappbox-create-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>" class="button button-primary">
-                    <?php _e('Send to SnappBox', 'sb-delivery');?>
+                    <?php _e('Send to SnappBox', 'sb-delivery'); ?>
                 </button>
                 <span id="snappbox-response"></span>
             </div>
-            <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    $('#snappbox-create-order').on('click', function(event) {
-                        var orderId = $(this).data('order-id');
-    
-                        $.ajax({
-                            url: '<?php echo admin_url('admin-ajax.php'); ?>',
-                            type: 'POST',
-                            data: {
-                                action: 'create_snappbox_order',
-                                order_id: orderId
-                            },
-                            beforeSend: function() {
-                                $('#snappbox-response').text('Sending...');
-                            },
-                            success: function(response) {
-                                if (response.response.status_code == 201) {
-                                    $('#snappbox-response').html('<span style="color:green;">' + response.response.data.finalCustomerFare + '</span>');
-                                } else {
-                                    $('#snappbox-response').html('<span style="color:red;">Error: ' + response.response.message + '</span>');
-                                }
-                            },
-                            error: function() {
-                                $('#snappbox-response').text('Error sending order.');
-                                console.log(response);
+        <?php
+        } else {
+        ?>
+            <div class="snappbox-cancel-container">
+                <button id="snappbox-cancel-order" data-order-id="<?php echo esc_attr($snappboxOrder); ?>" class="button button-secondary">
+                    <?php _e('Cancel Order', 'sb-delivery'); ?>
+                </button>
+                <span id="snappbox-cancel-response"></span>
+            </div>
+        <?php
+        }
+        ?>
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                $('#snappbox-create-order').on('click', function(event) {
+                    var orderId = $(this).data('order-id');
+
+                    $.ajax({
+                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                        type: 'POST',
+                        data: {
+                            action: 'create_snappbox_order',
+                            order_id: orderId
+                        },
+                        beforeSend: function() {
+                            $('#snappbox-response').text('Sending...');
+                        },
+                        success: function(response) {
+                            var data = response.response.data;
+                            if (response.response.status_code == 201) {
+                                $('#snappbox-response').html('<span style="color:green;">'+ response.response.message+ ' ' + data.finalCustomerFare + '</span>');
+                            } else {
+                                $('#snappbox-response').html('<span style="color:red;">Error: ' + response.response.message + '</span>');
                             }
-                        });
-                        event.preventDefault();
+                        },
+                        error: function() {
+                            $('#snappbox-response').text('Error sending order.');
+                        }
                     });
+                    event.preventDefault();
                 });
-            </script>
-            <?php
-        }
-        else{
-            echo('<a href="">Cancle order</a>');
-        }
-        
+
+                $('#snappbox-cancel-order').on('click', function(event) {
+                    var orderId = $(this).data('order-id');
+
+                    $.ajax({
+                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                        type: 'POST',
+                        data: {
+                            action: 'cancel_snappbox_order',
+                            order_id: orderId,
+                            woo_order_id: <?php echo $order->get_id();?>
+                        },
+                        beforeSend: function() {
+                            $('#snappbox-cancel-response').text('Cancelling...');
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $('#snappbox-cancel-response').html('<span style="color:green;">' + response.data + '</span>');
+                                location.reload(); 
+                            } else {
+                                $('#snappbox-cancel-response').html('<span style="color:red;">Error: ' + response.data + '</span>');
+                            }
+                        },
+                        error: function() {
+                            $('#snappbox-cancel-response').text('Error cancelling order.');
+                        }
+                    });
+                    event.preventDefault();
+                });
+            });
+        </script>
+<?php
     }
+
     public function handle_create_snappbox_order()
     {
         if (!isset($_POST['order_id'])) {
             wp_send_json_error('Order ID missing');
         }
-
         $order_id = intval($_POST['order_id']);
-
         if (!$order_id) {
             wp_send_json_error('Invalid Order ID');
         }
-
         $snappbox_order = new SnappBoxCreateOrder();
         $response = $snappbox_order->handleCreateOrder($order_id);
         if ($response['success']) {
             wp_send_json_success($response);
+        } else {
+            wp_send_json_error($response['message']);
+        }
+    }
+    public function handle_cancel_snappbox_order()
+    {
+        if (!isset($_POST['order_id'])) {
+            wp_send_json_error('Order ID missing');
+        }
+        $order_id = sanitize_text_field($_POST['order_id']);
+        $woo_order_id = sanitize_text_field($_POST['woo_order_id']);
+        $snappbox_api = new SnappBoxCancelOrder();
+        $response = $snappbox_api->cancel_order($order_id);
+        if ($response['success'] === false) {
+            delete_post_meta($woo_order_id, '_snappbox_order_id'); 
+            wp_send_json_success($response['message']);
         } else {
             wp_send_json_error($response['message']);
         }

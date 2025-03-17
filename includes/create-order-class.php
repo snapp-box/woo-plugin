@@ -14,7 +14,6 @@ class SnappBoxCreateOrder {
             'body'    => json_encode($order_data, JSON_UNESCAPED_UNICODE),
             'headers' => [
                 'Content-Type'  => 'application/json',
-                'Accept'        => 'application/json',
             ],
             'method'  => 'POST',
             'timeout' => 45,
@@ -23,9 +22,9 @@ class SnappBoxCreateOrder {
         if ($this->api_key) {
             $args['headers']['Authorization'] = $this->api_key;
         }
-
+        
         $response = wp_remote_post($this->api_url, $args);
-
+        
         if (is_wp_error($response)) {
             return [
                 'success' => false,
@@ -93,7 +92,7 @@ class SnappBoxCreateOrder {
                 "quantityMeasuringUnit" => "unit",
                 "packageValue" => $item->get_total(),
                 "externalRefType" => "INSURANCE",
-                "externalRefId" => 99
+                "externalRefId" => 99,
             ];
         }
         return $items;
@@ -125,23 +124,33 @@ class SnappBoxCreateOrder {
             "contactName" => get_option('snappbox_store_name', ''),
             "address" => WC()->countries->get_base_address() . ' ' . WC()->countries->get_base_address_2(),
             "contactPhoneNumber" => get_option('snappbox_store_phone'),
+            "plate"=> "",
+            "sequenceNumber"=> 1,
+            "unit"=> "",
+            "comment"=> "",
             "latitude" => get_option('snappbox_latitude', ''),
             "longitude" => get_option('snappbox_longitude', ''),
             "type" => "pickup",
             "paymentType" => "prepaid",
             "vendorId" => 0,
-            "services" => [["itemServiceId" => 2, "quantity" => 1]]
+            "services"=>[["itemServiceId"=> 2,"quantity"=> 1]],
         ]];
     }
 
     private function getDropoffDetails($order): array {
         $latitude = get_post_meta($order->get_id(), '_customer_latitude', true);
         $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
+    
         return [[
             "id" => null,
             "contactName" => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
             "address" => $order->get_billing_address_1(),
             "contactPhoneNumber" => $order->get_billing_phone(),
+            "editMerchandiseInfo"=> null,
+            "plate"=> "",
+            "sequenceNumber"=> 2,
+            "unit"=> "",
+            "comment"=> "کامنت تستی",
             "latitude" => $latitude,
             "longitude" => $longitude,
             "type" => "drop",
@@ -149,8 +158,10 @@ class SnappBoxCreateOrder {
             "vendorId" => 0,
             "services" => [["itemServiceId" => 1, "quantity" => 1]],
             "verificationCodeGenerationStrategy" => "AUTO",
-            "terminalDetails" => [["verificationCode" => '']]
+            "terminalDetails" => [
+                "verificationCode" => '' 
+            ]
         ]];
-    }
+    }    
 
 }
