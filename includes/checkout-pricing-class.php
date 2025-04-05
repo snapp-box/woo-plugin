@@ -41,8 +41,8 @@ class SnappBoxPricing {
                     function fetchSnappboxPrice() {
                         let city = $("#billing_city").val();
                         let address = $("#billing_address_1").val();
-                        let latitude = 35.7196283; // Replace with real latitude
-                        let longitude = 51.3971164; // Replace with real longitude
+                        let latitude = $("#customer_latitude").val();
+                        let longitude = $("#customer_longitude").val();
                         
                         if (!city || !address) return;
 
