@@ -1,17 +1,22 @@
 <?php
 require_once(SNAPPBOX_DIR . 'includes/create-order-class.php');
 require_once(SNAPPBOX_DIR . 'includes/cancel-order-class.php');
+require_once(SNAPPBOX_DIR . 'includes/status-check-class.php');
 
 class SnappBoxOrderAdmin
 {
-    public function __construct()
+
+    public function __construct($accessToken = SNAPPBOX_API_TOKEN)
     {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_leaflet_scripts']);
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_location_in_order_admin']);
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_map_in_admin_order'], 20);
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'display_snappbox_order_button']);
+        add_action('woocommerce_admin_order_data_after_order_details', [$this, 'check_order_status']);
         add_action('wp_ajax_create_snappbox_order', [$this, 'handle_create_snappbox_order']);
         add_action('wp_ajax_cancel_snappbox_order', [$this, 'handle_cancel_snappbox_order']);
+        
+        
     }
 
     public function enqueue_admin_leaflet_scripts($hook)
@@ -176,9 +181,32 @@ class SnappBoxOrderAdmin
         $response = $snappbox_api->cancel_order($order_id);
         if ($response['success'] === false) {
             delete_post_meta($woo_order_id, '_snappbox_order_id'); 
+            delete_post_meta($woo_order_id, '_uikar_last_api_response'); 
+            delete_post_meta($woo_order_id, '_uikar_last_api_call'); 
             wp_send_json_success($response['message']);
         } else {
             wp_send_json_error($response['message']);
         }
+    }
+    public function check_order_status(){
+        
+        $orderID = get_post_meta($_GET['id'], '_snappbox_order_id', true);
+        $getResponse = get_post_meta($orderID,'_uikar_last_api_response', true);
+        $last_called = get_post_meta($orderID, '_uikar_last_api_call', true);
+        if($getResponse){
+            echo('<p>Status: '.$getResponse->status.'</p>');
+        }
+        
+        if (!$last_called || (time() - (int)$last_called) > 300) {            
+            $statusCehck = new SnappOrderStatus();
+            $response = $statusCehck->get_order_status($orderID);
+            if (is_wp_error($response)) {
+                error_log('API Error: ' . $response->get_error_message());
+            } else {
+                update_post_meta($orderID, '_uikar_last_api_response', $response);
+                update_post_meta($orderID, '_uikar_last_api_call', time());
+            }
+        }
+
     }
 }
