@@ -18,7 +18,6 @@ define('SNAPPBOX_API_BASE_URL_STAGING', 'https://customer-stg.snapp-box.com/');
 define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://customer.snapp-box.com/');
 define('SNAPPBOX_API_TOKEN', get_option('snappbox_api', ''));
 
-require_once(SNAPPBOX_DIR . 'includes/admin.php');
 require_once(SNAPPBOX_DIR . 'includes/woo-checkout-map.php');
 require_once(SNAPPBOX_DIR . 'includes/cities-class.php');
 require_once(SNAPPBOX_DIR . 'includes/wooCommerce-filter-class.php');
@@ -27,9 +26,7 @@ require_once(SNAPPBOX_DIR . 'includes/checkout-pricing-class.php');
 
 
 function snappbox_init() {
-    if ( class_exists('SnappBoxAdminPage') ) {
-        new SnappBoxAdminPage();
-    }
+    
     if ( class_exists('SnappBoxCheckout') ) {
         new SnappBoxCheckout();
     }

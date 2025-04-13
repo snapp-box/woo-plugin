@@ -15,8 +15,6 @@ class SnappBoxOrderAdmin
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'check_order_status']);
         add_action('wp_ajax_create_snappbox_order', [$this, 'handle_create_snappbox_order']);
         add_action('wp_ajax_cancel_snappbox_order', [$this, 'handle_cancel_snappbox_order']);
-        
-        
     }
 
     public function enqueue_admin_leaflet_scripts($hook)
