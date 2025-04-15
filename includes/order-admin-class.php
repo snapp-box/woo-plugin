@@ -8,25 +8,12 @@ class SnappBoxOrderAdmin
 
     public function __construct($accessToken = SNAPPBOX_API_TOKEN)
     {
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_leaflet_scripts']);
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_location_in_order_admin']);
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'display_map_in_admin_order'], 20);
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'display_snappbox_order_button']);
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'check_order_status']);
         add_action('wp_ajax_create_snappbox_order', [$this, 'handle_create_snappbox_order']);
         add_action('wp_ajax_cancel_snappbox_order', [$this, 'handle_cancel_snappbox_order']);
-    }
-
-    public function enqueue_admin_leaflet_scripts($hook)
-    {
-        if ('post.php' !== $hook) {
-            return;
-        }
-        $screen = get_current_screen();
-        if ('shop_order' === $screen->post_type) {
-            wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
-            wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js', [], null, true);
-        }
     }
 
     public function display_location_in_order_admin($order)
@@ -46,7 +33,9 @@ class SnappBoxOrderAdmin
         $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
         if ($latitude && $longitude) {
             echo '<div id="admin-osm-map" style="height: 400px; margin-top: 20px;"></div>';
-?>
+?>          
+        <link rel="stylesheet" id="leaflet-css-css" href="https://unpkg.com/leaflet/dist/leaflet.css?ver=6.7.2" media="all">
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js" id="leaflet-js-js"></script>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var latitude = <?php echo esc_js($latitude); ?>;
@@ -179,8 +168,8 @@ class SnappBoxOrderAdmin
         $response = $snappbox_api->cancel_order($order_id);
         if ($response['success'] === false) {
             delete_post_meta($woo_order_id, '_snappbox_order_id'); 
-            delete_post_meta($woo_order_id, '_uikar_last_api_response'); 
-            delete_post_meta($woo_order_id, '_uikar_last_api_call'); 
+            delete_post_meta($woo_order_id, '_snappbox_last_api_response'); 
+            delete_post_meta($woo_order_id, '_snappbox_last_api_call'); 
             wp_send_json_success($response['message']);
         } else {
             wp_send_json_error($response['message']);
@@ -189,8 +178,8 @@ class SnappBoxOrderAdmin
     public function check_order_status(){
         
         $orderID = get_post_meta($_GET['id'], '_snappbox_order_id', true);
-        $getResponse = get_post_meta($orderID,'_uikar_last_api_response', true);
-        $last_called = get_post_meta($orderID, '_uikar_last_api_call', true);
+        $getResponse = get_post_meta($orderID,'_snappbox_last_api_response', true);
+        $last_called = get_post_meta($orderID, '_snappbox_last_api_call', true);
         if($getResponse){
             echo('<p>Status: '.$getResponse->status.'</p>');
         }
@@ -201,8 +190,8 @@ class SnappBoxOrderAdmin
             if (is_wp_error($response)) {
                 error_log('API Error: ' . $response->get_error_message());
             } else {
-                update_post_meta($orderID, '_uikar_last_api_response', $response);
-                update_post_meta($orderID, '_uikar_last_api_call', time());
+                update_post_meta($orderID, '_snappbox_last_api_response', $response);
+                update_post_meta($orderID, '_snappbox_last_api_call', time());
             }
         }
 
