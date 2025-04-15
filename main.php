@@ -23,6 +23,8 @@ require_once(SNAPPBOX_DIR . 'includes/cities-class.php');
 require_once(SNAPPBOX_DIR . 'includes/wooCommerce-filter-class.php');
 require_once(SNAPPBOX_DIR . 'includes/order-admin-class.php');
 require_once(SNAPPBOX_DIR . 'includes/checkout-pricing-class.php');
+require_once(SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php');
+
 
 function snappbox_init() {
     
@@ -42,7 +44,9 @@ function snappbox_init() {
     if(class_exists('SnappBoxPricing')){
         new SnappBoxPricing();
     }
-    
+    if(class_exists('SnappBoxWcOrderColumn')){
+        new SnappBoxWcOrderColumn();
+    }
     
     load_plugin_textdomain('sb-delivery', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
