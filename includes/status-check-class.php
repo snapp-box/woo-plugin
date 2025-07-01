@@ -1,11 +1,13 @@
 <?php
 class SnappOrderStatus
 {
-    private $apiUrl = SNAPPBOX_API_BASE_URL_STAGING.'/v2/orders/';
+    private $apiUrl;
     private $headers;
 
     public function __construct($accessToken = SNAPPBOX_API_TOKEN)
     {
+        global $api_base_url;
+        $this->apiUrl = $api_base_url.'/v2/orders/';
         $this->headers = [
             'Content-Type: application/json',
         ];

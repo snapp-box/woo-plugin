@@ -31,7 +31,10 @@ class SnappBoxWcOrderColumn {
             $order_id = $order->get_id(); 
             $orderID = get_post_meta($order_id, '_snappbox_order_id', true);
             $value = get_post_meta($orderID, $this->meta_key, true);
-            echo $value->status ? esc_html($value->status) : '—';
+            if(!empty($value)){
+                echo $value->status ? esc_html($value->status) : '—';
+            }
+            
         }
     }
 

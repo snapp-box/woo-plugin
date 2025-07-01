@@ -14,7 +14,7 @@ class SnappBoxOrderAdmin
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'check_order_status']);
         add_action('wp_ajax_create_snappbox_order', [$this, 'handle_create_snappbox_order']);
         add_action('wp_ajax_cancel_snappbox_order', [$this, 'handle_cancel_snappbox_order']);
-        add_action('wp_ajax_get_pricing', [$this, 'handle_get_pricing']); // ✅ Correct action hook for pricing
+        add_action('wp_ajax_get_pricing', [$this, 'handle_get_pricing']); 
     }
 
     public function display_location_in_order_admin($order)
@@ -32,6 +32,7 @@ class SnappBoxOrderAdmin
     {
         $latitude = get_post_meta($order->get_id(), '_customer_latitude', true);
         $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
+       
         if ($latitude && $longitude) {
             echo '<div id="admin-osm-map" style="height: 400px; margin-top: 20px;"></div>';
 ?>
@@ -42,7 +43,7 @@ class SnappBoxOrderAdmin
                     var latitude = <?php echo esc_js($latitude); ?>;
                     var longitude = <?php echo esc_js($longitude); ?>;
                     var map = L.map('admin-osm-map').setView([latitude, longitude], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    L.tileLayer('https://raster.snappmaps.ir/styles/snapp-style/{z}/{x}/{y}{r}.png', {
                         maxZoom: 19,
                         attribution: '© OpenStreetMap'
                     }).addTo(map);
@@ -73,15 +74,17 @@ class SnappBoxOrderAdmin
                 </div>
             </div>
 
-            <div class="snappbox-order-container">
+            <div class="snappbox-order-container clearfix" style="clear: both;margin-top: 20px;float: left;width: 100%;">
                 <button id="snappbox-pricing-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>" class="button button-primary">
                     <?php _e('Get SnappBox Price', 'sb-delivery'); ?>
+                    
                 </button>
+                <img class="loading" style="display:none" src="<?php echo SNAPPBOX_URL;?>/assets/img/ld.svg" />
             </div>
 <?php
         } else {
 ?>
-            <div class="snappbox-cancel-container">
+            <div class="snappbox-cancel-container" style="clear: both;margin-top: 20px;float: left;width: 100%;">
                 <button id="snappbox-cancel-order" data-order-id="<?php echo esc_attr($snappboxOrder); ?>" class="button button-secondary">
                     <?php _e('Cancel Order', 'sb-delivery'); ?>
                 </button>
@@ -101,7 +104,7 @@ class SnappBoxOrderAdmin
                 $('#snappbox-pricing-order').on('click', function (e) {
                     e.preventDefault();
                     let orderId = $(this).data('order-id');
-
+                    jQuery('.loading').css('display', 'inline-block');
                     $.ajax({
                         url: '<?php echo admin_url('admin-ajax.php'); ?>',
                         type: 'POST',
@@ -114,10 +117,12 @@ class SnappBoxOrderAdmin
                         },
                         success: function (response) {
                             $('.modal').css('display', 'flex');
-                            $('#pricing-message').text('قیمت تخمینی: ' + response.data.finalCustomerFare + ' تومان');
+                            jQuery('.loading').css('display', 'none');
+                            $('#pricing-message').text('قیمت تخمینی: ' + response.data.finalCustomerFare + ' ریال');
                         },
                         error: function () {
                             $('#pricing-message').text('خطا در ارسال درخواست.');
+                            jQuery('.loading').css('display', 'none');
                         }
                     });
                 });
@@ -137,11 +142,12 @@ class SnappBoxOrderAdmin
                             $('#snappbox-response').text('Sending...');
                         },
                         success: function (response) {
-                            if (response.success) {
-                                let data = response.data.response.data;
-                                $('#snappbox-response').html('<span style="color:green;">' + response.data.response.message + ' ' + data.finalCustomerFare + '</span>');
+                            if (response.response.status_code === '201') {
+                                let data = response.response.data;
+                                $('#snappbox-response').html('<span style="color:green;">' + response.response.message + '</span>');
+                                location.reload();
                             } else {
-                                $('#snappbox-response').html('<span style="color:red;">Error: ' + response.data + '</span>');
+                                $('#snappbox-response').html('<span style="color:red;">Error: ' + response.response.data + '</span>');
                             }
                         },
                         error: function () {
@@ -195,8 +201,9 @@ class SnappBoxOrderAdmin
         }
 
         $snappbox_order = new SnappBoxCreateOrder();
-        $response = $snappbox_order->handleCreateOrder($order_id);
 
+        $response = $snappbox_order->handleCreateOrder($order_id);
+        
         if ($response['success']) {
             wp_send_json_success($response);
         } else {
@@ -217,8 +224,6 @@ class SnappBoxOrderAdmin
 
         $pricing_api = new SnappBoxPriceHandler();
         $response = $pricing_api->get_pricing($order_id); 
-        print_r($response);
-        die();
         if ($response['success']) {
             wp_send_json_success([
                 'fare' => $response['data']['finalCustomerFare']

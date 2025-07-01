@@ -6,8 +6,8 @@ if (!defined('ABSPATH')) {
 
 class SnappBoxPricing {
     private static $instance = null;
-    private $api_url = SNAPPBOX_API_BASE_URL_STAGING."/v1/customer/order/pricing";
-    private $api_token = SNAPPBOX_API_TOKEN;
+    private $api_url;
+    private $api_token;
     private $freeDelivery;
     public static function get_instance() {
         if (self::$instance === null) {
@@ -18,6 +18,9 @@ class SnappBoxPricing {
 
     
     public function __construct() {
+        global $api_base_url;
+        $this->api_url = $api_base_url . "/v1/customer/order/pricing";
+        $this->api_token = SNAPPBOX_API_TOKEN;
         $this->freeDelivery = get_option('free_delivery');
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_snappbox_pricing', [$this, 'get_pricing']);

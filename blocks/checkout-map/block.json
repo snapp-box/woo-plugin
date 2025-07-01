@@ -1,0 +1,13 @@
+{
+  "apiVersion": 2,
+  "name": "snappbox/checkout-map",
+  "title": "SnappBox Checkout Map",
+  "category": "woocommerce",
+  "supports": {
+    "html": false
+  },
+  "textdomain": "woo-box-plugin",
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php",
+  "scope": ["woocommerce-checkout"]
+}

@@ -1,9 +1,11 @@
 <?php
 class SnappBoxCreateOrder {
-    private $api_url = SNAPPBOX_API_BASE_URL_STAGING . "/v1/customer/create_order";
+    private $api_url;
     private $api_key; 
 
     public function __construct($api_key = SNAPPBOX_API_TOKEN) {
+        global $api_base_url;
+        $this->api_url = $api_base_url . "/v1/customer/create_order";
         $this->api_key = $api_key;
         add_action('wp_ajax_snappbox_create_order', [$this, 'handleCreateOrder']);
         add_action('wp_ajax_nopriv_snappbox_create_order', [$this, 'handleCreateOrder']);
@@ -11,17 +13,18 @@ class SnappBoxCreateOrder {
 
     public function create_order($order_data, $order) {
         $args = [
-            'body'    => json_encode($order_data, JSON_UNESCAPED_UNICODE),
+            'body'    => json_encode($order_data),
             'headers' => [
                 'Content-Type'  => 'application/json',
+                // 'platform' => 'web',
+                // 'clientType'=> 'woocommerce-plugin',
+                'Authorization' => $this->api_key,
             ],
             'method'  => 'POST',
             'timeout' => 45,
         ];
-
-        if ($this->api_key) {
-            $args['headers']['Authorization'] = $this->api_key;
-        }
+        print_r(json_encode($order_data));
+        die();
         
         $response = wp_remote_post($this->api_url, $args);
         
@@ -59,7 +62,8 @@ class SnappBoxCreateOrder {
         if (!$order) {
             wp_send_json_error(['message' => 'Invalid order']);
         }
-
+        // print_r($order);
+        // die();
         $order_data = $this->prepareOrderData($order, $order_id);
         $response = $this->create_order($order_data, $order);
         wp_send_json($response, '', JSON_UNESCAPED_UNICODE);
@@ -76,7 +80,7 @@ class SnappBoxCreateOrder {
                 "orderDetails" => $this->getOrderDetails($order, $order_id),
                 "pickUpDetails" => $this->getPickupDetails(),
                 "dropOffDetails" => $this->getDropoffDetails($order),
-                "verificationCodeEnabled" => true
+                "verificationCodeEnabled" => false
             ]
         ];
     }
@@ -100,7 +104,7 @@ class SnappBoxCreateOrder {
 
     private function getOrderDetails($order, int $order_id): array {
         return [
-            "city" => $order->get_billing_city(),
+            "city" => $order->get_billing_state(),
             "customerWalletType" => null,
             "deliveryCategory" => "bike",
             "deliveryFarePaymentType" => "cod",
@@ -119,17 +123,20 @@ class SnappBoxCreateOrder {
     }
 
     private function getPickupDetails(): array {
+        $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
+        $settings = maybe_unserialize($settings_serialized);
         return [[
             "id" => null,
             "contactName" => get_option('snappbox_store_name', ''),
             "address" => WC()->countries->get_base_address() . ' ' . WC()->countries->get_base_address_2(),
-            "contactPhoneNumber" => get_option('snappbox_store_phone'),
+            "contactPhoneNumber" => $settings['snappbox_store_phone'] ?? '',
             "plate"=> "",
             "sequenceNumber"=> 1,
             "unit"=> "",
+            "editMerchandiseInfo"=> null,
             "comment"=> "",
-            "latitude" => get_option('snappbox_latitude', ''),
-            "longitude" => get_option('snappbox_longitude', ''),
+            "latitude" => $settings['snappbox_latitude'] ?? '',
+            "longitude" => $settings['snappbox_longitude'] ?? '',
             "type" => "pickup",
             "paymentType" => "prepaid",
             "vendorId" => 0,
@@ -159,7 +166,7 @@ class SnappBoxCreateOrder {
             "services" => [["itemServiceId" => 1, "quantity" => 1]],
             "verificationCodeGenerationStrategy" => "AUTO",
             "terminalDetails" => [
-                "verificationCode" => '' 
+                ["verificationCode" => '' ]
             ]
         ]];
     }    
