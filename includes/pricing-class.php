@@ -112,7 +112,7 @@ class SnappBoxPriceHandler {
             'body'    => json_encode($payload),
             'timeout' => 15,
         ]);
-
+        
         if (is_wp_error($response)) {
             return $response->get_error_message();
         }

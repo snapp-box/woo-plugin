@@ -16,15 +16,14 @@ class SnappBoxCreateOrder {
             'body'    => json_encode($order_data),
             'headers' => [
                 'Content-Type'  => 'application/json',
-                // 'platform' => 'web',
-                // 'clientType'=> 'woocommerce-plugin',
+                'platform' => 'web',
+                'clientType'=> 'woocommerce-plugin',
                 'Authorization' => $this->api_key,
             ],
             'method'  => 'POST',
             'timeout' => 45,
         ];
-        print_r(json_encode($order_data));
-        die();
+        
         
         $response = wp_remote_post($this->api_url, $args);
         
@@ -62,8 +61,7 @@ class SnappBoxCreateOrder {
         if (!$order) {
             wp_send_json_error(['message' => 'Invalid order']);
         }
-        // print_r($order);
-        // die();
+    
         $order_data = $this->prepareOrderData($order, $order_id);
         $response = $this->create_order($order_data, $order);
         wp_send_json($response, '', JSON_UNESCAPED_UNICODE);
@@ -72,10 +70,6 @@ class SnappBoxCreateOrder {
     private function prepareOrderData($order, int $order_id): array {
         return [
             "data" => [
-                "timeSlotDTO" => [
-                    "startTimeSlot" => current_time('mysql'),
-                    "endTimeSlot" => date('Y-m-d H:i:s', strtotime('+2 hours', current_time('timestamp')))
-                ],
                 "itemDetails" => $this->getItemDetails($order),
                 "orderDetails" => $this->getOrderDetails($order, $order_id),
                 "pickUpDetails" => $this->getPickupDetails(),
@@ -112,11 +106,9 @@ class SnappBoxCreateOrder {
             "loadAssistance" => false,
             "pricingId" => "",
             "sequenceNumberDeliveryCollection" => 1,
-            "orderLevelServices" => [["id" => 4, "quantity" => 1]],
             "customerEmail" => $order->get_billing_email(),
             "customerName" => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
             "customerPhonenumber" => $order->get_billing_phone(),
-            "customerRefId" => 31,
             "voucherCode" => "",
             "waitingTime" => 0
         ];
