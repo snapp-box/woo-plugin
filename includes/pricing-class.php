@@ -10,18 +10,17 @@ class SnappBoxPriceHandler {
         add_action('wp_ajax_snappbox_get_pricing', [$this, 'handleCreateOrder']);
         add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'handleCreateOrder']);
     }
-    public function get_pricing($orderId) {
+    public function get_pricing($orderId, $state_code) {
         $latitude = get_post_meta($orderId, '_customer_latitude', true);
         $longitude = get_post_meta($orderId, '_customer_longitude', true);
         
         $order = wc_get_order($orderId);
         $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
         $settings = maybe_unserialize($settings_serialized);
-        $state = $order->get_billing_state();
         $payload = [
-            "city" => $state,
+            "city" => $state_code,
             "customerWalletType" => null,
-            "deliveryCategory" => "bike", // updated from "bike-without-box"
+            "deliveryCategory" => "bike-without-box", // updated from "bike-without-box"
             "deliveryFarePaymentType" => null,
             "isReturn" => false,
             "loadAssistance" => false,
@@ -122,7 +121,7 @@ class SnappBoxPriceHandler {
         if (!empty($response_body['finalCustomerFare'])) {
             wp_send_json_success(['finalCustomerFare' => $response_body['finalCustomerFare']]);
         } else {
-            wp_send_json_error('Invalid response from SnappBox API');
+            wp_send_json_error($response_body);
         }
     }
 }

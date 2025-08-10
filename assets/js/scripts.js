@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
     // Manual trigger
-    launchModalBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        modal.style.display = "block";
-        currentSlide = 0;
-        showSlide(currentSlide);
-    });
+    // launchModalBtn.addEventListener('click', function (e) {
+    //     e.preventDefault();
+    //     modal.style.display = "block";
+    //     currentSlide = 0;
+    //     showSlide(currentSlide);
+    // });
     // Show modal on first load
     if (!sessionStorage.getItem('snappboxModalSeen')) {
         modal.style.display = "block";

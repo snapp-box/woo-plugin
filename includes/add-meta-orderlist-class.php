@@ -17,9 +17,8 @@ class SnappBoxWcOrderColumn {
 
         foreach ($columns as $key => $label) {
             $new_columns[$key] = $label;
-
             if ($key === 'order_total') {
-                $new_columns[$this->column_id] = __($this->column_label, 'textdomain');
+                $new_columns[$this->column_id] = __($this->column_label, 'sb-delivery');
             }
         }
 
@@ -32,7 +31,7 @@ class SnappBoxWcOrderColumn {
             $orderID = get_post_meta($order_id, '_snappbox_order_id', true);
             $value = get_post_meta($orderID, $this->meta_key, true);
             if(!empty($value)){
-                echo $value->status ? esc_html($value->status) : '—';
+                echo $value->status ? esc_html($value->statusText) : '—';
             }
             
         }
