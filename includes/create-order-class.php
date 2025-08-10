@@ -100,7 +100,7 @@ class SnappBoxCreateOrder {
         return [
             "city" => $order->get_billing_state(),
             "customerWalletType" => null,
-            "deliveryCategory" => "bike",
+            "deliveryCategory" => "bike-without-box",
             "deliveryFarePaymentType" => "cod",
             "isReturn" => false,
             "loadAssistance" => false,
