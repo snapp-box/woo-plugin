@@ -38,9 +38,8 @@ define('SNAPPBOX_API_TOKEN', $api_key);
 
 require_once(SNAPPBOX_DIR . 'includes/woo-checkout-map.php');
 require_once(SNAPPBOX_DIR . 'includes/cities-class.php');
-// require_once(SNAPPBOX_DIR . 'includes/wooCommerce-filter-class.php');
 require_once(SNAPPBOX_DIR . 'includes/order-admin-class.php');
-// require_once(SNAPPBOX_DIR . 'includes/checkout-pricing-class.php');
+require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php');
 require_once(SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php');
 
 
@@ -49,7 +48,7 @@ require_once(SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php');
 function snappbox_init() {
     $currentUser = wp_get_current_user();
     if( class_exists('SnappBoxOrderAdmin')) {
-            new SnappBoxOrderAdmin();
+        new SnappBoxOrderAdmin();
     }
     if( class_exists('SnappBoxCities') ){
         new SnappBoxCities();
@@ -60,20 +59,17 @@ function snappbox_init() {
             new SnappBoxCheckout();
         }
 
-        // if(class_exists('SnappBoxWooCommerceFilter')){
-        //     new SnappBoxWooCommerceFilter();
-        // }
-       
-        // if(class_exists('SnappBoxPricing')){
-        //     new SnappBoxPricing();
-        // }
-
         if(class_exists('SnappBoxWcOrderColumn')){
             new SnappBoxWcOrderColumn();
         }
+
         if ( class_exists('WC_Payment_Gateway') && ONDELIVERY == 'yes') {
             require_once(SNAPPBOX_DIR . 'includes/payment-method.php');
             SnappBoxOnDeliveryGateway::register();
+        }
+
+        if(class_exists('SnappBoxScheduleModal')){
+            new SnappBoxScheduleModal();
         }
        
     }
@@ -82,15 +78,9 @@ function snappbox_init() {
             if ( class_exists('SnappBoxCheckout') ) {
                 new SnappBoxCheckout();
             }
-    
-            // if(class_exists('SnappBoxWooCommerceFilter')){
-            //     new SnappBoxWooCommerceFilter();
-            // }
-           
-            // if(class_exists('SnappBoxPricing')){
-            //     new SnappBoxPricing();
-            // }
-    
+            if(class_exists('SnappBoxScheduleModal')){
+                new SnappBoxScheduleModal();
+            }
             if(class_exists('SnappBoxWcOrderColumn')){
                 new SnappBoxWcOrderColumn();
             }
@@ -99,7 +89,6 @@ function snappbox_init() {
                 SnappBoxOnDeliveryGateway::register();
             }
         }
-        
     }
     
     
@@ -111,9 +100,6 @@ function snappbox_init() {
             SnappBoxShippingMethod::register();
         });
     }
-    
-    
-
     if (!function_exists('register_block_type')) {
         return;
     }
@@ -127,9 +113,6 @@ function snappbox_activate() {
 }
 
 register_activation_hook( __FILE__, 'snappbox_activate' );
-
-
-
 
 
 add_action( 'before_woocommerce_init', function() {
@@ -173,19 +156,14 @@ function snappbox_admin_notice() {
     if ( isset( $screen->id ) ) {
         if ( $screen->id === 'dashboard' || $screen->id === 'woocommerce_page_wc-settings' ) {
             $notice_displayed = true; 
-
             $newNoticeObj = new SnappBoxShippingMethod();
             $walletObj = new SnappBoxWalletBalance();
             $walletObjResult = $walletObj->check_balance();
-
             $newNoticeObj->admin_alert( $walletObjResult );
         }
     }
 }
 add_action( 'admin_notices', 'snappbox_admin_notice' );
-
-
-
 
 
 add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), 'snappbox_settings_link' );
@@ -200,7 +178,6 @@ add_action( 'add_meta_boxes', 'snappbox_remove_shipping_address_admin_order_page
 function snappbox_remove_shipping_address_admin_order_page() {
     remove_action( 'woocommerce_admin_order_data_after_shipping_address', 'woocommerce_admin_shipping_address' );
 }
-
 
 
 

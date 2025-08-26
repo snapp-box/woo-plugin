@@ -260,3 +260,71 @@ button.snappbox-btn {
 .none-class{
 	display: none;
 }
+.snappbox-date-content h2{
+	border-bottom: 1px solid #cecece;
+    line-height: 35px;
+	font-family: "IRANSansX";
+}
+.snappbox-date-content .snappbox-close{
+	float: left;
+}
+.snappbox-day-selector p{
+	display: inline-block;
+	width: 48%;
+}
+.snappbox-day-selector select{
+	width: 48%;
+	display: inline-block;
+}
+.time-slot input[type="time"]{
+	width: 46%;
+    margin-bottom: 8px;
+}
+.remove-slot.button svg{
+	width:24px;
+	height:24px;
+}
+.remove-slot.button{
+	line-height: 0;
+    background-color: transparent;
+    border: 0;
+    padding: 0;
+}
+.add-time svg{
+	width: 20px;
+    height: 20px;
+    vertical-align: middle;
+	margin-left: 10px;
+}
+.snappbox-date-content button.add-time{
+	border-radius: 25px;
+    background-color: #524cff;
+    color: #fafafa;
+    padding: 5px 23px;
+    border: 0;
+    line-height: 36px;
+}
+.snappbox-date-content button.add-time:hover, .snappbox-date-content button.add-time:active{
+	background: #6560ff;
+    border-color: #fafafa;
+    color: #fafafa;
+}
+
+.snappbox-day-grid {
+	display:grid;
+	grid-template-columns:repeat(auto-fill,minmax(92px,1fr));
+	gap:8px; margin-top:6px;
+}
+.snappbox-day-card { border:1px solid #ddd; border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; user-select:none; transition:box-shadow .15s, border-color .15s; }
+.snappbox-day-card:hover { border-color:#2271b1; }
+.snappbox-day-card input[type=radio]{ display:none; }
+.snappbox-day-card .day-title{ font-weight:600; font-size:12px; line-height:1.1; margin-bottom:6px; }
+.snappbox-day-card .day-date{ font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+.snappbox-day-card .day-month{ font-size:12px; color:#555; }
+.snappbox-day-card.snappbox-selected{ border-color:#2271b1; box-shadow:0 0 0 2px rgba(34,113,177,.15); }
+
+.snappbox-time{
+	border:1px solid #cecece;
+	padding:10px;
+	border-radius: 10px;
+}

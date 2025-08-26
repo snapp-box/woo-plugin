@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: SnappBox WooCommerce\n"
-"POT-Creation-Date: 2025-08-04 16:15+0330\n"
-"PO-Revision-Date: 2025-08-04 16:17+0330\n"
+"POT-Creation-Date: 2025-08-25 18:39+0330\n"
+"PO-Revision-Date: 2025-08-25 18:40+0330\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fa_IR\n"
@@ -33,19 +33,23 @@ msgstr "اسنپ باکس"
 msgid "Address"
 msgstr "آدرس"
 
-#: includes/order-admin-class.php:105
+#: includes/order-admin-class.php:103
+msgid "Delivery Date and Time"
+msgstr "روز و زمان ارسال"
+
+#: includes/order-admin-class.php:117
 msgid "Send to SnappBox"
 msgstr "ارسال به اسنپ باکس"
 
-#: includes/order-admin-class.php:123
+#: includes/order-admin-class.php:135
 msgid "Get SnappBox Price"
 msgstr "گرفتن قیمت اسنپ باکس"
 
-#: includes/order-admin-class.php:136
+#: includes/order-admin-class.php:148
 msgid "Cancel Order"
 msgstr "کنسل کردن"
 
-#: includes/order-admin-class.php:363
+#: includes/order-admin-class.php:376
 msgid "Status"
 msgstr "وضعیت سفارش"
 
@@ -65,7 +69,7 @@ msgstr "فعال سازی"
 msgid "Enable SnappBox On-Delivery Payment"
 msgstr "فعال کردن پرداخت در محل اسپ باکس"
 
-#: includes/payment-method.php:43 includes/shipping-method-class.php:131
+#: includes/payment-method.php:43 includes/shipping-method-class.php:139
 msgid "Title"
 msgstr "تیتر"
 
@@ -93,6 +97,38 @@ msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دری�
 msgid "Awaiting SnappBox payment"
 msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
 
+#: includes/schedule-modal.php:31
+msgid "Select Day and Time"
+msgstr "انتخاب روز و ساعت"
+
+#: includes/schedule-modal.php:34
+msgid "Select Day"
+msgstr "انتخاب روز"
+
+#: includes/schedule-modal.php:47
+msgid "Add / Edit Time Slots"
+msgstr "اضافه / ویرایش زمان ها"
+
+#: includes/schedule-modal.php:65
+msgid "Add Time Slot"
+msgstr "اضافه کردن زمان"
+
+#: includes/schedule-modal.php:73
+msgid "Save"
+msgstr "ذخیره"
+
+#: includes/schedule-modal.php:82
+msgid "Invalid request."
+msgstr "درخواست غیر معتبر"
+
+#: includes/schedule-modal.php:86
+msgid "Permission denied."
+msgstr ""
+
+#: includes/schedule-modal.php:104
+msgid "Schedule saved successfully!"
+msgstr "زمانبندی با موفقیت ذخیره شد"
+
 #: includes/shipping-method-class.php:20
 msgid "SnappBox Shipping Method"
 msgstr "ارسال اسنپ باکس"
@@ -102,7 +138,6 @@ msgid "A SnappBox shipping method with dynamic pricing."
 msgstr "متد ارسال اسنپ باکس با قیمت داینامیک."
 
 #: includes/shipping-method-class.php:46
-#: includes/wooCommerce-filter-class.php:121
 msgid "Mobile Phone"
 msgstr "تلفن همراه"
 
@@ -111,161 +146,165 @@ msgid "SnappBox cost is free"
 msgstr ""
 "هزینه اسنپ باکس با فروشگاه است چون قیمت سبد خرید بالاتر از حد مشخص شده است"
 
-#: includes/shipping-method-class.php:80
+#: includes/shipping-method-class.php:85 includes/shipping-method-class.php:88
 msgid "SnappBox is not available in your city"
 msgstr "ارسال با اسنپ‌باکس در این شهر توسط فروشگاه پشتیبانی نمی شود"
 
-#: includes/shipping-method-class.php:119
+#: includes/shipping-method-class.php:127
 msgid "Enable"
 msgstr "فعال سازی"
 
-#: includes/shipping-method-class.php:121
+#: includes/shipping-method-class.php:129
 msgid "Enable this shipping method"
 msgstr "آیا به عنوان روش حمل و نقل در صفحه صورت حساب نمایش داده شود"
 
-#: includes/shipping-method-class.php:125
+#: includes/shipping-method-class.php:133
 msgid "Enable Test Mode"
 msgstr "فعال کردن محیط آزمایشی"
 
-#: includes/shipping-method-class.php:127
+#: includes/shipping-method-class.php:135
 msgid "Enable test mode for this plugin"
 msgstr "این گزینه محیط آزمایشی را برای ادمین وبسایت فراهم میکند"
 
-#: includes/shipping-method-class.php:133
+#: includes/shipping-method-class.php:141
 msgid "Title to display during checkout"
 msgstr "تیتر صفحه سبد خرید"
 
-#: includes/shipping-method-class.php:134
+#: includes/shipping-method-class.php:142
 msgid "SnappBox Shipping"
 msgstr "ارسال اسنپ باکس"
 
-#: includes/shipping-method-class.php:137
+#: includes/shipping-method-class.php:145
 msgid "Fixed Price"
 msgstr "قیمت ثابت"
 
-#: includes/shipping-method-class.php:139
+#: includes/shipping-method-class.php:147
 msgid "Leave it empty for canceling fixed price"
 msgstr "برای کنسل کردن این فیلد را خالی بگذارید"
 
-#: includes/shipping-method-class.php:139
-#: includes/shipping-method-class.php:144
+#: includes/shipping-method-class.php:147
+#: includes/shipping-method-class.php:152
 msgid "You must enter a price in "
 msgstr "واحد قیمت شما"
 
-#: includes/shipping-method-class.php:142
+#: includes/shipping-method-class.php:150
 msgid "Free Delivery"
 msgstr "ارسال رایگان"
 
-#: includes/shipping-method-class.php:144
+#: includes/shipping-method-class.php:152
 msgid "Minimum basket price for free delivery"
 msgstr "کمترین قیمت سبد خرید برای ارسال رایگان"
 
-#: includes/shipping-method-class.php:147
+#: includes/shipping-method-class.php:155
 msgid "Base Shipping Cost"
 msgstr "قیمت پایه ارسال"
 
-#: includes/shipping-method-class.php:149
+#: includes/shipping-method-class.php:157
 msgid "Base shipping cost for this method"
 msgstr "قیمت پایه ارسال برای این متد"
 
-#: includes/shipping-method-class.php:154
+#: includes/shipping-method-class.php:162
 msgid "Cost per KG"
 msgstr "هزینه بر اساس کیلوگرم"
 
-#: includes/shipping-method-class.php:156
+#: includes/shipping-method-class.php:164
 msgid "Shipping cost per kilogram"
 msgstr "هزینه در هر کیلوگرم"
 
-#: includes/shipping-method-class.php:161
+#: includes/shipping-method-class.php:169
 msgid "SnappBox API Key"
 msgstr "کلید API اسنپ باکس"
 
-#: includes/shipping-method-class.php:166
+#: includes/shipping-method-class.php:174
 msgid "Latitude"
 msgstr "طول جغرافیایی"
 
-#: includes/shipping-method-class.php:172
+#: includes/shipping-method-class.php:180
 msgid "Longitude"
 msgstr "عرض جغرافیایی"
 
-#: includes/shipping-method-class.php:178
+#: includes/shipping-method-class.php:186
 msgid "Phone Number"
 msgstr "شماره تماس"
 
-#: includes/shipping-method-class.php:183
+#: includes/shipping-method-class.php:191
 msgid "Store Name"
 msgstr "نام فروشگاه"
 
-#: includes/shipping-method-class.php:188
+#: includes/shipping-method-class.php:196
 msgid "Enable payment on delivery"
 msgstr "فعال کردن پرداخت در محل"
 
-#: includes/shipping-method-class.php:190
+#: includes/shipping-method-class.php:198
 msgid "Pay SnappBox payment on delivery"
 msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
 
-#: includes/shipping-method-class.php:194
+#: includes/shipping-method-class.php:202
 msgid "Cities"
 msgstr "شهر ها"
 
-#: includes/shipping-method-class.php:197
+#: includes/shipping-method-class.php:205
 msgid "This Item will show after token insertion"
 msgstr ""
 "شهرها بعد از وارد کردن توکن ( کلید API ) در این قسمت  نمایش داده میشوند"
 
-#: includes/shipping-method-class.php:219
+#: includes/shipping-method-class.php:227
 msgid "Show Setup Guide"
 msgstr "نمایش راهنما"
 
-#: includes/shipping-method-class.php:226
+#: includes/shipping-method-class.php:230
+msgid "Show Dates"
+msgstr "تنظیمات روز و ساعت"
+
+#: includes/shipping-method-class.php:237
 msgid "Set Store Location"
 msgstr "تنظیم کردن لوکیشن فروشگاه"
 
-#: includes/shipping-method-class.php:227
+#: includes/shipping-method-class.php:238
 msgid "Please move the pin"
 msgstr "لطفا پین را جابجا کنید"
 
-#: includes/shipping-method-class.php:265
+#: includes/shipping-method-class.php:276
 msgid "Your wallet balance is too low. Please contact Snappbox"
 msgstr "مقدار کیف پول شما بسیار کم است. لطفا با اسنپ باکس تماس بگیرید"
 
-#: includes/shipping-method-class.php:266
+#: includes/shipping-method-class.php:277
 msgid "Learn more."
 msgstr "بیشتر بدانید."
 
-#: includes/shipping-method-class.php:276
+#: includes/shipping-method-class.php:287
 msgid "wallet Information"
 msgstr "اطلاعات کیف پول"
 
-#: includes/shipping-method-class.php:287
+#: includes/shipping-method-class.php:298
 msgid "Your current balance is: "
 msgstr "مقدار کیف پول شما "
 
-#: includes/shipping-method-class.php:289
+#: includes/shipping-method-class.php:300
 msgid "Unable to fetch wallet balance."
 msgstr "نمیتوان مقدار کیف پول را دریافت کرد."
 
-#: includes/shipping-method-class.php:358
+#: includes/shipping-method-class.php:371
 msgid "Enable and Disable!"
 msgstr "فعال سازی و غیر فعال سازی"
 
-#: includes/shipping-method-class.php:359
+#: includes/shipping-method-class.php:372
 msgid "You can enable and disable the method here"
 msgstr "شما میتوانید اینجا متد را فعال یا غیر فعال کنید"
 
-#: includes/shipping-method-class.php:361
-#: includes/shipping-method-class.php:367
-#: includes/shipping-method-class.php:373
-#: includes/shipping-method-class.php:379
-#: includes/shipping-method-class.php:385
+#: includes/shipping-method-class.php:374
+#: includes/shipping-method-class.php:380
+#: includes/shipping-method-class.php:386
+#: includes/shipping-method-class.php:392
+#: includes/shipping-method-class.php:398
 msgid "Next"
 msgstr "بعدی"
 
-#: includes/shipping-method-class.php:364
+#: includes/shipping-method-class.php:377
 msgid "Step 1: Enter Your API Key"
 msgstr "قدم اول: وارد کردن کلید API"
 
-#: includes/shipping-method-class.php:365
+#: includes/shipping-method-class.php:378
 msgid ""
 "Put your API key in this field. you can aquire this API key by contacting "
 "SnappBox team"
@@ -273,51 +312,94 @@ msgstr ""
 "کلید API خود را در این فیلد بگذارید. برای گرفتن کلید با تیم اسنپ باکس تماس "
 "بگیرید"
 
-#: includes/shipping-method-class.php:370
+#: includes/shipping-method-class.php:383
 msgid "Step 2: Set Your Location"
 msgstr "مرحله دوم : تنظیم کردن لوکیشن فروشگاه"
 
-#: includes/shipping-method-class.php:371
+#: includes/shipping-method-class.php:384
 msgid "Drag the map marker to your store’s location."
-msgstr "موقعیت فروشگاه خود را با حرکت دادن مارکر روی نقشه تعیین کنید"
+msgstr "موقعیت فروشگاه خود را با حرکت دادن مارکر روی نقشه تعیین کنید."
 
-#: includes/shipping-method-class.php:376
+#: includes/shipping-method-class.php:389
 msgid "Step 3: Set Stores data"
 msgstr "مرحله سوم : تعیین شماره تلفن و نام فروشگاه"
 
-#: includes/shipping-method-class.php:377
+#: includes/shipping-method-class.php:390
 msgid "Set your stores name and your Mobile Number."
-msgstr "نام فروشگاه و شماره تلفن همراه خود را ذخیره کنید"
+msgstr "نام فروشگاه و شماره تلفن همراه خود را ذخیره کنید."
 
-#: includes/shipping-method-class.php:382
+#: includes/shipping-method-class.php:395
 msgid "Step 4: Set Stores city"
 msgstr "مرحله چهارم : تعیین شهر"
 
-#: includes/shipping-method-class.php:383
+#: includes/shipping-method-class.php:396
 msgid "Set the city that your store can send products by SnappBox."
-msgstr "شهری که در آن میتوانید با اسنپ باکس ارسال کنید را تعیین کنید"
+msgstr "شهری که در آن میتوانید با اسنپ باکس ارسال کنید را تعیین کنید."
 
-#: includes/shipping-method-class.php:388
+#: includes/shipping-method-class.php:401
 msgid "Final Step: Save Settings"
 msgstr "قدم آخر: ذخیره تغییرات"
 
-#: includes/shipping-method-class.php:390
+#: includes/shipping-method-class.php:403
 msgid "Scroll down and click \"Save changes\" to activate SnappBox."
-msgstr "به پایین اسکرول کنید و دکمه ذخیره را بزنید"
+msgstr "به پایین اسکرول کنید و دکمه ذخیره را بزنید."
 
-#: includes/shipping-method-class.php:393
+#: includes/shipping-method-class.php:406
 msgid "Got it!"
-msgstr "گرفتم"
+msgstr "گرفتم!"
 
-#: includes/woo-checkout-map.php:35
+#: includes/woo-checkout-map.php:39
 msgid "Select your location"
 msgstr "لوکیشن خود را انتخاب کنید"
 
-#: includes/woo-checkout-map.php:74
+#: includes/woo-checkout-map.php:78
 msgid "Please select your location on the map."
-msgstr "لطفا لوکیشن خود را روی نقشه انتخاب کنید"
+msgstr "لطفا لوکیشن خود را روی نقشه انتخاب کنید."
 
-#: main.php:194
+#: includes/woo-checkout-map.php:88
+msgid "Select delivery day & time:"
+msgstr "انتخاب روز و ساعت:"
+
+#: includes/woo-checkout-map.php:282
+msgctxt "weekday name"
+msgid "Monday"
+msgstr "دوشنبه"
+
+#: includes/woo-checkout-map.php:283
+msgctxt "weekday name"
+msgid "Tuesday"
+msgstr "سه شنبه"
+
+#: includes/woo-checkout-map.php:284
+msgctxt "weekday name"
+msgid "Wednesday"
+msgstr "چهارشنبه"
+
+#: includes/woo-checkout-map.php:285
+msgctxt "weekday name"
+msgid "Thursday"
+msgstr "پنجشبنه"
+
+#: includes/woo-checkout-map.php:286
+msgctxt "weekday name"
+msgid "Friday"
+msgstr "جمعه"
+
+#: includes/woo-checkout-map.php:287
+msgctxt "weekday name"
+msgid "Saturday"
+msgstr "شنبه"
+
+#: includes/woo-checkout-map.php:288
+msgctxt "weekday name"
+msgid "Sunday"
+msgstr "یکشنبه"
+
+#: includes/woo-checkout-map.php:324
+msgid "SnappBox Delivery:"
+msgstr "حمل و نقل اسنپ باکس:"
+
+#: main.php:172
 msgid "Settings"
 msgstr "تنظیمات"
 

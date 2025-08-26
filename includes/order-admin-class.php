@@ -91,7 +91,19 @@ class SnappBoxOrderAdmin
     public function display_snappbox_order_button($order)
     {
         $snappboxOrder = get_post_meta($order->get_id(), '_snappbox_order_id', true);
+        $day  = $order->get_meta('_snappbox_day');
+        $time = $order->get_meta('_snappbox_time');
         
+        
+        if($day && $time){
+            $ts = $day ? strtotime($day . ' 12:00:00') : false; 
+            $dateLabel = $ts ? wp_date('l j F Y', $ts) : $day;  
+            ?>
+            <div class="snappbox-order-container clearfix">
+                <p><b><?php _e('Delivery Date and Time', 'sb-delivery');?> :</b>  <?php  echo($dateLabel); ?>- <?php echo($time);?></p>
+            </div>
+            <?php 
+        }
         if (!$snappboxOrder) {
 ?>
             <div class="modal" style="display:none;justify-content:center;align-items:center;background-color:rgba(255,255,255,0.7);z-index:1100;left:0;right:0;top:0;bottom:0;position:absolute;">
@@ -355,7 +367,8 @@ class SnappBoxOrderAdmin
     
     public function check_order_status()
     {
-        $orderID = get_post_meta($_GET['id'], '_snappbox_order_id', true);
+        (isset($_GET['id']) ? $currentID = $_GET['id'] : $currentID = $_GET['post']);
+        $orderID = get_post_meta($currentID, '_snappbox_order_id', true);
         $getResponse = get_post_meta($orderID, '_snappbox_last_api_response', true);
         $last_called = get_post_meta($orderID, '_snappbox_last_api_call', true);
         

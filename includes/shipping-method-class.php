@@ -226,6 +226,9 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
         echo '<a href="#" id="snappbox-launch-modal" class="button colorful-button button-secondary">';
         echo esc_html__('Show Setup Guide', 'sb-delivery');
         echo '</a>';
+        echo '<a href="#" id="snappbox-launch-modal-guide" class="button colorful-button button-secondary">';
+        echo esc_html__('Show Dates', 'sb-delivery');
+        echo '</a>';
         echo '</div>';
         ?>
         <?php $this->wallet_information();?>
@@ -356,11 +359,13 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
     }
 
     public function add_modal_box(){
+        require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php');
+
         ?>
         <script type="text/javascript" src="<?php echo(SNAPPBOX_URL);?>/assets/js/scripts.js"></script>
         <!-- Multi-step modal -->
         <div id="snappbox-setup-modal" class="snappbox-modal">
-            <div class="snappbox-modal-content">
+            <div class="snappbox-modal-content" id="guide">
                 <span class="snappbox-close">&times;</span>
                 <div class="snappbox-slide active">
                     <h2><?php _e('Enable and Disable!', 'sb-delivery'); ?></h2>
@@ -401,6 +406,9 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
                     <button class="snappbox-close button colorful-button"><?php _e('Got it!', 'sb-delivery'); ?></button>
                 </div>
             </div>
+            <?php 
+                    $modal = new SnappBoxScheduleModal();
+                    $modal->render_modal_html();?>
         </div>
         <?php 
     }
