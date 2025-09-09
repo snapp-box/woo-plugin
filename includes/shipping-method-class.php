@@ -36,8 +36,20 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
     }
 
     public function enqueue_leafles_scripts() {
-        wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet/dist/leaflet.css');
-        wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet/dist/leaflet.js', array(), null, true);
+        wp_enqueue_script(
+            'leaflet',
+            trailingslashit( SNAPPBOX_URL ) . 'assets/js/leaflet.js',
+            [],
+            '1.9.4',
+            true
+        );
+        wp_enqueue_style(
+            'snappbox-style',
+            trailingslashit( SNAPPBOX_URL ) . 'assets/css/style.css',
+            [],
+            filemtime( trailingslashit( SNAPPBOX_DIR )  . 'assets/css/style.css' ) 
+        );
+        
         
     }
 
@@ -52,7 +64,6 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
 
     public function snappbox_order_register( $order, $data ) {
         global $woocommerce;
-    
         $chosen_shipping_methods = WC()->session->get( 'chosen_shipping_methods' );
         $chosen_shipping_method  = is_array( $chosen_shipping_methods ) ? $chosen_shipping_methods[0] : '';
         $totalCard               = floatval( preg_replace( '#[^\d.]#', '', $woocommerce->cart->get_cart_total() ) );
@@ -69,23 +80,16 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
         $settings_serialized = get_option( 'woocommerce_snappbox_shipping_method_settings' );
         $settings            = maybe_unserialize( $settings_serialized );
         $allCities           = new SnappBoxCityHelper();
-        $cityName            = $allCities->get_city_to_cityname_map();
-        $city_map            = $allCities->get_city_to_state_map();
-        $state_code          = isset( $city_map[ strtoupper( $shipping_city ) ] ) ? $city_map[ strtoupper( $shipping_city ) ] : null;
-        $cityNameCode        = isset( $cityName[  $shipping_cityName ] ) ? $cityName[ strtoupper( $shipping_cityName ) ] : null;
         $stored_cities       = $settings['snappbox_cities'];
+        $city = sanitize_text_field($_POST['customer_city']);  
         
         if ( $chosen_shipping_method === 'snappbox_shipping_method' ) {
-            if ( in_array( $state_code, $stored_cities, true ) ) {
-                if(in_array($cityNameCode, $stored_cities, true)){
-                    $order->add_order_note( 'Order registered with SnappBox in ' . $shipping_city );
-                    $order->update_meta_data( '_snappbox_city', $shipping_city ); 
-                }
-                else{
-                    throw new Exception( __( 'SnappBox is not available in your city', 'sb-delivery' ) );    
-                }
-            } else {
-                throw new Exception( __( 'SnappBox is not available in your city', 'sb-delivery' ) );
+            if(in_array(strtolower($city), $stored_cities, true)){
+                $order->add_order_note( 'Order registered with SnappBox in ' . $shipping_city );
+                $order->update_meta_data( '_snappbox_city', $shipping_city ); 
+            }
+            else{
+                throw new Exception( __( 'SnappBox is not available in your city', 'sb-delivery' ) );    
             }
         }
     }
@@ -220,7 +224,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
         $lat = $this->get_option('snappbox_latitude', '35.8037761');
         $lng = $this->get_option('snappbox_longitude', '51.4152466');
         ?>
-        <link rel="stylesheet" href="<?php echo(SNAPPBOX_URL);?>assets/css/style.css" />
+        
         <?php 
         echo '<div style="margin-bottom: 5px;float:left;">';
         echo '<a href="#" id="snappbox-launch-modal" class="button colorful-button button-secondary">';
@@ -237,10 +241,6 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
             <h4><?php _e('Set Store Location', 'sb-delivery');?></h4>
             <p><?php _e('Please move the pin','sb-delivery');?></p>
             <div id="map" style="height:400px;"></div>
-            <link rel="stylesheet" id="leaflet-css-css" href="https://unpkg.com/leaflet/dist/leaflet.css?ver=6.7.2" media="all">
-            <script src="https://unpkg.com/leaflet/dist/leaflet.js" id="leaflet-js-js"></script>
-            <!-- <link rel="stylesheet" id="leaflet-css-css" href="https://assets.snapp-box.com/static/box/scripts/leaflet/v1.9.3/leaflet.css" media="all">
-            <script src="https://assets.snapp-box.com/static/box/scripts/leaflet/v1.9.4/leaflet.js" id="leaflet-js-js"></script> -->
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var map = L.map('map').setView([<?php echo($lat);?>, <?php echo($lng)?>], 16);
@@ -303,7 +303,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method {
         </div>
     <?php
     }
-
+    
     public function snappbox_rial_to_toman($amount) {
         return $amount / 10;
     }

@@ -13,12 +13,12 @@ class SnappBoxPriceHandler {
     public function get_pricing($orderId, $state_code) {
         $latitude = get_post_meta($orderId, '_customer_latitude', true);
         $longitude = get_post_meta($orderId, '_customer_longitude', true);
-        
+        $city = get_post_meta($orderId,'customer_city', true);
         $order = wc_get_order($orderId);
         $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
         $settings = maybe_unserialize($settings_serialized);
         $payload = [
-            "city" => $state_code,
+            "city" => $city,
             "customerWalletType" => null,
             "deliveryCategory" => "bike-without-box", // updated from "bike-without-box"
             "deliveryFarePaymentType" => null,

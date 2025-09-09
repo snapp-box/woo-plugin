@@ -98,7 +98,7 @@ class SnappBoxCreateOrder {
 
     private function getOrderDetails($order, int $order_id): array {
         return [
-            "city" => $order->get_billing_state(),
+            "city" => $order->get_meta('customer_city'),
             "customerWalletType" => null,
             "deliveryCategory" => "bike-without-box",
             "deliveryFarePaymentType" => "cod",
