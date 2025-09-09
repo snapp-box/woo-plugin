@@ -126,10 +126,23 @@ add_action('wp_enqueue_scripts', 'snappbox_enqueue_leaflet_map_js');
 
 function snappbox_enqueue_leaflet_map_js() {
     if (!is_checkout()) return;
-    wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js', [], null, true);
-    wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
+    wp_enqueue_script(
+        'leaflet',
+        trailingslashit( SNAPPBOX_URL ) . 'assets/js/leaflet.js',
+        [],
+        '1.9.4',
+        true
+    );
+    wp_enqueue_style(
+        'snappbox-style',
+        trailingslashit( SNAPPBOX_URL ) . 'assets/css/style.css',
+        [],
+        filemtime( trailingslashit( SNAPPBOX_DIR )  . 'assets/css/style.css' ) 
+    );
     wp_enqueue_script('snappbox-map-checkout', plugin_dir_url(__FILE__) . '/assets/js/gutenberg-map.js', ['leaflet'], '1.0', true);
 }
+
+
 
 add_action('woocommerce_checkout_create_order', function($order, $data) {
 

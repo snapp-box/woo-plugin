@@ -25,51 +25,119 @@ class SnappBoxCheckout
 
     public function enqueue_leaflet_scripts()
     {
-        wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js', [], null, true);
-        wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
+        wp_enqueue_script('leaflet', trailingslashit( SNAPPBOX_URL ) . 'assets/js/leaflet.js', [], null, true);
+        wp_enqueue_style('leaflet-css', trailingslashit( SNAPPBOX_URL ) . 'assets/css/leaflet.css');
+        
     }
 
-    public function display_osm_map()
-    {
+    public function display_osm_map() {
         $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
         $settings = maybe_unserialize($settings_serialized);
-        
-        if ($settings['enabled'] == 'yes') {
+        if (empty($settings['enabled']) || $settings['enabled'] !== 'yes') return;
+        if (empty($settings['snappbox_latitude']) || empty($settings['snappbox_longitude'])) return;
+
+        $defaultLat = esc_js($settings['snappbox_latitude']);
+        $defaultLng = esc_js($settings['snappbox_longitude']);
+        $siteEmail  = rawurlencode(get_bloginfo('admin_email'));
         ?>
-            <h3><?php _e('Select your location', 'sb-delivery'); ?></h3>
-            <div id="osm-map" style="height: 400px;"></div>
-            <input type="hidden" id="customer_latitude" name="customer_latitude" />
-            <input type="hidden" id="customer_longitude" name="customer_longitude" />
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    var defaultLat = 35.6892;
-                    var defaultLng = 51.3890;
-                    var map = L.map('osm-map').setView([defaultLat, defaultLng], 12);
-                    L.tileLayer('https://raster.snappmaps.ir/styles/snapp-style/{z}/{x}/{y}{r}.png', {
-                        maxZoom: 19,
-                        attribution: '© OpenStreetMap'
-                    }).addTo(map);
-                    var marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
-                    marker.on('dragend', function () {
-                        var position = marker.getLatLng();
-                        document.getElementById('customer_latitude').value = position.lat;
-                        document.getElementById('customer_longitude').value = position.lng;
-                    });
-                    document.getElementById('customer_latitude').value = defaultLat;
-                    document.getElementById('customer_longitude').value = defaultLng;
+
+        <h3><?php _e('Select your location', 'sb-delivery'); ?></h3>
+        <div id="osm-map" style="height: 400px; margin-bottom: 12px;"></div>
+
+        <!-- These fields will be posted with the order -->
+        <input type="hidden" id="customer_latitude"  name="customer_latitude" />
+        <input type="hidden" id="customer_longitude" name="customer_longitude" />
+        <input type="hidden" id="customer_city"      name="customer_city" />
+        <input type="hidden" id="customer_address"   name="customer_address" />
+        <input type="hidden" id="customer_postcode"  name="customer_postcode" />
+        <input type="hidden" id="customer_state"     name="customer_state" />
+        <input type="hidden" id="customer_country"   name="customer_country" />
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof L === 'undefined') { console.error('Leaflet not loaded'); return; }
+
+            var defaultLat = <?php echo $defaultLat; ?>;
+            var defaultLng = <?php echo $defaultLng; ?>;
+
+            var map = L.map('osm-map').setView([defaultLat, defaultLng], 12);
+            L.tileLayer('https://raster.snappmaps.ir/styles/snapp-style/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            var marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+            function $(id){ return document.getElementById(id); }
+
+            function pickCity(addr) {
+                return addr.city || addr.town || addr.village || addr.municipality || addr.hamlet || addr.suburb || '';
+            }
+            function buildAddress(addr) {
+                var parts = [];
+                if (addr.house_number) parts.push(addr.house_number);
+                if (addr.road) parts.push(addr.road);
+                if (addr.suburb) parts.push(addr.suburb);
+                return parts.join(' ');
+            }
+
+            function reverseGeocode(lat,lng){
+                var url = "https://nominatim.openstreetmap.org/reverse"
+                        + "?format=jsonv2&addressdetails=1&zoom=18&accept-language=en"
+                        + "&lat=" + encodeURIComponent(lat)
+                        + "&lon=" + encodeURIComponent(lng)
+                        + "&email=<?php echo $siteEmail; ?>";
+
+                fetch(url)
+                .then(r=>r.json())
+                .then(function(data){
+                    var addr = data.address || {};
+                    $('customer_latitude').value  = lat;
+                    $('customer_longitude').value = lng;
+                    $('customer_city').value      = pickCity(addr);
+                    $('customer_address').value   = buildAddress(addr);
+                    $('customer_postcode').value  = addr.postcode || '';
+                    $('customer_state').value     = addr.state || '';
+                    $('customer_country').value   = addr.country_code ? addr.country_code.toUpperCase() : '';
+
+                    // also push values into Woo shipping fields
+                    var sa = document.querySelector('#billing_address_1'); if (sa) sa.value = $('customer_address').value;
                 });
-            </script>
-        <?php }
+            }
+
+            function onSet(lat,lng){
+                marker.setLatLng([lat,lng]);
+                reverseGeocode(lat,lng);
+            }
+
+            onSet(defaultLat,defaultLng);
+            marker.on('dragend', function(){ var p=marker.getLatLng(); onSet(p.lat,p.lng); });
+            map.on('click', function(e){ onSet(e.latlng.lat,e.latlng.lng); });
+        });
+        </script>
+        <?php
     }
+
 
     public function save_customer_location($order_id)
     {
         if (isset($_POST['customer_latitude']) && isset($_POST['customer_longitude'])) {
             $latitude = sanitize_text_field($_POST['customer_latitude']);
             $longitude = sanitize_text_field($_POST['customer_longitude']);
+            $customerCity = sanitize_text_field($_POST['customer_city']);
+            $customerAddress = sanitize_text_field($_POST['customer_address']);
+            $customerPostCode = sanitize_text_field($_POST['customer_postcode']);
+            $customerState = sanitize_text_field($_POST['customer_state']);
+            $customerCountry = sanitize_text_field($_POST['customer_country']);
             update_post_meta($order_id, '_customer_latitude', $latitude);
             update_post_meta($order_id, '_customer_longitude', $longitude);
+            update_post_meta($order_id, 'customer_city', $customerCity);
+            update_post_meta($order_id, 'customer_state', $customerState);
+            update_post_meta($order_id, 'customer_country', $customerCountry);
+            update_post_meta($order_id, 'customer_postcode', $customerPostCode);
+            update_post_meta($order_id, 'customer_address', $customerAddress);
         }
+        
     }
 
     public function validate_customer_location()
@@ -312,11 +380,12 @@ class SnappBoxCheckout
         if (!empty($_POST['snappbox_time'])) {
             $order->update_meta_data('_snappbox_time', sanitize_text_field($_POST['snappbox_time']));
         }
+       
     }
 
     public function display_order_meta($order) {
         $dateIso = $order->get_meta('_snappbox_day');   
-        $time    = $order->get_meta('_snappbox_time');
+        $time    = $order->get_meta('_snappbox_time');//customer_city
     
         if ($dateIso || $time) {
             $ts = $dateIso ? strtotime($dateIso . ' 12:00:00') : false; 
