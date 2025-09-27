@@ -19,17 +19,21 @@ class SnappBoxWcOrderColumn {
     }
 
 
-    public function add_columns($columns) {
-        $new = [];
-        foreach ($columns as $key => $label) {
-            $new[$key] = $label;
-            if ($key === 'order_total') {
-                $new[$this->date_column_id]  = __($this->date_column_label, 'sb-delivery');
-                $new[$this->column_id]       = __($this->column_label, 'sb-delivery');
+    public function add_columns( $columns ) {
+        $new = array();
+    
+        foreach ( $columns as $key => $label ) {
+            $new[ $key ] = $label;
+    
+            if ( 'order_total' === $key ) {
+                $new[ $this->date_column_id ] = esc_html__( 'SnappBox Date', 'sb-delivery' );
+                $new[ $this->column_id ]      = esc_html__( 'SnappBox', 'sb-delivery' );
             }
         }
+    
         return $new;
     }
+    
 
 
     public function render_hpos_column($column, $order) {

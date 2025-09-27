@@ -7,34 +7,30 @@ class SnappOrderStatus
     public function __construct($accessToken = SNAPPBOX_API_TOKEN)
     {
         global $api_base_url;
-        $this->apiUrl = $api_base_url.'/v2/orders/';
+        $this->apiUrl = $api_base_url . '/v2/orders/';
         $this->headers = [
-            'Content-Type: application/json',
+            'Content-Type' => 'application/json',
         ];
 
         if (!empty($accessToken)) {
-            $this->headers[] = 'Authorization:' . $accessToken;
+            $this->headers['Authorization'] = $accessToken;
         }
     }
 
     public function get_order_status($orderID)
     {
         $url = $this->apiUrl . $orderID;
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headers);
-        curl_setopt($ch, CURLOPT_HTTPGET, true); 
 
-        $response = curl_exec($ch);
+        $response = wp_remote_get($url, [
+            'headers' => $this->headers,
+        ]);
 
-        if ($response === false) {
-            throw new Exception('cURL error: ' . curl_error($ch));
+        if (is_wp_error($response)) {
+            throw new Exception('Request error: ' . esc_html($response->get_error_message()));
         }
 
-        curl_close($ch);
+        $body = wp_remote_retrieve_body($response);
 
-        return json_decode($response, false);
+        return json_decode($body, false);
     }
 }
-
-

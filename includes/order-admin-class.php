@@ -1,4 +1,8 @@
 <?php
+if (! defined('ABSPATH')) {
+    exit;
+}
+
 require_once(SNAPPBOX_DIR . 'includes/create-order-class.php');
 require_once(SNAPPBOX_DIR . 'includes/cancel-order-class.php');
 require_once(SNAPPBOX_DIR . 'includes/status-check-class.php');
@@ -8,115 +12,145 @@ require_once(SNAPPBOX_DIR . 'includes/convert-woo-cities-to-snappbox.php');
 class SnappBoxOrderAdmin
 {
     public function __construct($accessToken = SNAPPBOX_API_TOKEN)
-    {   
-        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_leaflet' ] );
+    {
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_leaflet']);
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'display_order_admin_box'], 20, 1);
+
+        // Admin-ajax handlers
         add_action('wp_ajax_create_snappbox_order', [$this, 'handle_create_snappbox_order']);
         add_action('wp_ajax_cancel_snappbox_order', [$this, 'handle_cancel_snappbox_order']);
-        add_action('wp_ajax_get_pricing', [$this, 'handle_get_pricing']); 
+        add_action('wp_ajax_get_pricing', [$this, 'handle_get_pricing']);
     }
 
-    public function display_location_in_order_admin($order)
+    public function enqueue_leaflet()
     {
-        
-        $orderID = get_post_meta($order->get_id(), '_snappbox_order_id', true);
-        if($orderID){
-            echo '<div style="margin-bottom:20px;"><strong>'. esc_html(__('Order ID', 'sb-delivery')).': </strong>' . esc_html($orderID). '</div>';
-        }
-    }
-    public function enqueue_leaflet() {
         wp_enqueue_style(
             'leaflet',
-            trailingslashit( SNAPPBOX_URL ) . 'assets/css/leaflet.css',
+            trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
             [],
             '1.9.4'
         );
 
         wp_enqueue_script(
             'leaflet',
-            trailingslashit( SNAPPBOX_URL ) . 'assets/js/leaflet.js',
+            trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
             [],
             '1.9.4',
             true
         );
+
         wp_enqueue_style(
             'snappbox-style',
-            trailingslashit( SNAPPBOX_URL ) . 'assets/css/style.css',
+            trailingslashit(SNAPPBOX_URL) . 'assets/css/style.css',
             [],
-            filemtime( trailingslashit( SNAPPBOX_DIR )  . 'assets/css/style.css' ) 
+            filemtime(trailingslashit(SNAPPBOX_DIR) . 'assets/css/style.css')
         );
     }
-    public function display_map_in_admin_order($order)
+
+    public function display_location_in_order_admin($order)
     {
-        $latitude = get_post_meta($order->get_id(), '_customer_latitude', true);
-        $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
-        if ($latitude && $longitude) {
-            echo '<div id="admin-osm-map" style="height: 400px; margin-top: 20px;"></div>';
-?>
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    var latitude = <?php echo esc_js($latitude); ?>;
-                    var longitude = <?php echo esc_js($longitude); ?>;
-                    var map = L.map('admin-osm-map').setView([latitude, longitude], 15);
-                    L.tileLayer('https://raster.snappmaps.ir/styles/snapp-style/{z}/{x}/{y}{r}.png', {
-                        maxZoom: 19,
-                        attribution: '© OpenStreetMap'
-                    }).addTo(map);
-                    L.marker([latitude, longitude]).addTo(map)
-                        .bindPopup('Customer Location')
-                        .openPopup();
-                });
-            </script>
-<?php
-        }
-    }
-   
-    public function display_order_admin_box($order){
-        if(isset($_GET['action']) && $_GET['action'] == 'edit'){
-            ?>
-            <script>
-                jQuery(document).ready(function(){
-                    var secondElement = jQuery('.order_data_column').eq(2);
-                    secondElement.addClass('none-class');
-                });
-            </script>
-            </div>
-            <div class="order_data_column_fullwidth">
-                <h3><?php esc_attr_e('SnappBox', 'sb-delivery');?></h3>
-                <?php 
-                $this->display_map_in_admin_order($order);
-                $this->display_location_in_order_admin($order);
-                echo( '<b>' .esc_html(__('Address', 'sb-delivery')) . '</b> : ' .esc_html($order->shipping_address_1));
-                $free_delivery = $order->get_meta( '_free_delivery' );
-                if($free_delivery){
-                    echo('<div><b>'.esc_html($free_delivery).'</b></div>');
-                }
-                $this->check_order_status();
-                $this->display_snappbox_order_button($order);
-                ?>
-            </div>
-            <?php
+        $orderID = get_post_meta($order->get_id(), '_snappbox_order_id', true);
+        if ($orderID) {
+            echo '<div style="margin-bottom:20px;"><strong>' . esc_html__('Order ID', 'sb-delivery') . ': </strong>' . esc_html($orderID) . '</div>';
         }
     }
 
-    public function display_snappbox_order_button($order)
+    public function display_map_in_admin_order($order)
+    {
+        $latitude  = get_post_meta($order->get_id(), '_customer_latitude', true);
+        $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
+    
+        if ($latitude && $longitude) {
+            $lat = (float) $latitude;
+            $lng = (float) $longitude;
+    
+            echo '<div id="admin-osm-map" style="height: 400px; margin-top: 20px;"></div>';
+            ?>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof maplibregl === 'undefined') {
+                    console.error('MapLibre not loaded');
+                    return;
+                }
+    
+                maplibregl.setRTLTextPlugin(
+                    'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js',
+                    null,
+                    true
+                );
+    
+                var lat = <?php echo wp_json_encode($lat); ?>;
+                var lng = <?php echo wp_json_encode($lng); ?>;
+    
+                var map = new maplibregl.Map({
+                    container: 'admin-osm-map',
+                    style: 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+                    center: [lng, lat],
+                    zoom: 15,
+                    attributionControl: true
+                });
+    
+                map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    
+                new maplibregl.Marker().setLngLat([lng, lat]).addTo(map);
+    
+                // Optional popup in Persian, rendered RTL
+                var popup = new maplibregl.Popup({ closeOnClick: false })
+                    .setLngLat([lng, lat])
+                    .setHTML('<div style="direction:rtl;unicode-bidi:plaintext;">موقعیت مشتری</div>')
+                    .addTo(map);
+            });
+            </script>
+            <?php
+        }
+    }
+    
+
+    public function display_order_admin_box($order)
+    {
+        $nonce = wp_create_nonce('snappbox_admin_actions');
+        ?>
+        </div>
+        <div class="order_data_column_fullwidth">
+            <?php wp_nonce_field('snappbox_admin_actions', 'nonce'); ?>
+            <h3><?php esc_html_e('SnappBox', 'sb-delivery'); ?></h3>
+            <?php
+            $this->display_map_in_admin_order($order);
+            $this->display_location_in_order_admin($order);
+
+            echo '<b>' . esc_html__('Address', 'sb-delivery') . '</b> : ' . esc_html($order->get_shipping_address_1());
+
+            $free_delivery = $order->get_meta('_free_delivery');
+            if ($free_delivery) {
+                echo '<div><b>' . esc_html($free_delivery) . '</b></div>';
+            }
+
+            $this->check_order_status($order);
+
+            $this->display_snappbox_order_button($order, $nonce);
+            ?>
+        </div>
+        <?php
+    }
+
+    public function display_snappbox_order_button($order, $nonce)
     {
         $snappboxOrder = get_post_meta($order->get_id(), '_snappbox_order_id', true);
-        $day  = $order->get_meta('_snappbox_day');
-        $time = $order->get_meta('_snappbox_time');
-        
-        
-        if($day && $time){
-            $ts = $day ? strtotime($day . ' 12:00:00') : false; 
-            $dateLabel = $ts ? wp_date('l j F Y', $ts) : $day;  
-            ?>
+        $day           = $order->get_meta('_snappbox_day');
+        $time          = $order->get_meta('_snappbox_time');
+
+        if ($day && $time) {
+            $ts        = $day ? strtotime($day . ' 12:00:00') : false;
+            $dateLabel = $ts ? wp_date('l j F Y', $ts) : $day;
+        ?>
             <div class="snappbox-order-container clearfix">
-                <p><b><?php esc_html_e('Delivery Date and Time', 'sb-delivery');?> :</b>  <?php  esc_html_e($dateLabel); ?>- <?php esc_html_e($time);?></p>
+                <p><b><?php esc_html_e('Delivery Date and Time', 'sb-delivery'); ?> :</b> <?php echo esc_html($dateLabel); ?> - <?php echo esc_html($time); ?></p>
             </div>
-            <?php 
+        <?php
         }
-        if (!$snappboxOrder) {
-?>
+
+        if (! $snappboxOrder) {
+        ?>
             <div class="modal" style="display:none;justify-content:center;align-items:center;background-color:rgba(255,255,255,0.7);z-index:1100;left:0;right:0;top:0;bottom:0;position:absolute;">
                 <div class="modal-box" style="width:40%;text-align:center;overflow:hidden;display:flex;flex-direction:column;background-color:#fff;padding-bottom:20px;border:1px solid #ebebeb;border-radius:15px;">
                     <div class="modal-header" style="height:100px;background-color:#22a958;width:100%;"></div>
@@ -124,164 +158,192 @@ class SnappBoxOrderAdmin
                         <h3>قیمت اسنپ باکس</h3>
                         <p id="pricing-message">در حال دریافت قیمت...</p>
                         <div class="snappbox-order-container">
-                            <button id="snappbox-create-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>" class="snappbox-btn button button-primary">
+                            <button id="snappbox-create-order"
+                                data-order-id="<?php echo esc_attr($order->get_id()); ?>"
+                                class="snappbox-btn button button-primary"
+                                style="display:none">
                                 <?php esc_html_e('Send to SnappBox', 'sb-delivery'); ?>
                             </button>
                         </div>
-                        <img class="ct-order-loading" style="visibility:hidden" src="<?php esc_html_e(SNAPPBOX_URL) ;?>/assets/img/ld.svg" />
+                        <img class="ct-order-loading" style="visibility:hidden" src="<?php echo esc_url(trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" />
                         <span id="snappbox-response"></span>
-
                     </div>
+
                     <div class="vds-content" style="display:none">
-                        <video width="320" height="240" autoplay loop muted><source src="<?php esc_html_e(SNAPPBOX_URL)?>assets/vds/cup.mp4" type="video/mp4"></video>
+                        <video width="320" height="240" autoplay loop muted>
+                            <source src="<?php echo esc_url(trailingslashit(SNAPPBOX_URL) . 'assets/vds/cup.mp4'); ?>" type="video/mp4">
+                        </video>
                         <span id="snappbox-response-victory"></span>
                     </div>
-                    
+
                     <a href="#" class="close" style="margin-top:15px;">بستن</a>
                 </div>
             </div>
 
             <div class="snappbox-order-container clearfix" style="clear: both;margin-top: 20px;float: left;width: 100%;">
-                <button id="snappbox-pricing-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>" class="snappbox-btn button button-primary">
+                <button id="snappbox-pricing-order"
+                    data-order-id="<?php echo esc_attr($order->get_id()); ?>"
+                    class="snappbox-btn button button-primary">
                     <?php esc_html_e('Get SnappBox Price', 'sb-delivery'); ?>
-                    
                 </button>
-                <img class="loading" style="display:none" src="<?php esc_html_e(SNAPPBOX_URL);?>/assets/img/ld.svg" />
+                <img class="loading" style="display:none" src="<?php echo esc_url(trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" />
             </div>
-<?php
+            <?php
         } else {
-            $orderID = get_post_meta($_GET['id'], '_snappbox_order_id', true);
-            $getResponse = get_post_meta($orderID, '_snappbox_last_api_response', true);
-            if($getResponse->canCancel == 1){
-                ?>
+            
+            $order_meta_id = get_post_meta($order->get_id(), '_snappbox_order_id', true);
+            $getResponse   = $order_meta_id ? get_post_meta($order_meta_id, '_snappbox_last_api_response', true) : null;
+
+            if ($getResponse && isset($getResponse->canCancel) && (int) $getResponse->canCancel === 1) {
+            ?>
                 <div class="snappbox-cancel-container" style="clear: both;margin-top: 20px;float: left;width: 100%;">
-                    <button id="snappbox-cancel-order" data-order-id="<?php echo esc_attr($snappboxOrder); ?>" class="cancel-order button button-secondary">
+                    <button id="snappbox-cancel-order"
+                        data-order-id="<?php echo esc_attr($snappboxOrder); ?>"
+                        class="cancel-order button button-secondary">
                         <?php esc_html_e('Cancel Order', 'sb-delivery'); ?>
                     </button>
-                    <img class="cancel-order-loading" style="visibility:hidden" src="<?php esc_html_e(SNAPPBOX_URL);?>/assets/img/ld.svg" />
+                    <img class="cancel-order-loading" style="visibility:hidden" src="<?php echo esc_url(trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" />
                     <span id="snappbox-cancel-response"></span>
                 </div>
-                <?php 
+        <?php
             }
         }
-        
-?>
 
+        ?>
         <script type="text/javascript">
-            jQuery(document).ready(function ($) {
-                $('.close').on('click', function (e) {
+            jQuery(document).ready(function($) {
+                var SNAPPBOX_AJAX = {
+                    url: '<?php echo esc_js(admin_url('admin-ajax.php')); ?>',
+                    nonce: '<?php echo esc_js($nonce); ?>',
+                    wooCurrency: '<?php echo esc_js(get_woocommerce_currency()); ?>',
+                    wooOrderId: <?php echo (int) $order->get_id(); ?>
+                };
+
+                function snappboxRialToToman(currency) {
+                    return parseInt(currency, 10) / 10;
+                }
+
+                $('.close').on('click', function(e) {
                     e.preventDefault();
                     $('.modal').hide();
                 });
 
-                $('#snappbox-pricing-order').on('click', function (e) {
+                $('#snappbox-pricing-order').on('click', function(e) {
                     e.preventDefault();
-                    let orderId = $(this).data('order-id');
-                    
-                    jQuery('.loading').css('display', 'inline-block');
+                    var orderId = $(this).data('order-id');
+
+                    $('.loading').css('display', 'inline-block');
                     $.ajax({
-                        url: '<?php esc_html_e(admin_url('admin-ajax.php')); ?>',
+                        url: SNAPPBOX_AJAX.url,
                         type: 'POST',
                         data: {
                             action: 'get_pricing',
-                            order_id: orderId
+                            order_id: orderId,
+                            nonce: SNAPPBOX_AJAX.nonce
                         },
-                        beforeSend: function () {
+                        beforeSend: function() {
                             $('#pricing-message').text('در حال دریافت قیمت...');
                         },
-                        success: function (response) {
+                        success: function(response) {
                             $('.modal').css('display', 'flex');
-                            if(response.success != false){
-                                jQuery('#snappbox-create-order').css('display', 'block');
-                                let wooCurrency = '<?php esc_html_e(get_woocommerce_currency());?>';
-                                if( wooCurrency == 'IRT'){
-                                    var finalFare = snappboxRialToToman(response.data.finalCustomerFare)
-                                    var simbol = 'تومان'
-                                }
-                                else{
-                                    var finalFare = response.data.finalCustomerFare
-                                    var simbol = 'ریال'
+
+                            if (response && response.success) {
+                                var fare = response.data.finalCustomerFare;
+                                $('#snappbox-create-order').css('display', 'block');
+
+                                var finalFare, simbol;
+                                if (SNAPPBOX_AJAX.wooCurrency === 'IRT') {
+                                    finalFare = snappboxRialToToman(fare);
+                                    simbol = 'تومان';
+                                } else {
+                                    finalFare = fare;
+                                    simbol = 'ریال';
                                 }
 
-                                jQuery('.loading').css('display', 'none');
-                                $('#pricing-message').text('قیمت تخمینی: ' + new Intl.NumberFormat("en-IR", { maximumSignificantDigits: 3 }).format(
-                                    finalFare,) + simbol);
+                                $('.loading').css('display', 'none');
+                                $('#pricing-message').text(
+                                    'قیمت تخمینی: ' +
+                                    new Intl.NumberFormat("en-IR", {
+                                        maximumSignificantDigits: 3
+                                    }).format(finalFare) +
+                                    ' ' + simbol
+                                );
+                            } else {
+                                $('.loading').css('display', 'none');
+                                var msg = (response && response.data) ? response.data : 'خطا در دریافت قیمت.';
+                                $('#pricing-message').text(msg);
+                                $('#snappbox-create-order').css('display', 'none');
                             }
-                            else{
-                                jQuery('.loading').css('display', 'none');
-                                jQuery('#pricing-message').text(response.data.message);
-                                jQuery('#snappbox-create-order').css('display', 'none');
-                            }
-                            
                         },
-                        error: function (response) {
+                        error: function() {
                             $('#pricing-message').text('خطا در ارسال درخواست.');
-                            jQuery('.loading').css('display', 'none');
+                            $('.loading').css('display', 'none');
                         }
                     });
                 });
-                function snappboxRialToToman(currency){
-                    return parseInt(currency) / 10;
-                }
-                $('#snappbox-create-order').on('click', function (e) {
+
+                $('#snappbox-create-order').on('click', function(e) {
                     e.preventDefault();
-                    let orderId = $(this).data('order-id');
+                    var orderId = $(this).data('order-id');
 
                     $.ajax({
-                        url: '<?php esc_html_e(admin_url('admin-ajax.php')); ?>',
+                        url: SNAPPBOX_AJAX.url,
                         type: 'POST',
                         data: {
                             action: 'create_snappbox_order',
-                            order_id: orderId
+                            order_id: orderId,
+                            nonce: SNAPPBOX_AJAX.nonce
                         },
-                        beforeSend: function () {
+                        beforeSend: function() {
                             $('.ct-order-loading').css('visibility', 'visible');
                         },
-                        success: function (response) {
-                            if (response.response.status_code === '201') {
-                                let data = response.response.data;
-                                $('.modal-content').css('display', 'none');
-                                $('.vds-content').css('display', 'block');
-                                $('#snappbox-response-victory').html('<span style="color:green;">' + response.response.message + '</span>');
-                                location.reload();
+                        success: function(response) {
+                            if (response && response.success && response.response && response.response.data && (response.response.status_code === 201 || response.response.status_code === '201')) {
+                                $('.modal-content').hide();
+                                $('.vds-content').show();
+                                $('#snappbox-response-victory').html('<span style="color:green;">' + (response.response.message || 'Created') + '</span>');
+                                window.location.reload();
                             } else {
-                                $('#snappbox-response').html('<span style="color:red;">Error: ' + response.response.data + '</span>');
+                                var errMsg = (response && response.data) ? response.data : 'Unknown error';
+                                $('#snappbox-response').html('<span style="color:red;">Error: ' + errMsg + '</span>');
                             }
                             $('.ct-order-loading').css('visibility', 'hidden');
                         },
-                        error: function () {
+                        error: function() {
                             $('#snappbox-response').text('Error sending order.');
                             $('.ct-order-loading').css('visibility', 'hidden');
                         }
                     });
                 });
 
-                $('#snappbox-cancel-order').on('click', function (e) {
+                $('#snappbox-cancel-order').on('click', function(e) {
                     e.preventDefault();
-                    let orderId = $(this).data('order-id');
+                    var orderId = $(this).data('order-id');
 
                     $.ajax({
-                        url: '<?php esc_html_e(admin_url('admin-ajax.php')); ?>',
+                        url: SNAPPBOX_AJAX.url,
                         type: 'POST',
                         data: {
                             action: 'cancel_snappbox_order',
                             order_id: orderId,
-                            woo_order_id: <?php esc_html_e($order->get_id()); ?>
+                            woo_order_id: SNAPPBOX_AJAX.wooOrderId,
+                            nonce: SNAPPBOX_AJAX.nonce
                         },
-                        beforeSend: function () {
+                        beforeSend: function() {
                             $('.cancel-order-loading').css('visibility', 'visible');
                         },
-                        success: function (response) {
-                            if (response.success) {
+                        success: function(response) {
+                            if (response && response.success) {
                                 $('#snappbox-cancel-response').html('<span style="color:green;">' + response.data + '</span>');
                                 $('.cancel-order-loading').css('visibility', 'hidden');
                                 location.reload();
                             } else {
-                                $('#snappbox-cancel-response').html('<span style="color:red;">Error: ' + response.data + '</span>');
+                                var msg = (response && response.data) ? response.data : 'خطا';
+                                $('#snappbox-cancel-response').html('<span style="color:red;">Error: ' + msg + '</span>');
                                 $('.cancel-order-loading').css('visibility', 'hidden');
                             }
                         },
-                        error: function () {
+                        error: function() {
                             $('#snappbox-cancel-response').text('Error cancelling order.');
                             $('.cancel-order-loading').css('visibility', 'hidden');
                         }
@@ -292,108 +354,144 @@ class SnappBoxOrderAdmin
 <?php
     }
 
+
     public function handle_create_snappbox_order()
     {
-        if (!isset($_POST['order_id'])) {
-            wp_send_json_error('Order ID missing');
+        check_ajax_referer('snappbox_admin_actions', 'nonce');
+
+        if (empty($_POST['order_id'])) {
+            wp_send_json_error(__('Order ID missing', 'sb-delivery'));
         }
 
-        $order_id = intval($_POST['order_id']);
-        if (!$order_id) {
-            wp_send_json_error('Invalid Order ID');
+        $order_id = absint(wp_unslash($_POST['order_id']));
+        if (! $order_id) {
+            wp_send_json_error(__('Invalid Order ID', 'sb-delivery'));
+        }
+
+        if (! current_user_can('edit_shop_order', $order_id) && ! current_user_can('manage_woocommerce')) {
+            wp_send_json_error(__('Permission denied.', 'sb-delivery'), 403);
         }
 
         $snappbox_order = new SnappBoxCreateOrder();
+        $response       = $snappbox_order->handleCreateOrder($order_id);
 
-        $response = $snappbox_order->handleCreateOrder($order_id);
-        
-        if ($response['success']) {
-            wp_send_json_success($response);
+        if (! is_array($response)) {
+            wp_send_json_error(__('Unexpected response', 'sb-delivery'));
+        }
+
+        if (! empty($response['success'])) {
+            // خروجی هم‌خوان با JS: response.response.data / response.response.status_code
+            wp_send_json_success(['response' => $response]);
         } else {
-            wp_send_json_error($response['message']);
+            $msg = isset($response['message']) ? $response['message'] : __('Create order failed', 'sb-delivery');
+            wp_send_json_error($msg);
         }
     }
 
     public function handle_get_pricing()
     {
-        if (!isset($_POST['order_id'])) {
-            wp_send_json_error('Order ID missing');
-        }
-        
-        $order_id = intval($_POST['order_id']);
+        check_ajax_referer('snappbox_admin_actions', 'nonce');
 
-        if (!$order_id) {
-            wp_send_json_error('Invalid Order ID');
+        if (empty($_POST['order_id'])) {
+            wp_send_json_error(__('Order ID missing', 'sb-delivery'));
         }
+
+        $order_id = absint(wp_unslash($_POST['order_id']));
+        if (! $order_id) {
+            wp_send_json_error(__('Invalid Order ID', 'sb-delivery'));
+        }
+
+        if (! current_user_can('edit_shop_order', $order_id) && ! current_user_can('manage_woocommerce')) {
+            wp_send_json_error(__('Permission denied.', 'sb-delivery'), 403);
+        }
+
         $order = wc_get_order($order_id);
-        $state = strtolower($order->get_billing_state());
-        $allCities = new SnappBoxCityHelper();
-        $city_map = $allCities->get_city_to_state_map();
-        $state_code = isset($city_map[strtoupper($state)]) ? $city_map[strtoupper($state)] : null;
-        
-        $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
-        $settings = maybe_unserialize($settings_serialized);
-        $stored_cities = $settings['snappbox_cities'];
-        
-        if(in_array($state_code, $stored_cities)){
-            $pricing_api = new SnappBoxPriceHandler();
-            $response = $pricing_api->get_pricing($order_id, $state_code);
+        if (! $order) {
+            wp_send_json_error(__('Order not found', 'sb-delivery'));
+        }
 
-            if ($response['success'] == true) {
-                wp_send_json_success([
-                    'fare' => $response['data']['finalCustomerFare']
-                ]);
-            } else {
-                print_r($response['message']);
-                die();
-            }
-        } 
-        
-        
+        $state      = strtolower((string) $order->get_billing_state());
+        $allCities  = new SnappBoxCityHelper();
+        $city_map   = $allCities->get_city_to_state_map();
+        $state_code = isset($city_map[strtoupper($state)]) ? $city_map[strtoupper($state)] : null;
+
+        $settings      = maybe_unserialize(get_option('woocommerce_snappbox_shipping_method_settings'));
+        $stored_cities = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
+
+        if (! $state_code) {
+            wp_send_json_error('استان/شهر نامعتبر است.');
+        }
+        if (! in_array($state_code, $stored_cities, true)) {
+            wp_send_json_error('ارسال اسنپ‌باکس برای این شهر فعال نیست.');
+        }
+
+        $pricing_api = new SnappBoxPriceHandler();
+        $response    = $pricing_api->get_pricing($order_id, $state_code);
+
+        if (! empty($response['success']) && isset($response['data']['finalCustomerFare'])) {
+            wp_send_json_success([
+                'finalCustomerFare' => $response['data']['finalCustomerFare'],
+            ]);
+        }
+
+        $msg = isset($response['message']) ? $response['message'] : 'خطا در دریافت قیمت.';
+        wp_send_json_error($msg);
     }
 
     public function handle_cancel_snappbox_order()
     {
-        if (!isset($_POST['order_id'])) {
-            wp_send_json_error('Order ID missing');
+        check_ajax_referer('snappbox_admin_actions', 'nonce');
+
+        if (empty($_POST['order_id'])) {
+            wp_send_json_error(__('Order ID missing', 'sb-delivery'));
+        }
+        if (empty($_POST['woo_order_id'])) {
+            wp_send_json_error(__('Woo order ID missing', 'sb-delivery'));
         }
 
-        $order_id = sanitize_text_field($_POST['order_id']);
-        $woo_order_id = sanitize_text_field($_POST['woo_order_id']);
+        $order_id     = sanitize_text_field(wp_unslash($_POST['order_id'])); // SnappBox order id (string)
+        $woo_order_id = absint(wp_unslash($_POST['woo_order_id']));
+        if (! $woo_order_id) {
+            wp_send_json_error(__('Invalid Woo order ID', 'sb-delivery'));
+        }
+
+        if (! current_user_can('edit_shop_order', $woo_order_id) && ! current_user_can('manage_woocommerce')) {
+            wp_send_json_error(__('Permission denied.', 'sb-delivery'), 403);
+        }
 
         $snappbox_api = new SnappBoxCancelOrder();
-        $response = $snappbox_api->cancel_order($order_id);
+        $response     = $snappbox_api->cancel_order($order_id);
 
-        if ($response['success'] === false) {
+        if (isset($response['success']) && $response['success'] === false) {
             delete_post_meta($woo_order_id, '_snappbox_order_id');
             delete_post_meta($woo_order_id, '_snappbox_last_api_response');
             delete_post_meta($woo_order_id, '_snappbox_last_api_call');
-            wp_send_json_success($response['message']);
+            $msg = isset($response['message']) ? $response['message'] : __('Cancelled', 'sb-delivery');
+            wp_send_json_success($msg);
         } else {
-            wp_send_json_error($response['message']);
+            $msg = isset($response['message']) ? $response['message'] : __('Cancel failed', 'sb-delivery');
+            wp_send_json_error($msg);
         }
     }
 
-   
-    
-    public function check_order_status()
+    public function check_order_status($order)
     {
-        (isset($_GET['id']) ? $currentID = $_GET['id'] : $currentID = $_GET['post']);
-        $orderID = get_post_meta($currentID, '_snappbox_order_id', true);
-        $getResponse = get_post_meta($orderID, '_snappbox_last_api_response', true);
-        $last_called = get_post_meta($orderID, '_snappbox_last_api_call', true);
-        
-        if ($getResponse) {
-            esc_html_e('<p><b>'.__('Status', 'sb-delivery').'</b>: ' . esc_html($getResponse->statusText) . '</p>');
+        $meta_order_id = get_post_meta($order->get_id(), '_snappbox_order_id', true);
+        $getResponse   = $meta_order_id ? get_post_meta($meta_order_id, '_snappbox_last_api_response', true) : null;
+
+        if ($getResponse && isset($getResponse->statusText)) {
+            echo '<p><b>' . esc_html__('Status', 'sb-delivery') . '</b>: ' . esc_html($getResponse->statusText) . '</p>';
         }
-        
-        $statusCehck = new SnappOrderStatus();
-        $response = $statusCehck->get_order_status($orderID);
-        if (!is_wp_error($response)) {
-            update_post_meta($orderID, '_snappbox_last_api_response', $response);
-            update_post_meta($orderID, '_snappbox_last_api_call', time());
-        } else {
-            error_log('API Error: ' . $response->get_error_message());
+
+        if ($meta_order_id) {
+            $statusCheck = new SnappOrderStatus();
+            $response    = $statusCheck->get_order_status($meta_order_id);
+            if (! is_wp_error($response)) {
+                update_post_meta($meta_order_id, '_snappbox_last_api_response', $response);
+                update_post_meta($meta_order_id, '_snappbox_last_api_call', time());
+            } else {
+                echo esc_html('API Error: ' . $response->get_error_message());
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ class SnappBoxPriceHandler {
         $order = wc_get_order($orderId);
         $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
         $settings = maybe_unserialize($settings_serialized);
+        
         $payload = [
             "city" => $city,
             "customerWalletType" => null,
@@ -117,7 +118,7 @@ class SnappBoxPriceHandler {
         }
 
         $response_body = json_decode(wp_remote_retrieve_body($response), true);
-
+        
         if (!empty($response_body['finalCustomerFare'])) {
             wp_send_json_success(['finalCustomerFare' => $response_body['finalCustomerFare']]);
         } else {
