@@ -328,3 +328,26 @@ button.snappbox-btn {
 	padding:10px;
 	border-radius: 10px;
 }
+a.snappbox-token{
+	border-radius: 25px;
+    padding: 10px;
+    background-color: #3581C4;
+    color: #fafafa;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}
+.token-info{
+	background-color: rgba(53, 129, 196, 0.1);
+	padding:15px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+}
+.token-info p{
+	margin:0;
+}
+.token-info svg{
+	margin-left: 10px;
+}

@@ -28,10 +28,10 @@ class SnappBoxScheduleModal {
     ?>
     <div class="snappbox-modal-content snappbox-date-content none-class" id="dates">
         <span class="snappbox-close">&times;</span>
-        <h2><?php _e('Select Day and Time', 'sb-delivery');?></h2>
+        <h2><?php esc_html_e('Select Day and Time', 'sb-delivery');?></h2>
         <div class="selection-wrapper clearfix">
             <div class="snappbox-day-selector">
-                <p><?php _e('Select Day', 'sb-delivery');?></p>
+                <p><?php esc_html_e('Select Day', 'sb-delivery');?></p>
                 <select id="snappbox-day" class="snappbox-day-selector">
                     <?php
                     $days = ['saturday','sunday','monday','tuesday','wednesday','thursday','friday'];
@@ -47,14 +47,14 @@ class SnappBoxScheduleModal {
 
                     foreach ($days as $day): ?>
                         <option value="<?php echo esc_attr($day); ?>">
-                            <?php echo $day_labels[$day] ?? esc_html(ucfirst($day)); ?>
+                            <?php echo (esc_html($day_labels[$day]) ?? esc_html(ucfirst($day))); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
             <div>
-                <p><?php _e('Add / Edit Time Slots', 'sb-delivery');?></p>
+                <p><?php esc_html_e('Add / Edit Time Slots', 'sb-delivery');?></p>
                 <div id="snappbox-time-slots">
                     <?php foreach ($schedule as $day => $slots): ?>
                         <div class="snappbox-day-slots" data-day="<?php echo esc_attr($day); ?>" style="display:none;">
@@ -72,7 +72,7 @@ class SnappBoxScheduleModal {
                 </div>
                 <button type="button" id="add-time-slot" class="add-time button">
                     <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 511.99"><path fill="#ffffff" fill-rule="nonzero" d="M256 0c70.68 0 134.69 28.66 181.01 74.98C483.35 121.31 512 185.31 512 255.99c0 70.68-28.66 134.69-74.99 181.02-46.32 46.32-110.33 74.98-181.01 74.98-70.68 0-134.69-28.66-181.02-74.98C28.66 390.68 0 326.67 0 255.99S28.65 121.31 74.99 74.98C121.31 28.66 185.32 0 256 0zm116.73 236.15v39.69c0 9.39-7.72 17.12-17.11 17.12h-62.66v62.66c0 9.4-7.71 17.11-17.11 17.11h-39.7c-9.4 0-17.11-7.69-17.11-17.11v-62.66h-62.66c-9.39 0-17.11-7.7-17.11-17.12v-39.69c0-9.41 7.69-17.11 17.11-17.11h62.66v-62.67c0-9.41 7.7-17.11 17.11-17.11h39.7c9.41 0 17.11 7.71 17.11 17.11v62.67h62.66c9.42 0 17.11 7.76 17.11 17.11zm37.32-134.21c-39.41-39.41-93.89-63.8-154.05-63.8-60.16 0-114.64 24.39-154.05 63.8-39.42 39.42-63.81 93.89-63.81 154.05 0 60.16 24.39 114.64 63.8 154.06 39.42 39.41 93.9 63.8 154.06 63.8s114.64-24.39 154.05-63.8c39.42-39.42 63.81-93.9 63.81-154.06s-24.39-114.63-63.81-154.05z"/></svg> 
-                    <?php _e('Add Time Slot', 'sb-delivery');?>
+                    <?php esc_html_e('Add Time Slot', 'sb-delivery');?>
                 </button>
             </div>
         </div>
@@ -80,7 +80,7 @@ class SnappBoxScheduleModal {
 
         <div style="margin-top: 15px;text-align:left">
             <button type="button" id="save-snappbox-schedule" class="button button-primary colorful-button snappbox-btn">
-                <?php _e('Save', 'sb-delivery');?>
+                <?php esc_html_e('Save', 'sb-delivery');?>
             </button>
         </div>
     </div>
@@ -88,7 +88,7 @@ class SnappBoxScheduleModal {
     }
 
     public function save_schedule() {
-        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'snappbox_schedule_nonce' ) ) {
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['nonce'])), 'snappbox_schedule_nonce' ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid request.', 'sb-delivery' ) ], 400 );
         }
 
@@ -96,8 +96,8 @@ class SnappBoxScheduleModal {
             wp_send_json_error( [ 'message' => __( 'Permission denied.', 'sb-delivery' ) ], 403 );
         }
 
-        $day   = isset( $_POST['day'] ) ? sanitize_text_field( $_POST['day'] ) : '';
-        $slots = isset( $_POST['slots'] ) && is_array( $_POST['slots'] ) ? $_POST['slots'] : [];
+        $day   = isset( $_POST['day'] ) ? sanitize_text_field( wp_unslash($_POST['day']) ) : '';
+        $slots = isset( $_POST['slots'] ) && is_array( sanitize_text_field(wp_unslash($_POST['slots'])) ) ? sanitize_text_field(wp_unslash($_POST['slots'])) : [];
 
         $slots_clean = array_map( function( $slot ) {
             return [

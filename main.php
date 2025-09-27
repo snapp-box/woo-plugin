@@ -1,11 +1,13 @@
 <?php
 
 /*
- * Plugin Name:  SnappBox WooCommerce
+ * Plugin Name:  SnappBox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
  * Version: 1.0
  * Author: SnappBox Team
+ * License:     GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Author URI: http://uikar.com
  * Text Domain: sb-delivery
  * Domain Path: /languages/
@@ -92,7 +94,6 @@ function snappbox_init() {
     }
     
     
-    load_plugin_textdomain('sb-delivery', false, dirname(plugin_basename(__FILE__)) . '/languages/');
     
     if ( class_exists('WC_Shipping_Method') ) {
         require_once SNAPPBOX_DIR . 'includes/shipping-method-class.php';
@@ -144,11 +145,24 @@ function snappbox_enqueue_leaflet_map_js() {
 
 
 
+add_action('woocommerce_after_order_notes', function () {
+    wp_nonce_field('snappbox_geo_meta', 'snappbox_geo_nonce');
+});
+
 add_action('woocommerce_checkout_create_order', function($order, $data) {
 
-    if (isset($_POST['customer_latitude']) && isset($_POST['customer_longitude'])) {
-        $order->update_meta_data('_customer_latitude', sanitize_text_field($_POST['customer_latitude']));
-        $order->update_meta_data('_customer_longitude', sanitize_text_field($_POST['customer_longitude']));
+    if ( empty($_POST['snappbox_geo_nonce'])
+      || ! wp_verify_nonce( sanitize_text_field(wp_unslash($_POST['snappbox_geo_nonce'])), 'snappbox_geo_meta') ) {
+        return;
+    }
+
+    if ( isset($_POST['customer_latitude'], $_POST['customer_longitude']) ) {
+        $lat = (float) sanitize_text_field(wp_unslash($_POST['customer_latitude']));
+        $lng = (float) sanitize_text_field(wp_unslash($_POST['customer_longitude']));
+        if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
+            $order->update_meta_data('_customer_latitude',  $lat);
+            $order->update_meta_data('_customer_longitude', $lng);
+        }
     }
 }, 10, 2);
 
@@ -161,7 +175,7 @@ function snappbox_admin_notice() {
     if ( $notice_displayed || ! is_admin() ) {
         return;
     }
-    if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+    if ( isset($_SERVER['REQUEST_METHOD']) === 'POST' ) {
         return;
     }
     $screen = get_current_screen();
