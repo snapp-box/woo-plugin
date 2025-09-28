@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) exit;
 
 class SnappBoxWooCommerceFilter {
 
+    private $enabled_methods = null;
+
     public function __construct() {
         add_filter('woocommerce_states', array($this, 'register_all_cities'));
         add_filter('woocommerce_checkout_fields', array($this, 'customize_checkout_fields'));
@@ -11,17 +13,16 @@ class SnappBoxWooCommerceFilter {
 
     private function get_saved_snappbox_cities() {
         $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
-        $settings = maybe_unserialize($settings_serialized);
+        $settings = is_array($settings_serialized) ? $settings_serialized : maybe_unserialize($settings_serialized);
 
         $cities = [];
         if (!empty($settings['snappbox_cities']) && is_array($settings['snappbox_cities'])) {
             $raw_cities = $settings['snappbox_cities'];
-            if (array_values($raw_cities) === $raw_cities) {
-                $cities = array_combine($raw_cities, $raw_cities);
-            } else {
-                $cities = $raw_cities;
-            }
+            $cities = array_values($raw_cities) === $raw_cities
+                ? array_combine($raw_cities, $raw_cities)
+                : $raw_cities;
         }
+
         return $cities;
     }
 
@@ -35,6 +36,7 @@ class SnappBoxWooCommerceFilter {
             'AHW' => 'اهواز',
             'KRN' => 'کرمان',
             'KRJ' => 'کرج',
+            'KHZ' => 'خوزستان',
             'RSH' => 'رشت',
             'YAZ' => 'یزد',
             'ARD' => 'اردبیل',
@@ -65,31 +67,71 @@ class SnappBoxWooCommerceFilter {
         ];
     }
 
+    private function get_enabled_shipping_methods() {
+        if (!is_null($this->enabled_methods)) {
+            return $this->enabled_methods;
+        }
+    
+        $this->enabled_methods = [];
+    
+        if (!class_exists('WC_Shipping_Zones')) return $this->enabled_methods;
+    
+        $zones = WC_Shipping_Zones::get_zones();
+        $zones[] = array('zone_id' => 0); // Add "Rest of the World" zone manually
+        // var_dump($zones);
+        // die();
+        foreach ($zones as $zone_data) {
+            $zone = new WC_Shipping_Zone($zone_data['zone_id']);
+            $methods = $zone->get_shipping_methods();
+            foreach ($methods as $method) {
+                if ($method->enabled === 'yes') {
+                    $this->enabled_methods[$method->id] = true;
+                }
+            }
+        }
+        return $this->enabled_methods;
+    }
+
     public function register_all_cities($states) {
-        $woo = $this->get_woocommerce_default_cities();
+        $woo   = $this->get_woocommerce_default_cities();
         $snapp = $this->get_saved_snappbox_cities();
-        
+
+        $enabled_methods         = $this->get_enabled_shipping_methods();
+        $is_snappbox_enabled     = isset($enabled_methods['snappbox_shipping_method']);
+        $is_only_snappbox_enabled = $is_snappbox_enabled && count($enabled_methods) === 1;
+
         if (!empty($snapp) && array_values($snapp) === $snapp) {
             $snapp = array_combine($snapp, $snapp);
         }
+        
+        if (!$is_snappbox_enabled) {
+            $states['IR'] = $woo;
+        } elseif ($is_only_snappbox_enabled) {
+            $states['IR'] = $snapp;
+        } else {
+            $states['IR'] = array_merge($woo, $snapp);
+        }
 
-        $merged = array_merge($woo, $snapp);
-        $states['IR'] = $merged;
         return $states;
     }
 
     public function customize_checkout_fields($fields) {
-        unset($fields['billing']['billing_city']); 
+        // unset($fields['billing']['billing_city']);
+        if (isset($fields['billing']['billing_phone'])) {
+            $fields['billing']['billing_phone']['label'] = __('Mobile Phone', 'sb-delivery');
+            $fields['billing']['billing_phone']['placeholder'] = "09121234567";
+            $fields['billing']['billing_phone']['required'] = true;
+        }
         return $fields;
     }
 
     public function city_switch_script() {
         if (!is_checkout()) return;
 
-        $snappbox_cities = $this->get_saved_snappbox_cities();
+        $snappbox_cities    = $this->get_saved_snappbox_cities();
         $woocommerce_cities = $this->get_woocommerce_default_cities();
         ?>
-       <script type="text/javascript">
+        <script type="text/javascript">
         jQuery(function($) {
             const snappboxCities = <?php echo json_encode($snappbox_cities); ?>;
             const wooCities = <?php echo json_encode($woocommerce_cities); ?>;
@@ -142,7 +184,6 @@ class SnappBoxWooCommerceFilter {
 
             $('form.checkout').on('change', '#billing_state', function() {
                 const selectedCity = $(this).val();
-
                 if (snappboxCities.hasOwnProperty(selectedCity)) {
                     selectSnappboxMethod();
                 } else {

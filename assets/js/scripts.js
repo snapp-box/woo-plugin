@@ -3,13 +3,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const closeButtons = modal.querySelectorAll(".snappbox-close");
     const nextButtons = modal.querySelectorAll(".snappbox-next");
     const slides = modal.querySelectorAll(".snappbox-slide");
+    const guide = document.getElementById("guide");
+    const dates = document.getElementById("dates");
     let currentSlide = 0;
     document.getElementById('snappbox-launch-modal').addEventListener('click', function (e) {
         e.preventDefault();
         modal.style.display = "block";
+        guide.style.display = "block";
+        dates.style.display = "none";
         currentSlide = 0;
         showSlide(currentSlide);
     });
+    document.getElementById('snappbox-launch-modal-guide').addEventListener('click', function (e) {
+        e.preventDefault();
+        modal.style.display = "block";
+        guide.style.display = "none";
+        dates.style.display = "block";
+        
+    });//
     function showSlide(index) {
         slides.forEach((slide, i) => {
             slide.classList.toggle("active", i === index);
@@ -32,18 +43,14 @@ document.addEventListener('DOMContentLoaded', function () {
             event.preventDefault();
         });
     });
-    // Manual trigger
-    launchModalBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        modal.style.display = "block";
-        currentSlide = 0;
-        showSlide(currentSlide);
-    });
-    // Show modal on first load
+
     if (!sessionStorage.getItem('snappboxModalSeen')) {
         modal.style.display = "block";
+        dates.style.display = "none";
         sessionStorage.setItem('snappboxModalSeen', 'true');
     }
 
     showSlide(currentSlide);
 });
+
+
