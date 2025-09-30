@@ -13,7 +13,6 @@ class SnappBoxCheckout
 
     public function __construct()
     {
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_leaflet_scripts']);
         add_action('woocommerce_before_checkout_billing_form', [$this, 'display_osm_map']);
         add_action('woocommerce_checkout_update_order_meta', [$this, 'save_customer_location']);
         add_action('woocommerce_checkout_process', [$this, 'validate_customer_location']);
@@ -26,11 +25,6 @@ class SnappBoxCheckout
         add_action('woocommerce_order_details_after_order_table', [$this, 'display_order_meta'], 20, 1);
     }
 
-    public function enqueue_leaflet_scripts()
-    {
-        wp_enqueue_script('leaflet', trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js', [], null, true);
-        wp_enqueue_style('leaflet-css', trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css');
-    }
 
     public function display_osm_map()
     {
@@ -38,31 +32,28 @@ class SnappBoxCheckout
         $settings = maybe_unserialize($settings_serialized);
         if (empty($settings['enabled']) || $settings['enabled'] !== 'yes') return;
         if (empty($settings['snappbox_latitude']) || empty($settings['snappbox_longitude'])) return;
-
+        wp_enqueue_script('maplibreg', trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet-maplibreg.js', [], null, true);
+        wp_enqueue_style('leaflet-css', trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css');
         $defaultLat = esc_js($settings['snappbox_latitude']);
         $defaultLng = esc_js($settings['snappbox_longitude']);
         $siteEmail  = rawurlencode(get_bloginfo('admin_email'));
 ?>
+        <div id="snappbox-map-section" style="display:none;">
+            <h3><?php esc_html_e('Select your location', 'sb-delivery'); ?></h3>
+            <div id="osm-map" style="height: 400px; margin-bottom: 12px; z-index:1"></div>
 
-        <h3><?php esc_html_e('Select your location', 'sb-delivery'); ?></h3>
-        <div id="osm-map" style="height: 400px; margin-bottom: 12px; z-index:1"></div>
+            <input type="hidden" id="customer_latitude" name="customer_latitude" />
+            <input type="hidden" id="customer_longitude" name="customer_longitude" />
+            <input type="hidden" id="customer_city" name="customer_city" />
+            <input type="hidden" id="customer_address" name="customer_address" />
+            <input type="hidden" id="customer_postcode" name="customer_postcode" />
+            <input type="hidden" id="customer_state" name="customer_state" />
+            <input type="hidden" id="customer_country" name="customer_country" />
 
-        <!-- These fields will be posted with the order -->
-        <input type="hidden" id="customer_latitude" name="customer_latitude" />
-        <input type="hidden" id="customer_longitude" name="customer_longitude" />
-        <input type="hidden" id="customer_city" name="customer_city" />
-        <input type="hidden" id="customer_address" name="customer_address" />
-        <input type="hidden" id="customer_postcode" name="customer_postcode" />
-        <input type="hidden" id="customer_state" name="customer_state" />
-        <input type="hidden" id="customer_country" name="customer_country" />
-
-        <?php
-        // ✅ Nonce field (included in the same POST as the hidden fields)
-        wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
-        ?>
-
-        <!-- MapLibre GL (Vector Tiles) -->
-
+            <?php
+            wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
+            ?>
+        </div>
 
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -77,7 +68,7 @@ class SnappBoxCheckout
                 const map = new maplibregl.Map({
                     container: 'osm-map',
                     style: 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
-                    center: [defaultLng, defaultLat], // [lng, lat]
+                    center: [defaultLng, defaultLat],
                     zoom: 12,
                     attributionControl: true
                 });
@@ -95,6 +86,9 @@ class SnappBoxCheckout
                     })
                     .setLngLat([defaultLng, defaultLat])
                     .addTo(map);
+
+                // برای resize پس از نمایش
+                window.snappboxMap = map;
 
                 function $(id) {
                     return document.getElementById(id);
@@ -122,9 +116,10 @@ class SnappBoxCheckout
 
                     const headers = {
                         "Accept": "application/json",
-                        "X-Smapp-Key": "aa22e8eef7d348d32f492d8a0c755f4d"
+                        "X-Smapp-Key": "aa22e8eef7d348d32f492d8a0c755f4d",
+                        "Authorization": "pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw"
                     };
-                    headers["Authorization"] = "pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw";
+
                     fetch(url, {
                             headers
                         })
@@ -136,7 +131,7 @@ class SnappBoxCheckout
                             const addr = data.address || {};
                             $('customer_latitude').value = lat;
                             $('customer_longitude').value = lng;
-                            $('customer_address').value = data.result.displayName || buildAddress(addr);
+                            $('customer_address').value = (data.result && data.result.displayName) ? data.result.displayName : buildAddress(addr);
                             const sa = document.querySelector('#billing_address_1');
                             if (sa) sa.value = $('customer_address').value;
                         })
@@ -148,9 +143,9 @@ class SnappBoxCheckout
                         "?format=jsonv2" +
                         "&lat=" + encodeURIComponent(lat) +
                         "&lon=" + encodeURIComponent(lng) +
-                        "&accept-language=en" + 
+                        "&accept-language=en" +
                         "&zoom=18" +
-                        "&addressdetails=1"; 
+                        "&addressdetails=1";
                     const headers = {
                         "Accept": "application/json"
                     };
@@ -164,18 +159,13 @@ class SnappBoxCheckout
                         })
                         .then(function(data) {
                             const addr = data.address || {};
-
-                            // Fill hidden fields
                             $('customer_city').value = pickCity(addr);
                             $('customer_postcode').value = addr.postcode || '';
                             $('customer_state').value = addr.state || addr.region || '';
                             $('customer_country').value = addr.country_code ? addr.country_code.toUpperCase() : '';
-
-                            
                         })
                         .catch(console.error);
                 }
-
 
                 function onSet(lat, lng) {
                     marker.setLngLat([lng, lat]);
@@ -198,9 +188,18 @@ class SnappBoxCheckout
     <?php
     }
 
-
     public function save_customer_location($order_id)
     {
+        $selected_methods = isset($_POST['shipping_method']) ? (array) sanitize_text_field(wp_unslash($_POST['shipping_method'])) : [];
+        $snapp_selected = false;
+        foreach ($selected_methods as $m) {
+            if (strpos((string)$m, 'snappbox_shipping_method') === 0) {
+                $snapp_selected = true;
+                break;
+            }
+        }
+        if (!$snapp_selected) return;
+
         if (
             empty($_POST[self::NONCE_FIELD]) ||
             ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST[self::NONCE_FIELD])), self::NONCE_ACTION)
@@ -232,6 +231,16 @@ class SnappBoxCheckout
 
     public function validate_customer_location()
     {
+        $selected_methods = isset($_POST['shipping_method']) ? (array) sanitize_text_field(wp_unslash($_POST['shipping_method'])) : [];
+        $snapp_selected = false;
+        foreach ($selected_methods as $m) {
+            if (strpos((string)$m, 'snappbox_shipping_method') === 0) {
+                $snapp_selected = true;
+                break;
+            }
+        }
+        if (!$snapp_selected) return;
+
         if (
             empty($_POST[self::NONCE_FIELD]) ||
             ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST[self::NONCE_FIELD])), self::NONCE_ACTION)
@@ -264,6 +273,46 @@ class SnappBoxCheckout
     public function add_checkout_scripts()
     {
         if (! is_checkout()) return;
+
+    ?>
+        <script>
+            jQuery(function($) {
+                function isSnappBoxSelected() {
+                    var selected = $('input[name^="shipping_method["]:checked').map(function() {
+                        return $(this).val() || '';
+                    }).get();
+                    return selected.some(function(v) {
+                        return /^snappbox_shipping_method(?::|$)/.test(v);
+                    });
+                }
+
+                function toggleMapSectionBasic() {
+                    var $section = $('#snappbox-map-section');
+                    if (!$section.length) return;
+
+                    if (isSnappBoxSelected()) {
+                        $section.show();
+                        if (window.snappboxMap) {
+                            setTimeout(function() {
+                                try {
+                                    window.snappboxMap.resize();
+                                } catch (e) {}
+                            }, 50);
+                        }
+                    } else {
+                        $section.hide();
+                        $('#customer_latitude, #customer_longitude, #customer_city, #customer_address, #customer_postcode, #customer_state, #customer_country').val('');
+                    }
+                }
+
+                toggleMapSectionBasic();
+                $(document.body).on('updated_checkout updated_shipping_method updated_wc_div change', function() {
+                    toggleMapSectionBasic();
+                });
+                $(document.body).on('change', 'input[name^="shipping_method["]', toggleMapSectionBasic);
+            });
+        </script>
+        <?php
 
         $raw_schedule = get_option('snappbox_schedule', []);
         if (empty($raw_schedule) || !is_array($raw_schedule)) return;
@@ -309,7 +358,7 @@ class SnappBoxCheckout
         }
 
         if (empty($candidates)) return;
-    ?>
+        ?>
         <style>
             .snappbox-day-grid {
                 display: grid;
@@ -440,9 +489,31 @@ class SnappBoxCheckout
                     });
                 }
 
+                function toggleMapSection() {
+                    var $section = $('#snappbox-map-section');
+                    if (!$section.length) return;
+
+                    if (isSnappBoxSelected()) {
+                        $section.show();
+                        if (window.snappboxMap) {
+                            setTimeout(function() {
+                                try {
+                                    window.snappboxMap.resize();
+                                } catch (e) {}
+                            }, 50);
+                        }
+                    } else {
+                        $section.hide();
+                        $('#customer_latitude, #customer_longitude, #customer_city, #customer_address, #customer_postcode, #customer_state, #customer_country').val('');
+                    }
+                }
+
                 function mountRow() {
                     var $row = $('tr.snappbox-delivery-tr');
-                    if (!$row.length) return;
+                    if (!$row.length) {
+                        toggleMapSection();
+                        return;
+                    }
 
                     if (isSnappBoxSelected()) {
                         $row.show();
@@ -450,6 +521,7 @@ class SnappBoxCheckout
                     } else {
                         $row.hide();
                     }
+                    toggleMapSection();
                 }
 
                 $(document.body)
@@ -474,6 +546,7 @@ class SnappBoxCheckout
         </script>
 <?php
     }
+
 
     private function sb_normalize_schedule_to_w(array $schedule): array
     {

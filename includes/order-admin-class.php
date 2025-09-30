@@ -33,7 +33,7 @@ class SnappBoxOrderAdmin
 
         wp_enqueue_script(
             'leaflet',
-            trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
+            trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet-maplibreg.js',
             [],
             '1.9.4',
             true

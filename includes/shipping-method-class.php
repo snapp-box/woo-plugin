@@ -35,7 +35,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
         $this->enabled = $this->get_option('enabled');
         $this->title   = $this->get_option('title');
 
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_leafles_scripts'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_leafles_scripts'), 10, 1);
         add_action('woocommerce_update_options_shipping_' . $this->id, [$this, 'process_admin_options']);
         add_action('woocommerce_checkout_create_order', array($this, 'snappbox_order_register'), 10, 2);
         add_filter('woocommerce_checkout_fields', array($this, 'customize_checkout_fields'));
@@ -44,15 +44,13 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
 
     public function enqueue_leafles_scripts()
     {
-
         wp_enqueue_style(
             'snappbox-style',
             trailingslashit(SNAPPBOX_URL) . 'assets/css/style.css',
             [],
             filemtime(trailingslashit(SNAPPBOX_DIR)  . 'assets/css/style.css')
         );
-        wp_enqueue_script('leaflet', trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js', [], null, true);
-        wp_enqueue_script('admin-scripts', trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], null, true);
+        wp_enqueue_script('maplibreg', trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet-maplibreg.js', [], null, true);
         wp_enqueue_style('leaflet-css', trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css');
     }
 
@@ -269,7 +267,6 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
         parent::admin_options();
         echo ('</div>');
 
-        // Defaults if not set
         $lat = $this->get_option('snappbox_latitude', '35.8037761');
         $lng = $this->get_option('snappbox_longitude', '51.4152466');
 ?>
@@ -303,7 +300,6 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
                     const defaultLat = <?php echo esc_html($lat); ?>;
                     const defaultLng = <?php echo esc_html($lng); ?>;
 
-                    // Initialize vector map using SnappMaps style.json
                     const map = new maplibregl.Map({
                         container: 'map',
                         style: 'https://tile.snappmaps.ir/styles/snapp-style/style.json',
@@ -339,18 +335,15 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
                         updateInputs(lat, lng);
                     }
 
-                    // When the marker drag ends, update fields
                     marker.on('dragend', function() {
                         const p = marker.getLngLat(); // {lng, lat}
                         updateInputs(p.lat, p.lng);
                     });
 
-                    // Allow clicking on the map to reposition the marker
                     map.on('click', function(e) {
                         onSet(e.lngLat.lat, e.lngLat.lng);
                     });
 
-                    // Initialize the inputs with current values
                     updateInputs(defaultLat, defaultLng);
                 });
             </script>
@@ -455,7 +448,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
                         ?>
                     </td>
                     <td>
-                        <a href="https://snapp-box.com/connect" class="snappbox-token">درخواست توکن</a>
+                        <a href="https://snapp-box.com/connect" class="snappbox-token" target="_blank">درخواست توکن</a>
                     </td>
                 </tr>
             </table>
@@ -532,8 +525,8 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
     public function add_modal_box()
     {
         require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php'); ?>
-        <script type="text/javascript" src="<?php echo esc_html(SNAPPBOX_URL); ?>/assets/js/scripts.js"></script>
-        <!-- Multi-step modal -->
+        <?php  
+        wp_enqueue_script('schedule-scripts', trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], null, true);?>
         <div id="snappbox-setup-modal" class="snappbox-modal">
             <div class="snappbox-modal-content" id="guide">
                 <span class="snappbox-close">&times;</span>
