@@ -50,7 +50,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
             [],
             filemtime(trailingslashit(SNAPPBOX_DIR)  . 'assets/css/style.css')
         );
-        wp_enqueue_script('maplibreg', trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet-maplibreg.js', [], null, true);
+        wp_enqueue_script('maplibreg', trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js', [], null, true);
         wp_enqueue_style('leaflet-css', trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css');
     }
 
@@ -287,8 +287,52 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
             <h4><?php esc_html_e('Set Store Location', 'sb-delivery'); ?></h4>
             <p><?php esc_html_e('Please move the pin', 'sb-delivery'); ?></p>
 
+            <div id="map" style="height:400px; position:relative;">
+                <button id="center-pin" type="button" aria-label="<?php esc_attr_e('Set this location', 'sb-delivery'); ?>"></button>
+            </div>
 
-            <div id="map" style="height:400px;"></div>
+            <style>
+                #center-pin {
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -100%);
+                    width: 34px;
+                    height: 34px;
+                    border: 0;
+                    padding: 0;
+                    background: transparent;
+                    cursor: pointer;
+                    z-index: 5;
+                }
+
+                #center-pin::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    background-size: contain;
+                    background-image: url('data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="%23e53935" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="3" fill="white"/></svg>');
+                }
+
+                #center-pin::after {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    top: 100%;
+                    transform: translate(-50%, 2px);
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    box-shadow: 0 0 0 2px rgba(0, 0, 0, .12);
+                    background: rgba(0, 0, 0, .06);
+                }
+
+                .maplibregl-marker {
+                    z-index: 9999 !important;
+                }
+            </style>
 
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -302,21 +346,22 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
 
                     const map = new maplibregl.Map({
                         container: 'map',
-                        style: 'https://tile.snappmaps.ir/styles/snapp-style/style.json',
-                        center: [defaultLng, defaultLat], // [lng, lat]
+                        style: 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+                        center: [defaultLng, defaultLat], 
                         zoom: 16,
                         attributionControl: true
                     });
+
                     maplibregl.setRTLTextPlugin(
                         'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js',
-                        null, // onError callback (optional)
-                        true // lazy load
+                        null,
+                        true
                     );
+
                     map.addControl(new maplibregl.NavigationControl({
                         visualizePitch: true
                     }), 'top-right');
 
-                    // Draggable marker
                     const marker = new maplibregl.Marker({
                             draggable: true
                         })
@@ -342,6 +387,12 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
 
                     map.on('click', function(e) {
                         onSet(e.lngLat.lat, e.lngLat.lng);
+                    });
+
+                    const centerPinBtn = document.getElementById('center-pin');
+                    centerPinBtn.addEventListener('click', function() {
+                        const c = map.getCenter(); // {lng, lat}
+                        onSet(c.lat, c.lng);
                     });
 
                     updateInputs(defaultLat, defaultLng);
@@ -525,8 +576,8 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
     public function add_modal_box()
     {
         require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php'); ?>
-        <?php  
-        wp_enqueue_script('schedule-scripts', trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], null, true);?>
+        <?php
+        wp_enqueue_script('schedule-scripts', trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], null, true); ?>
         <div id="snappbox-setup-modal" class="snappbox-modal">
             <div class="snappbox-modal-content" id="guide">
                 <span class="snappbox-close">&times;</span>

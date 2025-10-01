@@ -33,7 +33,7 @@ class SnappBoxOrderAdmin
 
         wp_enqueue_script(
             'leaflet',
-            trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet-maplibreg.js',
+            trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
             [],
             '1.9.4',
             true
@@ -304,7 +304,7 @@ class SnappBoxOrderAdmin
                                 $('#snappbox-response-victory').html('<span style="color:green;">' + (response.response.message || 'Created') + '</span>');
                                 window.location.reload();
                             } else {
-                                var errMsg = (response && response.data) ? response.data : 'Unknown error';
+                                var errMsg = (response && response.response) ? response.response.message : 'Unknown error';
                                 $('#snappbox-response').html('<span style="color:red;">Error: ' + errMsg + '</span>');
                             }
                             $('.ct-order-loading').css('visibility', 'hidden');
@@ -380,7 +380,6 @@ class SnappBoxOrderAdmin
         }
 
         if (! empty($response['success'])) {
-            // خروجی هم‌خوان با JS: response.response.data / response.response.status_code
             wp_send_json_success(['response' => $response]);
         } else {
             $msg = isset($response['message']) ? $response['message'] : __('Create order failed', 'sb-delivery');
@@ -449,7 +448,7 @@ class SnappBoxOrderAdmin
             wp_send_json_error(__('Woo order ID missing', 'sb-delivery'));
         }
 
-        $order_id     = sanitize_text_field(wp_unslash($_POST['order_id'])); // SnappBox order id (string)
+        $order_id     = sanitize_text_field(wp_unslash($_POST['order_id'])); 
         $woo_order_id = absint(wp_unslash($_POST['woo_order_id']));
         if (! $woo_order_id) {
             wp_send_json_error(__('Invalid Woo order ID', 'sb-delivery'));
