@@ -10,7 +10,7 @@ class SnappBoxPriceHandler {
         add_action('wp_ajax_snappbox_get_pricing', [$this, 'handleCreateOrder']);
         add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'handleCreateOrder']);
     }
-    public function get_pricing($orderId, $state_code) {
+    public function get_pricing($orderId, $state_code, $voucherCode) {
         $latitude = get_post_meta($orderId, '_customer_latitude', true);
         $longitude = get_post_meta($orderId, '_customer_longitude', true);
         $city = get_post_meta($orderId,'customer_city', true);
@@ -25,6 +25,7 @@ class SnappBoxPriceHandler {
             "deliveryFarePaymentType" => null,
             "isReturn" => false,
             "loadAssistance" => false,
+            "voucherCode" => $voucherCode,
             "orderLevelServices" => [],
             "sequenceNumberDeliveryCollection" => 1,
             "waitingTime" => 0,
@@ -119,10 +120,18 @@ class SnappBoxPriceHandler {
 
         $response_body = json_decode(wp_remote_retrieve_body($response), true);
         
-        if (!empty($response_body['finalCustomerFare'])) {
+        if (!empty($response_body['finalCustomerFare']) && empty($response_body['voucherMessage'] )) {
             wp_send_json_success(['finalCustomerFare' => $response_body['finalCustomerFare']]);
-        } else {
+        } 
+        else if(!empty($response_body['voucherMessage']) && $response_body['voucherMessage'] == "SUCCESS"){
+            wp_send_json_success(['finalCustomerFare' => $response_body['finalCustomerFare'], 'totalFare' => $response_body['totalFare']]);
+        }
+        else if(!empty($response_body['voucherMessage']) && $response_body['voucherMessage'] != "SUCCESS"){
+            wp_send_json_error(['voucherMessage' => $response_body['voucherMessage']]);
+        }
+        else {
             wp_send_json_error($response_body);
         }
+        
     }
 }

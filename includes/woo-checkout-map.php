@@ -55,7 +55,8 @@ class SnappBoxCheckout
         $defaultLng = esc_js($settings['snappbox_longitude']);
         $siteEmail  = rawurlencode(get_bloginfo('admin_email'));
 ?>
-
+        <script src="https://unpkg.com/maplibre-gl@^5.8.0/dist/maplibre-gl.js"></script>
+        <link href="https://unpkg.com/maplibre-gl@^5.8.0/dist/maplibre-gl.css" rel="stylesheet" />
         <div id="snappbox-map-section" style="display:none;">
             <h3><?php esc_html_e('Select your location', 'sb-delivery'); ?></h3>
 
@@ -114,6 +115,9 @@ class SnappBoxCheckout
                 border-radius: 50%;
                 box-shadow: 0 0 0 2px rgba(0, 0, 0, .12);
                 background: rgba(0, 0, 0, .06);
+            }
+            .woocommerce-billing-fields .maplibregl-marker{
+                top:23px;
             }
         </style>
 
@@ -287,11 +291,11 @@ class SnappBoxCheckout
         if (isset($_POST['customer_latitude'], $_POST['customer_longitude'])) {
             $latitude        = (float) sanitize_text_field(wp_unslash($_POST['customer_latitude']));
             $longitude       = (float) sanitize_text_field(wp_unslash($_POST['customer_longitude']));
-            $customerCity    = isset($_POST['customer_city'])     ? sanitize_text_field(wp_unslash($_POST['customer_city']))       : '';
-            $customerAddress = isset($_POST['customer_address'])  ? sanitize_text_field(wp_unslash($_POST['customer_address']))    : '';
-            $customerPost    = isset($_POST['customer_postcode']) ? sanitize_text_field(wp_unslash($_POST['customer_postcode']))   : '';
-            $customerState   = isset($_POST['customer_state'])    ? sanitize_text_field(wp_unslash($_POST['customer_state']))      : '';
-            $customerCountry = isset($_POST['customer_country'])  ? sanitize_text_field(wp_unslash($_POST['customer_country']))    : '';
+            $customerCity    = sanitize_text_field(wp_unslash($_POST['customer_city']));
+            $customerAddress = sanitize_text_field(wp_unslash($_POST['customer_address']));
+            $customerPost    = sanitize_text_field(wp_unslash($_POST['customer_postcode']));
+            $customerState   = sanitize_text_field(wp_unslash($_POST['customer_state']));
+            $customerCountry = sanitize_text_field(wp_unslash($_POST['customer_country']));
 
             if ($latitude >= -90 && $latitude <= 90 && $longitude >= -180 && $longitude <= 180) {
                 update_post_meta($order_id, '_customer_latitude',  $latitude);
@@ -355,15 +359,12 @@ class SnappBoxCheckout
             jQuery(function($) {
                 function getChosenShippingMethods() {
                     var vals = [];
-                    // Multiple methods: radios
                     jQuery('input[name^="shipping_method["][type="radio"]:checked').each(function() {
                         vals.push(jQuery(this).val() || '');
                     });
-                    // Single method: hidden inputs
                     jQuery('input[name^="shipping_method["][type="hidden"]').each(function() {
                         vals.push(jQuery(this).val() || '');
                     });
-                    // Some themes use selects
                     jQuery('select[name^="shipping_method["]').each(function() {
                         vals.push(jQuery(this).val() || '');
                     });
@@ -570,15 +571,12 @@ class SnappBoxCheckout
 
                 function getChosenShippingMethods() {
                     var vals = [];
-                    // Multiple methods: radios
                     jQuery('input[name^="shipping_method["][type="radio"]:checked').each(function() {
                         vals.push(jQuery(this).val() || '');
                     });
-                    // Single method: hidden inputs
                     jQuery('input[name^="shipping_method["][type="hidden"]').each(function() {
                         vals.push(jQuery(this).val() || '');
                     });
-                    // Some themes use selects
                     jQuery('select[name^="shipping_method["]').each(function() {
                         vals.push(jQuery(this).val() || '');
                     });

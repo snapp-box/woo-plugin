@@ -27,7 +27,7 @@ class SnappBoxCreateOrder {
             'method'  => 'POST',
             'timeout' => 45,
         ];
-
+        
         $response = wp_remote_post($this->api_url, $args);
 
         if (is_wp_error($response)) {
@@ -61,7 +61,7 @@ class SnappBoxCreateOrder {
         if ( ! isset($_POST['order_id']) ) {
             wp_send_json_error(['message' => 'Order ID is missing'], 400);
         }
-
+        $voucherCode = wp_unslash($_POST['voucher_code']);
         $order_id = intval( wp_unslash($_POST['order_id']) );
         $order    = wc_get_order($order_id);
 
@@ -69,17 +69,17 @@ class SnappBoxCreateOrder {
             wp_send_json_error(['message' => 'Invalid order'], 404);
         }
 
-        $order_data = $this->prepareOrderData($order, $order_id);
+        $order_data = $this->prepareOrderData($order, $order_id, $voucherCode);
         $response   = $this->create_order($order_data, $order);
 
         wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
     }
 
-    private function prepareOrderData($order, int $order_id): array {
+    private function prepareOrderData($order, int $order_id, $voucherCode): array {
         return [
             "data" => [
                 "itemDetails"             => $this->getItemDetails($order),
-                "orderDetails"            => $this->getOrderDetails($order, $order_id),
+                "orderDetails"            => $this->getOrderDetails($order, $order_id, $voucherCode),
                 "pickUpDetails"           => $this->getPickupDetails(),
                 "dropOffDetails"          => $this->getDropoffDetails($order),
                 "verificationCodeEnabled" => false,
@@ -104,7 +104,7 @@ class SnappBoxCreateOrder {
         return $items;
     }
 
-    private function getOrderDetails($order, int $order_id): array {
+    private function getOrderDetails($order, int $order_id, $voucherCode): array {
         return [
             "city"                             => $order->get_meta('customer_city'),
             "customerWalletType"               => null,
@@ -117,7 +117,7 @@ class SnappBoxCreateOrder {
             "customerEmail"                    => $order->get_billing_email(),
             "customerName"                     => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
             "customerPhonenumber"              => $order->get_billing_phone(),
-            "voucherCode"                      => "",
+            "voucherCode"                      => $voucherCode,
             "waitingTime"                      => 0
         ];
     }
@@ -157,7 +157,7 @@ class SnappBoxCreateOrder {
             "plate"                           => "",
             "sequenceNumber"                  => 2,
             "unit"                            => "",
-            "comment"                         => "کامنت تستی",
+            "comment"                         => "",
             "latitude"                        => $latitude,
             "longitude"                       => $longitude,
             "type"                            => "drop",

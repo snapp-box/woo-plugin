@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: SnappBox WooCommerce\n"
-"POT-Creation-Date: 2025-09-30 17:36+0330\n"
-"PO-Revision-Date: 2025-09-30 17:43+0330\n"
+"POT-Creation-Date: 2025-10-05 16:00+0330\n"
+"PO-Revision-Date: 2025-10-05 16:00+0330\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fa_IR\n"
@@ -22,13 +22,11 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 
 #: includes/add-meta-orderlist-class.php:29
-#, fuzzy
-#| msgid "SnappBox Team"
 msgid "SnappBox Date"
-msgstr "تیم اسنپ باکس"
+msgstr "تاریخ تحویل اسنپ باکس"
 
 #. Plugin Name of the plugin/theme
-#: includes/add-meta-orderlist-class.php:30 includes/order-admin-class.php:116
+#: includes/add-meta-orderlist-class.php:30 includes/order-admin-class.php:120
 msgid "SnappBox"
 msgstr "اسنپ باکس"
 
@@ -36,92 +34,135 @@ msgstr "اسنپ باکس"
 msgid "Order ID"
 msgstr "شماره سفارش اسنپ باکس"
 
-#: includes/order-admin-class.php:121
+#: includes/order-admin-class.php:125
 msgid "Address"
 msgstr "آدرس"
 
-#: includes/order-admin-class.php:147
+#: includes/order-admin-class.php:151
 msgid "Delivery Date and Time"
 msgstr "روز و زمان ارسال"
 
+#: includes/order-admin-class.php:162
+msgid "SnappBox Price"
+msgstr "قیمت اسنپ باکس"
+
+#: includes/order-admin-class.php:163
+msgid "Calculating Price"
+msgstr "درحال محاسبه قیمت"
+
 #: includes/order-admin-class.php:165
+msgid "Enter Your Voucher Code"
+msgstr "کد تخفیف را وارد کنید"
+
+#: includes/order-admin-class.php:166
+msgid "Operate"
+msgstr "اعمال"
+
+#: includes/order-admin-class.php:174
 msgid "Send to SnappBox"
 msgstr "ارسال به اسنپ باکس"
 
-#: includes/order-admin-class.php:187
+#: includes/order-admin-class.php:188
+msgid "Close"
+msgstr "بستن"
+
+#: includes/order-admin-class.php:196
 msgid "Get SnappBox Price"
 msgstr "گرفتن قیمت اسنپ باکس"
 
-#: includes/order-admin-class.php:203
+#: includes/order-admin-class.php:212
 msgid "Cancel Order"
 msgstr "کنسل کردن"
 
-#: includes/order-admin-class.php:363 includes/order-admin-class.php:396
-#: includes/order-admin-class.php:446
+#: includes/order-admin-class.php:383 includes/order-admin-class.php:415
+#: includes/order-admin-class.php:466
 msgid "Order ID missing"
 msgstr "شماره سفارش وجود ندارد"
 
-#: includes/order-admin-class.php:368 includes/order-admin-class.php:401
+#: includes/order-admin-class.php:388 includes/order-admin-class.php:420
 msgid "Invalid Order ID"
 msgstr "شماره سفارش نا معتبر"
 
-#: includes/order-admin-class.php:372 includes/order-admin-class.php:405
-#: includes/order-admin-class.php:459 includes/schedule-modal.php:94
+#: includes/order-admin-class.php:392 includes/order-admin-class.php:424
+#: includes/order-admin-class.php:479 includes/schedule-modal.php:94
 msgid "Permission denied."
 msgstr "دسترسی وجود ندارد"
 
-#: includes/order-admin-class.php:379
+#: includes/order-admin-class.php:399
 msgid "Unexpected response"
 msgstr "پاسخ غیر منتظره"
 
-#: includes/order-admin-class.php:386
+#: includes/order-admin-class.php:405
 msgid "Create order failed"
 msgstr "خطا در ایجاد سفارش"
 
-#: includes/order-admin-class.php:410
+#: includes/order-admin-class.php:429
 msgid "Order not found"
 msgstr "سفارش پیدا نشد"
 
-#: includes/order-admin-class.php:449
+#: includes/order-admin-class.php:469
 msgid "Woo order ID missing"
 msgstr "شماره سفارش ووکامرس پیدا نشد"
 
-#: includes/order-admin-class.php:455
+#: includes/order-admin-class.php:475
 msgid "Invalid Woo order ID"
 msgstr "شماره سفارش ووکامرس نامعتبر است"
 
-#: includes/order-admin-class.php:469
+#: includes/order-admin-class.php:489
 msgid "Cancelled"
 msgstr "کنسل شد"
 
-#: includes/order-admin-class.php:472
+#: includes/order-admin-class.php:492
 msgid "Cancel failed"
 msgstr "کنسل کردن با خطا مواجه شد"
 
-#: includes/order-admin-class.php:483
+#: includes/order-admin-class.php:503
 msgid "Status"
 msgstr "وضعیت سفارش"
 
-#: includes/payment-method.php:45 includes/payment-method.php:103
-#: includes/payment-method.php:111 includes/payment-method.php:122
-msgid "Shipping cost is on delivery"
-msgstr "هزینه سفارش در مقصد پرداخت شود"
+#: includes/payment-method.php:18
+msgid "SnappBox On-Delivery"
+msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
 
-#: includes/payment-method.php:102
-msgid "SnappBox:"
-msgstr "اسنپ باکس:"
+#: includes/payment-method.php:19
+msgid "Pay with SnappBox on delivery."
+msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت."
 
-#: includes/payment-method.php:104
-msgid "Shipping cost is not on delivery"
-msgstr "هزینه سفارش در مقصد پرداخت نمیشود"
+#: includes/payment-method.php:37
+msgid "Enable/Disable"
+msgstr "فعال سازی"
 
-#: includes/payment-method.php:112
-msgid "yes"
-msgstr "بله"
+#: includes/payment-method.php:39
+msgid "Enable SnappBox On-Delivery Payment"
+msgstr "فعال کردن پرداخت در محل اسپ باکس"
 
-#: includes/payment-method.php:112
-msgid "no"
-msgstr "خیر"
+#: includes/payment-method.php:43 includes/shipping-method-class.php:193
+msgid "Title"
+msgstr "تیتر"
+
+#: includes/payment-method.php:45
+msgid "Title shown to customers during checkout."
+msgstr "تیتر صفحه سبد خرید."
+
+#: includes/payment-method.php:46
+msgid "SnappBox On Delivery"
+msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
+
+#: includes/payment-method.php:50
+msgid "Description"
+msgstr "توضیحات"
+
+#: includes/payment-method.php:52
+msgid "Description shown to customers during checkout."
+msgstr "این توضیحات در صفحه چک اوت به مشتری نمایش داده میشود"
+
+#: includes/payment-method.php:53
+msgid "Pay using SnappBox when your order is delivered."
+msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت."
+
+#: includes/payment-method.php:60
+msgid "Awaiting SnappBox payment"
+msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
 
 #: includes/schedule-modal.php:29
 msgid "Select Day and Time"
@@ -131,37 +172,37 @@ msgstr "انتخاب روز و ساعت"
 msgid "Select Day"
 msgstr "انتخاب روز"
 
-#: includes/schedule-modal.php:37 includes/woo-checkout-map.php:566
+#: includes/schedule-modal.php:37 includes/woo-checkout-map.php:672
 msgctxt "weekday name"
 msgid "Saturday"
 msgstr "شنبه"
 
-#: includes/schedule-modal.php:38 includes/woo-checkout-map.php:567
+#: includes/schedule-modal.php:38 includes/woo-checkout-map.php:673
 msgctxt "weekday name"
 msgid "Sunday"
 msgstr "یکشنبه"
 
-#: includes/schedule-modal.php:39 includes/woo-checkout-map.php:561
+#: includes/schedule-modal.php:39 includes/woo-checkout-map.php:667
 msgctxt "weekday name"
 msgid "Monday"
 msgstr "دوشنبه"
 
-#: includes/schedule-modal.php:40 includes/woo-checkout-map.php:562
+#: includes/schedule-modal.php:40 includes/woo-checkout-map.php:668
 msgctxt "weekday name"
 msgid "Tuesday"
 msgstr "سه شنبه"
 
-#: includes/schedule-modal.php:41 includes/woo-checkout-map.php:563
+#: includes/schedule-modal.php:41 includes/woo-checkout-map.php:669
 msgctxt "weekday name"
 msgid "Wednesday"
 msgstr "چهارشنبه"
 
-#: includes/schedule-modal.php:42 includes/woo-checkout-map.php:564
+#: includes/schedule-modal.php:42 includes/woo-checkout-map.php:670
 msgctxt "weekday name"
 msgid "Thursday"
 msgstr "پنجشبنه"
 
-#: includes/schedule-modal.php:43 includes/woo-checkout-map.php:565
+#: includes/schedule-modal.php:43 includes/woo-checkout-map.php:671
 msgctxt "weekday name"
 msgid "Friday"
 msgstr "جمعه"
@@ -215,7 +256,7 @@ msgid "SnappBox cost is free"
 msgstr ""
 "هزینه اسنپ باکس با فروشگاه است چون قیمت سبد خرید بالاتر از حد مشخص شده است"
 
-#: includes/shipping-method-class.php:131 includes/woo-checkout-map.php:246
+#: includes/shipping-method-class.php:131 includes/woo-checkout-map.php:328
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 "چک امنیتی با خطا مواجه شد. لطفا صفحه را مجددا بارگزاری و دوباره تلاش کنید."
@@ -239,10 +280,6 @@ msgstr "فعال کردن محیط آزمایشی"
 #: includes/shipping-method-class.php:189
 msgid "Enable test mode for this plugin"
 msgstr "این گزینه محیط آزمایشی را برای ادمین وبسایت فراهم میکند"
-
-#: includes/shipping-method-class.php:193
-msgid "Title"
-msgstr "تیتر"
 
 #: includes/shipping-method-class.php:195
 msgid "Title to display during checkout"
@@ -338,61 +375,65 @@ msgstr "تنظیم کردن لوکیشن فروشگاه"
 msgid "Please move the pin"
 msgstr "لطفا پین را جابجا کنید"
 
-#: includes/shipping-method-class.php:390
+#: includes/shipping-method-class.php:291 includes/woo-checkout-map.php:63
+#, fuzzy
+#| msgid "Set Store Location"
+msgid "Set this location"
+msgstr "تنظیم کردن لوکیشن فروشگاه"
+
+#: includes/shipping-method-class.php:441
 msgid "Your wallet balance is too low. Please contact Snappbox"
 msgstr "مقدار کیف پول شما بسیار کم است. لطفا با اسنپ باکس تماس بگیرید"
 
-#: includes/shipping-method-class.php:392
+#: includes/shipping-method-class.php:443
 msgid "Learn more."
 msgstr "بیشتر بدانید."
 
-#: includes/shipping-method-class.php:409
+#: includes/shipping-method-class.php:460
 msgid "wallet Information"
 msgstr "اطلاعات کیف پول"
 
-#: includes/shipping-method-class.php:419
+#: includes/shipping-method-class.php:470
 msgid "Your current balance is: "
 msgstr "مقدار کیف پول شما "
 
-#: includes/shipping-method-class.php:421
+#: includes/shipping-method-class.php:472
 msgid "Unable to fetch wallet balance."
 msgstr "نمیتوان مقدار کیف پول را دریافت کرد."
 
-#: includes/shipping-method-class.php:433
-#, fuzzy
-#| msgid "SnappBox API Key"
+#: includes/shipping-method-class.php:484
 msgid "API Key"
-msgstr "کلید API اسنپ باکس"
+msgstr "کلید API "
 
-#: includes/shipping-method-class.php:437
+#: includes/shipping-method-class.php:488
 msgid "SnappBox API Key"
 msgstr "کلید API اسنپ باکس"
 
-#: includes/shipping-method-class.php:445
+#: includes/shipping-method-class.php:496
 msgid "Paste your API key…"
 msgstr "کلید ای پی آی را اینجا قرار دهید"
 
-#: includes/shipping-method-class.php:534
+#: includes/shipping-method-class.php:585
 msgid "Enable and Disable!"
 msgstr "فعال سازی و غیر فعال سازی"
 
-#: includes/shipping-method-class.php:535
+#: includes/shipping-method-class.php:586
 msgid "You can enable and disable the method here"
 msgstr "شما میتوانید اینجا متد را فعال یا غیر فعال کنید"
 
-#: includes/shipping-method-class.php:537
-#: includes/shipping-method-class.php:543
-#: includes/shipping-method-class.php:549
-#: includes/shipping-method-class.php:555
-#: includes/shipping-method-class.php:561
+#: includes/shipping-method-class.php:588
+#: includes/shipping-method-class.php:594
+#: includes/shipping-method-class.php:600
+#: includes/shipping-method-class.php:606
+#: includes/shipping-method-class.php:612
 msgid "Next"
 msgstr "بعدی"
 
-#: includes/shipping-method-class.php:540
+#: includes/shipping-method-class.php:591
 msgid "Step 1: Enter Your API Key"
 msgstr "قدم اول: وارد کردن کلید API"
 
-#: includes/shipping-method-class.php:541
+#: includes/shipping-method-class.php:592
 msgid ""
 "Put your API key in this field. you can aquire this API key by contacting "
 "SnappBox team"
@@ -400,55 +441,55 @@ msgstr ""
 "کلید API خود را در این فیلد بگذارید. برای گرفتن کلید با تیم اسنپ باکس تماس "
 "بگیرید"
 
-#: includes/shipping-method-class.php:546
+#: includes/shipping-method-class.php:597
 msgid "Step 2: Set Your Location"
 msgstr "مرحله دوم : تنظیم کردن لوکیشن فروشگاه"
 
-#: includes/shipping-method-class.php:547
+#: includes/shipping-method-class.php:598
 msgid "Drag the map marker to your store’s location."
 msgstr "موقعیت فروشگاه خود را با حرکت دادن مارکر روی نقشه تعیین کنید."
 
-#: includes/shipping-method-class.php:552
+#: includes/shipping-method-class.php:603
 msgid "Step 3: Set Stores data"
 msgstr "مرحله سوم : تعیین شماره تلفن و نام فروشگاه"
 
-#: includes/shipping-method-class.php:553
+#: includes/shipping-method-class.php:604
 msgid "Set your stores name and your Mobile Number."
 msgstr "نام فروشگاه و شماره تلفن همراه خود را ذخیره کنید."
 
-#: includes/shipping-method-class.php:558
+#: includes/shipping-method-class.php:609
 msgid "Step 4: Set Stores city"
 msgstr "مرحله چهارم : تعیین شهر"
 
-#: includes/shipping-method-class.php:559
+#: includes/shipping-method-class.php:610
 msgid "Set the city that your store can send products by SnappBox."
 msgstr "شهری که در آن میتوانید با اسنپ باکس ارسال کنید را تعیین کنید."
 
-#: includes/shipping-method-class.php:564
+#: includes/shipping-method-class.php:615
 msgid "Final Step: Save Settings"
 msgstr "قدم آخر: ذخیره تغییرات"
 
-#: includes/shipping-method-class.php:566
+#: includes/shipping-method-class.php:617
 msgid "Scroll down and click \"Save changes\" to activate SnappBox."
 msgstr "به پایین اسکرول کنید و دکمه ذخیره را بزنید."
 
-#: includes/shipping-method-class.php:569
+#: includes/shipping-method-class.php:620
 msgid "Got it!"
 msgstr "گرفتم!"
 
-#: includes/woo-checkout-map.php:41
+#: includes/woo-checkout-map.php:60
 msgid "Select your location"
 msgstr "لوکیشن خود را انتخاب کنید"
 
-#: includes/woo-checkout-map.php:251
+#: includes/woo-checkout-map.php:333
 msgid "Please select your location on the map."
 msgstr "لطفا لوکیشن خود را روی نقشه انتخاب کنید."
 
-#: includes/woo-checkout-map.php:262
+#: includes/woo-checkout-map.php:344
 msgid "Select delivery day & time:"
 msgstr "انتخاب روز و ساعت:"
 
-#: includes/woo-checkout-map.php:610
+#: includes/woo-checkout-map.php:716
 msgid "SnappBox Delivery:"
 msgstr "حمل و نقل اسنپ باکس:"
 
@@ -472,35 +513,23 @@ msgstr "تیم اسنپ باکس"
 msgid "http://uikar.com"
 msgstr ""
 
-#~ msgid "SnappBox On-Delivery"
-#~ msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
+#~ msgid "Add Voucher Code"
+#~ msgstr "اضافه کردن کد تخفیف"
 
-#~ msgid "Pay with SnappBox on delivery."
-#~ msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت."
+#~ msgid "Shipping cost is on delivery"
+#~ msgstr "هزینه سفارش در مقصد پرداخت شود"
 
-#~ msgid "Enable/Disable"
-#~ msgstr "فعال سازی"
+#~ msgid "SnappBox:"
+#~ msgstr "اسنپ باکس:"
 
-#~ msgid "Enable SnappBox On-Delivery Payment"
-#~ msgstr "فعال کردن پرداخت در محل اسپ باکس"
+#~ msgid "Shipping cost is not on delivery"
+#~ msgstr "هزینه سفارش در مقصد پرداخت نمیشود"
 
-#~ msgid "Title shown to customers during checkout."
-#~ msgstr "تیتر صفحه سبد خرید."
+#~ msgid "yes"
+#~ msgstr "بله"
 
-#~ msgid "SnappBox On Delivery"
-#~ msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
-
-#~ msgid "Description"
-#~ msgstr "توضیحات"
-
-#~ msgid "Description shown to customers during checkout."
-#~ msgstr "این توضیحات در صفحه چک اوت به مشتری نمایش داده میشود"
-
-#~ msgid "Pay using SnappBox when your order is delivered."
-#~ msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت."
-
-#~ msgid "Awaiting SnappBox payment"
-#~ msgstr "پرداخت هزینه حمل اسنپ باکس در هنگام دریافت"
+#~ msgid "no"
+#~ msgstr "خیر"
 
 #~ msgid "SnappBox WooCommerce"
 #~ msgstr "اسنپ باکس برای ووکامرس"

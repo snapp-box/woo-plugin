@@ -351,3 +351,21 @@ a.snappbox-token{
 .token-info svg{
 	margin-left: 10px;
 }
+.voucher-code-wrapper input[type="text"]{
+	border: 1px solid #ebebeb;
+	padding:8px;
+	border-radius: 10px;
+	width: 22%;
+}
+.voucher-code-wrapper button{
+	background: #2271b1;
+    border-color: transparent;
+    color: #fff;
+    text-decoration: none;
+    text-shadow: none;
+    padding: 12px;
+    border-radius: 10px;
+}
+.voucher-code-wrapper{
+	margin-bottom: 10px;
+}
