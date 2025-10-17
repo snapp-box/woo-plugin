@@ -187,7 +187,7 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
                 'title'       => __('Enable Test Mode', 'sb-delivery'),
                 'type'        => 'checkbox',
                 'description' => __('Enable test mode for this plugin', 'sb-delivery'),
-                'default'     => 'yes',
+                'default'     => 'no',
             ],
             'title' => [
                 'title'       => __('Title', 'sb-delivery'),
@@ -209,16 +209,16 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
                 'title'       => __('Base Shipping Cost', 'sb-delivery'),
                 'type'        => 'number',
                 'description' => __('Base shipping cost for this method', 'sb-delivery'),
-                'default'     => '5',
-                'desc_tip'    => true,
-            ],
-            'cost_per_kg' => [
-                'title'       => __('Cost per KG', 'sb-delivery'),
-                'type'        => 'number',
-                'description' => __('Shipping cost per kilogram', 'sb-delivery'),
                 'default'     => '',
                 'desc_tip'    => true,
             ],
+            // 'cost_per_kg' => [
+            //     'title'       => __('Cost per KG', 'sb-delivery'),
+            //     'type'        => 'number',
+            //     'description' => __('Shipping cost per kilogram', 'sb-delivery'),
+            //     'default'     => '',
+            //     'desc_tip'    => true,
+            // ],
 
             'snappbox_latitude' => [
                 'title'       => __('Latitude', 'sb-delivery'),
@@ -248,6 +248,13 @@ class SnappBoxShippingMethod extends WC_Shipping_Method
                 'description' => __('Pay SnappBox payment on delivery', 'sb-delivery'),
                 'default'     => 'no',
             ],
+            'autofill' => [
+                'title'       => __('Enable Address Autofill', 'sb-delivery'),
+                'type'        => 'checkbox',
+                'description' => __('This option enables the address to be autofilled from SmappMap', 'sb-delivery'),
+                'default'     => 'no',
+            ],
+
             'snappbox_cities' => [
                 'title'       => __('Cities', 'sb-delivery'),
                 'type'        => 'multiselect',

@@ -43,8 +43,7 @@ require_once(SNAPPBOX_DIR . 'includes/cities-class.php');
 require_once(SNAPPBOX_DIR . 'includes/order-admin-class.php');
 require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php');
 require_once(SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php');
-
-
+require_once(SNAPPBOX_DIR . 'includes/quick-setup-wizard.php');
 
 
 function snappbox_init() {
@@ -55,6 +54,8 @@ function snappbox_init() {
     if( class_exists('SnappBoxCities') ){
         new SnappBoxCities();
     }
+    
+
 
     if(in_array('administrator', $currentUser->roles) && SNAPPBOX_SANDBOX == 'yes'){
         if ( class_exists('SnappBoxCheckout') ) {
@@ -110,6 +111,7 @@ add_action('plugins_loaded', 'snappbox_init');
 
 
 function snappbox_activate() {
+    update_option('snappbox_qs_do_activation_redirect', 'yes', false);
     delete_transient( 'woocommerce_shipping_zones_cache' );
 }
 

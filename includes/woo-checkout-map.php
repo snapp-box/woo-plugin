@@ -53,6 +53,7 @@ class SnappBoxCheckout
 
         $defaultLat = esc_js($settings['snappbox_latitude']);
         $defaultLng = esc_js($settings['snappbox_longitude']);
+        $autoFill = esc_js($settings['autofill']);
         $siteEmail  = rawurlencode(get_bloginfo('admin_email'));
 ?>
         <script src="https://unpkg.com/maplibre-gl@^5.8.0/dist/maplibre-gl.js"></script>
@@ -130,7 +131,8 @@ class SnappBoxCheckout
 
                 const defaultLat = <?php echo esc_js($defaultLat); ?>;
                 const defaultLng = <?php echo esc_js($defaultLng); ?>;
-
+                const autoFill = '<?php echo esc_js($autoFill);?>';
+                console.log(autoFill);
                 const map = new maplibregl.Map({
                     container: 'osm-map',
                     style: 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
@@ -193,7 +195,7 @@ class SnappBoxCheckout
                             $('customer_longitude').value = lng;
                             $('customer_address').value = (data.result && data.result.displayName) ? data.result.displayName : buildAddress(addr);
                             const sa = document.querySelector('#billing_address_1');
-                            if (sa) sa.value = $('customer_address').value;
+                            if (sa && autoFill =='yes') sa.value = $('customer_address').value;
                         })
                         .catch(console.error);
                 }
