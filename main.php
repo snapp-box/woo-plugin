@@ -8,7 +8,7 @@
  * Author: SnappBox Team
  * License:     GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Author URI: http://uikar.com
+ * Author URI: http://snapp-box.com
  * Text Domain: sb-delivery
  * Domain Path: /languages/
  * Requires Plugins: woocommerce
