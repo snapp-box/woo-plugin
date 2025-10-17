@@ -96,7 +96,6 @@ class SnappBoxOrderAdmin
 
                     new maplibregl.Marker().setLngLat([lng, lat]).addTo(map);
 
-                    // Optional popup in Persian, rendered RTL
                     var popup = new maplibregl.Popup({
                             closeOnClick: false
                         })
@@ -181,9 +180,7 @@ class SnappBoxOrderAdmin
                     </div>
 
                     <div class="vds-content" style="display:none">
-                        <video width="320" height="240" autoplay loop muted>
-                            <source src="<?php echo esc_url(trailingslashit(SNAPPBOX_URL) . 'assets/vds/cup.mp4'); ?>" type="video/mp4">
-                        </video>
+                        <img style="width:50%" src="<?php echo esc_url(trailingslashit(SNAPPBOX_URL) . 'assets/img/success.png');?>" />
                         <span id="snappbox-response-victory"></span>
                     </div>
 
