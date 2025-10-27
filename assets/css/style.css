@@ -369,3 +369,19 @@ a.snappbox-token{
 .voucher-code-wrapper{
 	margin-bottom: 10px;
 }
+#center-pin {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -100%);
+    width: 34px;
+    height: 34px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 5;
+}
+#center-pin::before { content: ""; position: absolute; inset: 0; background-repeat: no-repeat; background-position: center; background-size: contain; background-image: url('data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="%23e53935" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="3" fill="white"/></svg>'); }
+#center-pin::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px); width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .12); background: rgba(0, 0, 0, .06); }
+.maplibregl-marker { z-index: 9999 !important; }

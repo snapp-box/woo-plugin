@@ -1,7 +1,9 @@
 <?php 
+namespace Snappbox;
+if ( ! defined( 'ABSPATH' ) ) exit; 
 
 class SnappBoxCityHelper {
-    public static function get_city_to_state_map() {
+    public static function snappb_get_city_to_state_map() {
         return [
             'THR' => 'tehran',
             'ABZ' => 'karaj',
@@ -32,7 +34,7 @@ class SnappBoxCityHelper {
             'SBN' => 'zabol',
         ];
     }
-    public static function get_city_to_cityname_map() {
+    public static function snappb_get_city_to_cityname_map() {
         return [
             'تهران' => 'tehran',
             'بوجنورد' => 'bojnourd',
