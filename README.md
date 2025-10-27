@@ -1,4 +1,4 @@
-=== SnappBox===
+=== snappbox===
 Contributors: samooel
 Tags: woocommerce, shipping, delivery, tracking, orders
 Requires at least: 5.6

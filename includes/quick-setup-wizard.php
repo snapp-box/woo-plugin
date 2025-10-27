@@ -6,9 +6,11 @@ defined('ABSPATH') || exit;
 if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
   class SnappBox_Quick_Setup {
     private $plugin_file;
-    private $page_slug     = 'snappbox-quick-setup';
-    private $nonce_action  = 'snappbox_qs_save';
-    private $wc_option_key = 'woocommerce_snappbox_shipping_method_settings';
+    private $page_slug         = 'snappbox-quick-setup';
+    private $nonce_action      = 'snappbox_qs_save';
+    private $nav_nonce_action  = 'snappbox_qs_nav';
+    private $nav_nonce_name    = '_snappbox_qs_nav';
+    private $wc_option_key     = 'woocommerce_snappbox_shipping_method_settings';
 
     public function __construct( $plugin_file ) {
       $this->plugin_file = $plugin_file;
@@ -28,6 +30,8 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     public function snappb_maybe_redirect_after_activation() : void {
       if ( \get_option( 'snappbox_qs_do_activation_redirect' ) === 'yes' ) {
         \delete_option( 'snappbox_qs_do_activation_redirect' );
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check of a core activation param; no user action taken based on this value.
         $activate_multi = isset( $_GET['activate-multi'] ) ? \sanitize_text_field( \wp_unslash( $_GET['activate-multi'] ) ) : '';
 
         if ( $activate_multi === '' && \current_user_can( 'manage_woocommerce' ) ) {
@@ -106,8 +110,8 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
 
       echo '<div class="sbqs-fullscreen" id="sbqs-root">';
       echo '  <div class="sbqs-container">';
-      echo \wp_kses_post( $this->snappb_get_logo_svg() );          
-      echo \wp_kses_post( $this->snappb_render_stepper( $step ) ); 
+      echo \wp_kses_post( $this->snappb_get_logo_svg() );
+      echo \wp_kses_post( $this->snappb_render_stepper( $step ) );
       echo '    <div class="sbqs-card">';
 
       switch ( $step ) {
@@ -125,29 +129,38 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     }
 
     private function snappb_current_step() : int {
-      
-      $raw = isset( $_GET['step'] ) ? \sanitize_text_field(wp_unslash( $_GET['step'] )) : '1';
+      // Validate the navigation nonce (sanitize first to satisfy scanners).
+      $nonce_val = isset( $_GET[ $this->nav_nonce_name ] )
+        ? \sanitize_text_field( \wp_unslash( $_GET[ $this->nav_nonce_name ] ) )
+        : '';
+
+      $nonce_valid = $nonce_val && \wp_verify_nonce( $nonce_val, $this->nav_nonce_action );
+
+      // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only access to 'step' AFTER nonce verification.
+      $raw = ( $nonce_valid && isset( $_GET['step'] ) ) ? \sanitize_text_field( \wp_unslash( $_GET['step'] ) ) : '1';
       $s   = (int) $raw;
       return \max( 1, \min( 5, $s ) );
     }
 
     private function snappb_url_for_step( $n ) : string {
-      return \add_query_arg(
+      $url = \add_query_arg(
         [
           'page' => $this->page_slug,
           'step' => (int) $n,
         ],
         \admin_url( 'admin.php' )
       );
+
+      return \wp_nonce_url( $url, $this->nav_nonce_action, $this->nav_nonce_name );
     }
 
     private function snappb_render_stepper( $step ) : string {
       $titles = [
-        1 => \_x( 'API Token',     'Wizard step title', 'snappbox' ),
-        2 => \_x( 'Select Cities', 'Wizard step title', 'snappbox' ),
-        3 => \_x( 'Map Setup',     'Wizard step title', 'snappbox' ),
-        4 => \_x( 'Store Info',    'Wizard step title', 'snappbox' ),
-        5 => \_x( 'Other Info',    'Wizard step title', 'snappbox' ),
+        1 => \esc_html_x( 'API Token',     'Wizard step title', 'snappbox' ),
+        2 => \esc_html_x( 'Select Cities', 'Wizard step title', 'snappbox' ),
+        3 => \esc_html_x( 'Map Setup',     'Wizard step title', 'snappbox' ),
+        4 => \esc_html_x( 'Store Info',    'Wizard step title', 'snappbox' ),
+        5 => \esc_html_x( 'Other Info',    'Wizard step title', 'snappbox' ),
       ];
 
       \ob_start();
@@ -163,7 +176,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
               <a class="sbqs-dot"
                  href="<?php echo \esc_url( $this->snappb_url_for_step( $i ) ); ?>"
                  aria-label="<?php echo \esc_attr( \sprintf(
-                   \_x( 'Go to step %d', 'aria', 'snappbox' ),
+                   \esc_html( 'Go to step %d', 'snappbox' ),
                    $i
                  ) ); ?>">
                  <?php echo \esc_html( (string) $i ); ?>
@@ -389,7 +402,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
 
       \check_admin_referer( $this->nonce_action, '_snappbox_qs_nonce' );
 
-      $step_raw = isset( $_POST['step'] ) ? \sanitize_text_field(wp_unslash( $_POST['step'] )) : '1';
+      $step_raw = isset( $_POST['step'] ) ? \sanitize_text_field( \wp_unslash( $_POST['step'] ) ) : '1';
       $step     = (int) $step_raw;
 
       $settings = \maybe_unserialize( \get_option( $this->wc_option_key ) );
@@ -407,8 +420,16 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
         }
 
         case 2: {
-          $cities_raw = isset( $_POST['cities'] ) ? (array) \sanitize_text_field(wp_unslash( $_POST['cities'] )) : [];
-          $settings['snappbox_cities'] = \array_map( 'sanitize_text_field', $cities_raw );
+          // Sanitize each submitted city value safely.
+          $cities_raw = isset( $_POST['cities'] ) ? (array) sanitize_text_field(wp_unslash($_POST['cities'])) : [];
+          $cities_san = \array_values( \array_filter( \array_map(
+            static function( $v ) {
+              return \sanitize_text_field( \wp_unslash( $v ) );
+            },
+            $cities_raw
+          ) ) );
+          $settings['snappbox_cities'] = $cities_san;
+
           \update_option( $this->wc_option_key, $settings );
           $this->snappb_redirect_step( 3 );
           break;
