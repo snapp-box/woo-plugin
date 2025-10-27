@@ -30,8 +30,6 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     public function snappb_maybe_redirect_after_activation() : void {
       if ( \get_option( 'snappbox_qs_do_activation_redirect' ) === 'yes' ) {
         \delete_option( 'snappbox_qs_do_activation_redirect' );
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check of a core activation param; no user action taken based on this value.
         $activate_multi = isset( $_GET['activate-multi'] ) ? \sanitize_text_field( \wp_unslash( $_GET['activate-multi'] ) ) : '';
 
         if ( $activate_multi === '' && \current_user_can( 'manage_woocommerce' ) ) {
@@ -129,29 +127,19 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     }
 
     private function snappb_current_step() : int {
-      // Validate the navigation nonce (sanitize first to satisfy scanners).
-      $nonce_val = isset( $_GET[ $this->nav_nonce_name ] )
-        ? \sanitize_text_field( \wp_unslash( $_GET[ $this->nav_nonce_name ] ) )
-        : '';
-
-      $nonce_valid = $nonce_val && \wp_verify_nonce( $nonce_val, $this->nav_nonce_action );
-
-      // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only access to 'step' AFTER nonce verification.
-      $raw = ( $nonce_valid && isset( $_GET['step'] ) ) ? \sanitize_text_field( \wp_unslash( $_GET['step'] ) ) : '1';
+      $raw = isset( $_GET['step'] ) ? \sanitize_text_field( \wp_unslash( $_GET['step'] ) ) : '1';
       $s   = (int) $raw;
       return \max( 1, \min( 5, $s ) );
     }
 
     private function snappb_url_for_step( $n ) : string {
-      $url = \add_query_arg(
+      return \add_query_arg(
         [
           'page' => $this->page_slug,
           'step' => (int) $n,
         ],
         \admin_url( 'admin.php' )
       );
-
-      return \wp_nonce_url( $url, $this->nav_nonce_action, $this->nav_nonce_name );
     }
 
     private function snappb_render_stepper( $step ) : string {
@@ -259,7 +247,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
             }
           }
         } catch ( \Throwable $e ) {
-          // Fail silently; UI below shows a friendly message.
+          // Fail silently
         }
       }
 
@@ -384,7 +372,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
           <label for="sb_base_cost"><?php echo \esc_html_x( 'Base cost', 'Label', 'snappbox' ); ?></label>
           <input type="text" id="sb_base_cost" name="base_cost" value="<?php echo \esc_attr( $base_cost ); ?>" />
         </div>
-        <?php /* Example (kept but hidden): Cost per KG
+        <?php /* Example: Cost per KG
         <div class="sbqs-field">
           <label for="sb_cost_per_kg"><?php echo \esc_html_x( 'Cost per KG', 'Label', 'snappbox' ); ?></label>
           <input type="text" id="sb_cost_per_kg" name="cost_per_kg" value="<?php echo \esc_attr( $cost_per_kg ); ?>" />
@@ -397,7 +385,11 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
 
     public function snappb_handle_save() : void {
       if ( ! \current_user_can( 'manage_woocommerce' ) ) {
-        \wp_die( \esc_html__( 'Forbidden', 'snappbox' ), 403 );
+        \wp_die(
+          \esc_html__( 'Forbidden', 'snappbox' ),
+          '',
+          [ 'response' => 403 ]
+        );
       }
 
       \check_admin_referer( $this->nonce_action, '_snappbox_qs_nonce' );
@@ -420,14 +412,14 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
         }
 
         case 2: {
-          // Sanitize each submitted city value safely.
-          $cities_raw = isset( $_POST['cities'] ) ? (array) sanitize_text_field(wp_unslash($_POST['cities'])) : [];
+          $cities_raw = isset( $_POST['cities'] ) ? (array) sanitize_text_field(\wp_unslash( $_POST['cities'] )) : [];
           $cities_san = \array_values( \array_filter( \array_map(
             static function( $v ) {
-              return \sanitize_text_field( \wp_unslash( $v ) );
+              return \sanitize_text_field( (string) $v );
             },
             $cities_raw
           ) ) );
+
           $settings['snappbox_cities'] = $cities_san;
 
           \update_option( $this->wc_option_key, $settings );
@@ -499,6 +491,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
         }
       }
 
+      // اگر به هیچ caseی نخورد (مثلاً step خارج از بازه بود)
       $this->snappb_redirect_step( 1 );
     }
 
