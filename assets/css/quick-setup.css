@@ -89,8 +89,9 @@ body.woocommerce_page_snappbox-quick-setup.rtl #wpcontent { margin-right:0 !impo
   box-shadow: 0 0 0 2px rgba(0,0,0,.12); background: rgba(0,0,0,.06);
 }
 .sb-logo{
-    width: 10%;
-    margin: 50px auto;
+  width: 40%;
+  margin: 20px auto;
+  text-align: center;
 }
 .sb-logo svg{
     color:#22a958;

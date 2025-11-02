@@ -1,0 +1,95 @@
+
+.sb-modal__header,
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #22a958; 
+  height: 100px;
+}
+.sb-modal__header h3,
+.modal-header h3 {
+  color: #fff !important;
+  margin: 0;
+  padding-top: 15px; 
+  text-align: center;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 0 !important;
+}
+
+.sb-modal__box,
+.modal-box {
+  width: 40%;
+  max-width: 640px;   
+  min-width: 320px;   
+  border: 1px solid #ebebeb;
+  border-radius: 15px;
+  background: #fff;
+  overflow: hidden;
+  text-align: center;
+  padding-bottom: 40px;
+}
+
+
+.voucher-code-wrapper {
+  margin-top: 30px;           
+  margin-bottom: 12px;       
+  gap: 8px;
+}
+.voucher-code-wrapper input[type="text"] {
+  min-width: 260px;           
+  height: 34px;
+  line-height: 34px;
+  padding:21px;
+}
+.sb-strike{
+    text-decoration: line-through;
+}
+
+.sb-modal .snappbox-order-container,
+.modal .snappbox-order-container {
+  margin-top: 16px;
+}
+
+.sb-modal .button,
+.modal .button {
+  border: none !important;
+  box-shadow: none !important;
+}
+.sb-modal .button-primary,
+.modal .button-primary {
+  border: none !important;
+  box-shadow: none !important;
+  margin-bottom: 30px;
+}
+
+.ct-order-loading[hidden],
+.cancel-order-loading[hidden],
+.loading[hidden],
+#snappbox-create-order[hidden],
+.vds-content[hidden],
+#sb-pricing-modal[hidden] {
+  display: none !important;
+}
+.vds-image { width: 50%; }
+
+#admin-osm-map,
+.sb-admin-map {
+  height: 400px;
+  margin-top: 20px;
+}
+
+.sb-modal,
+.modal {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255,255,255,0.7);
+  z-index: 1100;
+}
+#pricing-message{
+    margin-top:40px;
+}

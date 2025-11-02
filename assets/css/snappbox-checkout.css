@@ -1,0 +1,36 @@
+/* Map container & center pin */
+#osm-map { position: relative; }
+#center-pin {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%);
+  width: 34px; height: 34px; border: 0; padding: 0; cursor: pointer;
+  background: transparent; z-index: 5;
+}
+#center-pin::before {
+  content: ""; position: absolute; inset: 0;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url('data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="%23e53935" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="3" fill="white"/></svg>');
+}
+#center-pin::after {
+  content: ""; position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px);
+  width: 10px; height: 10px; border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.12); background: rgba(0,0,0,.06);
+}
+.woocommerce-billing-fields .maplibregl-marker { top: 23px; }
+
+.snappbox-day-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(92px,1fr));
+  gap:8px; margin-top:6px;
+}
+.snappbox-day-card {
+  border:1px solid #ddd; border-radius:10px; padding:10px 8px;
+  text-align:center; cursor:pointer; user-select:none;
+  transition: box-shadow .15s, border-color .15s;
+}
+.snappbox-day-card:hover { border-color:#2271b1; }
+.snappbox-day-card input[type=radio] { display:none; }
+.snappbox-day-card .day-title { font-weight:600; font-size:12px; line-height:1.1; margin-bottom:6px; }
+.snappbox-day-card .day-date  { font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+.snappbox-day-card .day-month { font-size:12px; color:#555; }
+.snappbox-day-card.snappbox-selected { border-color:#2271b1; box-shadow:0 0 0 2px rgba(34,113,177,.15); }
+
+.snappbox-time { border:1px solid #cecece; padding:10px; border-radius:10px; }

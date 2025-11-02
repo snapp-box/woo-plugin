@@ -1,10 +1,7 @@
-// داخل quick-setup.js — بخش map logic
 (function($){
-    if (typeof SNB_QS !== 'undefined' && SNB_QS.isStep3 && typeof maplibregl !== 'undefined') {
-      // URL پلاگین RTL (مثال)
-      var rtlPluginUrl = 'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js';
+    if (typeof SNAPPB_QS !== 'undefined' && SNAPPB_QS.isStep3 && typeof maplibregl !== 'undefined') {
+      var rtlPluginUrl = SNAPPB_QS.rtlPluginUrl;
   
-      // ست کردن RTL plugin
       try {
         maplibregl.setRTLTextPlugin(rtlPluginUrl, true);
       } catch(e) {
@@ -13,7 +10,7 @@
   
       var latInput = document.getElementById('sb_lat');
       var lngInput = document.getElementById('sb_lng');
-      var mapStyle = SNB_QS.mapStyle || '';
+      var mapStyle = SNAPPB_QS.mapStyle || '';
   
       var lat = parseFloat(latInput ? latInput.value : '0') || 0;
       var lng = parseFloat(lngInput ? lngInput.value : '0') || 0;
