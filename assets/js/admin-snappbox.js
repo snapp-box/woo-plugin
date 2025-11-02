@@ -107,7 +107,7 @@
         type: 'POST',
         dataType: 'json',
         data: {
-          action: 'get_pricing',
+          action: 'snappb_get_pricing',
           order_id: orderId,
           voucher_code: voucherCode,
           nonce: ctx.nonce
@@ -189,7 +189,7 @@
         type: 'POST',
         dataType: 'json',
         data: {
-          action: 'create_snappbox_order',
+          action: 'snappb_create_order',
           order_id: orderId,
           voucher_code: voucherCode,
           nonce: ctx.nonce
@@ -226,7 +226,7 @@
         type: 'POST',
         dataType: 'json',
         data: {
-          action: 'cancel_snappbox_order',
+          action: 'snappb_cancel_order',
           order_id: orderId,
           woo_order_id: ctx.wooOrderId,
           nonce: ctx.nonce

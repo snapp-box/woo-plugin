@@ -4,16 +4,10 @@ namespace Snappbox;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class SnappBoxScheduleModal {
-
-    /**
-     * Whitelisted days
-     * @var string[]
-     */
     private $allowed_days = [ 'saturday','sunday','monday','tuesday','wednesday','thursday','friday' ];
-
     public function __construct() {
         \add_action( 'admin_enqueue_scripts', [ $this, 'snappb_enqueue_assets' ] );
-        \add_action( 'wp_ajax_save_snappbox_schedule', [ $this, 'snappb_save_schedule' ] );
+        \add_action( 'wp_ajax_snappb_save_schedule', [ $this, 'snappb_save_schedule' ] );
     }
 
     public function snappb_enqueue_assets() {
@@ -63,7 +57,6 @@ class SnappBoxScheduleModal {
                         foreach ( $days as $day ) : ?>
                             <option value="<?php echo \esc_attr( $day ); ?>">
                                 <?php
-                                // Explicit escaping to satisfy WordPress.Security.EscapeOutput.OutputNotEscaped
                                 echo isset( $day_labels[ $day ] )
                                     ? \esc_html( $day_labels[ $day ] )
                                     : \esc_html( \ucfirst( $day ) );
@@ -108,29 +101,24 @@ class SnappBoxScheduleModal {
     }
 
     public function snappb_save_schedule() {
-        // Nonce (use check_ajax_referer per WPCS; false to avoid wp_die)
         if ( ! \check_ajax_referer( 'snappbox_schedule_nonce', 'nonce', false ) ) {
             \wp_send_json_error( [ 'message' => \__( 'Invalid request.', 'snappbox' ) ], 400 );
         }
 
-        // Capability
         if ( ! \current_user_can( 'manage_options' ) ) {
             \wp_send_json_error( [ 'message' => \__( 'Permission denied.', 'snappbox' ) ], 403 );
         }
 
-        // Pull request data once, unslash globally; avoid direct $_POST usage
         $post = [];
         if ( isset( $_POST ) && \is_array( $_POST ) ) {
             $post = \wp_unslash( $_POST );
         }
 
-        // Day: sanitize + whitelist
         $day = isset( $post['day'] ) ? \sanitize_text_field( $post['day'] ) : '';
         if ( ! \in_array( $day, $this->allowed_days, true ) ) {
             \wp_send_json_error( [ 'message' => \__( 'Invalid day value.', 'snappbox' ) ], 400 );
         }
 
-        // Slots: accept array or JSON string; sanitize deeply
         $raw_slots   = [];
         $slots_input = $post['slots'] ?? [];
 
@@ -149,7 +137,6 @@ class SnappBoxScheduleModal {
             $raw_slots = [];
         }
 
-        // Validate & normalize times to HH:MM
         $slots_clean = [];
         foreach ( $raw_slots as $slot ) {
             if ( ! \is_array( $slot ) ) {
@@ -162,7 +149,6 @@ class SnappBoxScheduleModal {
             $start = $this->normalize_time_5( $start );
             $end   = $this->normalize_time_5( $end );
 
-            // Skip empty pair
             if ( '' === $start && '' === $end ) {
                 continue;
             }
@@ -173,7 +159,6 @@ class SnappBoxScheduleModal {
             ];
         }
 
-        // Option storage (always array)
         $saved_data = \get_option( 'snappbox_schedule', [] );
         if ( ! \is_array( $saved_data ) ) {
             $saved_data = [];
@@ -188,14 +173,7 @@ class SnappBoxScheduleModal {
         ] );
     }
 
-    /**
-     * Normalize time string to HH:MM or return '' if invalid.
-     *
-     * Accepts H:MM or HH:MM (e.g., 9:05, 09:05, 23:59), clamps to valid ranges.
-     *
-     * @param string $time
-     * @return string
-     */
+    
     private function normalize_time_5( $time ) {
         $time = \trim( (string) $time );
 
@@ -204,7 +182,6 @@ class SnappBoxScheduleModal {
         }
 
         if ( ! \preg_match( '/^\d{1,2}:\d{2}$/', $time ) ) {
-            // Try to cut extras like "09:05:30"
             if ( \preg_match( '/^(\d{1,2}):(\d{2})/', $time, $m ) ) {
                 $time = $m[1] . ':' . $m[2];
             } else {

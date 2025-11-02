@@ -8,9 +8,9 @@ class SnappBoxPriceHandler {
     private $api_key;
 
     public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
-        global $api_base_url;
+        global $snappb_api_base_url;
         $this->api_key = $api_key;
-        $this->apiUrl  = rtrim($api_base_url, '/') . '/v1/customer/order/pricing';
+        $this->apiUrl  = rtrim($snappb_api_base_url, '/') . '/v1/customer/order/pricing';
 
         \add_action('wp_ajax_snappbox_get_pricing',  [$this, 'snappb_handle_create_order']);
         \add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'snappb_handle_create_order']);

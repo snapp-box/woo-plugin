@@ -191,23 +191,23 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 'description' => \__('Enable this shipping method', 'snappbox'),
                 'default'     => 'yes',
             ],
-            'sandbox' => [
-                'title'       => \__('Enable Test Mode', 'snappbox'),
-                'type'        => 'checkbox',
-                'description' => \__('Enable test mode for this plugin', 'snappbox'),
-                'default'     => 'no',
-            ],
+            // 'sandbox' => [
+            //     'title'       => \__('Enable Test Mode', 'snappbox'),
+            //     'type'        => 'checkbox',
+            //     'description' => \__('Enable test mode for this plugin', 'snappbox'),
+            //     'default'     => 'no',
+            // ],
             'title' => [
                 'title'       => \__('Title', 'snappbox'),
                 'type'        => 'text',
                 'description' => \__('Title to display during checkout', 'snappbox'),
                 'default'     => \__('SnappBox Shipping', 'snappbox'),
             ],
-            'fixed_price' => [
-                'title'       => \__('Fixed Price', 'snappbox'),
-                'type'        => 'number',
-                'description' => \__('Leave it empty for canceling fixed price', 'snappbox') . '. ' . \__('You must enter a price in ', 'snappbox') . ' : ' . \get_woocommerce_currency_symbol(),
-            ],
+            // 'fixed_price' => [
+            //     'title'       => \__('Fixed Price', 'snappbox'),
+            //     'type'        => 'number',
+            //     'description' => \__('Leave it empty for canceling fixed price', 'snappbox') . '. ' . \__('You must enter a price in ', 'snappbox') . ' : ' . \get_woocommerce_currency_symbol(),
+            // ],
             'free_delivery' => [
                 'title'       => \__('Free Delivery', 'snappbox'),
                 'type'        => 'number',

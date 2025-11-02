@@ -6,14 +6,14 @@ class SnappBoxCities {
     private $headers;
 
     public function __construct() {
-        global $api_base_url;
+        global $snappb_api_base_url;
         $this->headers = [
             'Accept'        => 'application/json',
             'Authorization' => \SNAPPBOX_API_TOKEN,
             'User-Agent'    => 'SnappBoxCities/1.0; ' . \home_url('/'),
         ];
 
-        $this->apiUrl = \trailingslashit($api_base_url) . 'v2/delivery-category/by-city';
+        $this->apiUrl = \trailingslashit($snappb_api_base_url) . 'v2/delivery-category/by-city';
     }
 
     public function snappb_get_delivery_category($latitude, $longitude) {

@@ -7,8 +7,8 @@ class SnappBoxCancelOrder {
     private $api_token;
 
     public function __construct() {
-        global $api_base_url;
-        $this->api_url   = $api_base_url . '/v1/customer/cancel_order';
+        global $snappb_api_base_url;
+        $this->api_url   = $snappb_api_base_url . '/v1/customer/cancel_order';
         $this->api_token = \SNAPPBOX_API_TOKEN;
     }
 

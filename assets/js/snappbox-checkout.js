@@ -58,7 +58,7 @@
   
     
     function renderInto($row) {
-      if (!window.SB_DELIVERY) return;
+      if (!window.SNAPPB_DELIVERY_DATES) return;
   
       var $box    = $row.find(".snappbox-checkout-box");
       var $grid   = $row.find("#snappbox_day_grid");
@@ -69,7 +69,7 @@
   
       if (!$grid.data("sbInit")) {
         $grid.data("sbInit", true);
-        var cands = SB_DELIVERY.candidates || [];
+        var cands = SNAPPB_DELIVERY_DATES.candidates || [];
         $grid.empty();
   
         cands.forEach(function (c, idx) {
@@ -129,7 +129,7 @@
     }
   
     function fillTimes($timeSel, dateKey) {
-      var slots = (SB_DELIVERY.timesByDate || {})[dateKey] || [];
+      var slots = (SNAPPB_DELIVERY_DATES.timesByDate || {})[dateKey] || [];
       var previous = $timeSel.val();
   
       $timeSel.empty();

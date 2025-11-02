@@ -296,7 +296,7 @@ class SnappBoxCheckout
             }
         }
 
-        \wp_localize_script('snappbox-checkout', 'SB_DELIVERY', [
+        \wp_localize_script('snappbox-checkout', 'SNAPPB_DELIVERY_DATES', [
             'candidates'  => $candidates,
             'timesByDate' => $times_by_date,
         ]);

@@ -10,8 +10,8 @@ class SnappBoxCreateOrder {
     public const NONCE_FIELD  = 'nonce';
 
     public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
-        global $api_base_url;
-        $this->api_url = $api_base_url . '/v1/customer/create_order';
+        global $snappb_api_base_url;
+        $this->api_url = $snappb_api_base_url . '/v1/customer/create_order';
         $this->api_key = $api_key;
 
         \add_action('wp_ajax_snappbox_create_order',        [$this, 'snappb_handle_create_order']);

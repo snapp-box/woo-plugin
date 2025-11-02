@@ -1,5 +1,5 @@
 === snappbox===
-Contributors: samooel
+Contributors: @samooel, @snappbox
 Tags: woocommerce, shipping, delivery, tracking, orders
 Requires at least: 5.6
 Tested up to: 6.8
@@ -16,7 +16,7 @@ Snappbox helps you track and display delivery statuses inside WordPress. This pl
 
 ### Step 1: Download the Plugin
 Open your browser and go to:  
-https://snapp-box.com/woo-plugin  
+https://snapp-box.com/wordpress-plugin  
 Click the **“Download SnappBox Plugin for Free”** button.  
 Fill out the displayed form (Business Name, Mobile Number, and Email) and click **Submit**.  
 After submitting, the plugin file will automatically be downloaded.  

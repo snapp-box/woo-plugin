@@ -55,7 +55,7 @@ jQuery(document).ready(function($){
         $('.selection-wrapper .notice').remove();
 
         $.post(SnappBoxData.ajax_url, {
-            action: 'save_snappbox_schedule',
+            action: 'snappb_save_schedule',
             nonce: SnappBoxData.nonce,
             day: day,
             slots: JSON.stringify(slots)

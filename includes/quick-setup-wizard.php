@@ -30,6 +30,8 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     public function snappb_maybe_redirect_after_activation() : void {
       if ( \get_option( 'snappbox_qs_do_activation_redirect' ) === 'yes' ) {
         \delete_option( 'snappbox_qs_do_activation_redirect' );
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $activate_multi = isset( $_GET['activate-multi'] ) ? \sanitize_text_field( \wp_unslash( $_GET['activate-multi'] ) ) : '';
 
         if ( $activate_multi === '' && \current_user_can( 'manage_woocommerce' ) ) {
@@ -87,7 +89,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
 
       \wp_localize_script(
         'snappbox-quick-setup',
-        'SNB_QS',
+        'SNAPPB_QS',
         [
           'isStep3'      => ( $step === 3 ),
           'mapStyle'     => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
@@ -127,6 +129,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     }
 
     private function snappb_current_step() : int {
+      // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only access.
       $raw = isset( $_GET['step'] ) ? \sanitize_text_field( \wp_unslash( $_GET['step'] ) ) : '1';
       $s   = (int) $raw;
       return \max( 1, \min( 5, $s ) );
@@ -206,6 +209,9 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
     }
 
     private function snappb_render_step_1() : void {
+      // Storing WooCommerce shipping method settings uses the official option key pattern:
+      // woocommerce_{method_id}_settings
+      // I defined wc_option_key at the first of my class
       $settings = \maybe_unserialize( \get_option( $this->wc_option_key ) );
       $api      = \is_array( $settings ) ? ( $settings['snappbox_api'] ?? '' ) : '';
 
@@ -360,10 +366,11 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
           <input type="checkbox" name="ondelivery" value="yes" <?php \checked( $ondelivery ); ?> />
           <?php echo \esc_html_x( 'Pay on SnappBox delivery', 'Checkbox', 'snappbox' ); ?>
         </label>
+        <?php /*
         <div class="sbqs-field">
           <label for="sb_fixed_price"><?php echo \esc_html_x( 'Fixed price', 'Label', 'snappbox' ); ?></label>
           <input type="text" id="sb_fixed_price" name="fixed_price" value="<?php echo \esc_attr( $fixed_price ); ?>" />
-        </div>
+        </div> */?>
         <div class="sbqs-field">
           <label for="sb_free_delivery"><?php echo \esc_html_x( 'Free delivery threshold', 'Label', 'snappbox' ); ?></label>
           <input type="text" id="sb_free_delivery" name="free_delivery" value="<?php echo \esc_attr( $free_delivery ); ?>" />
@@ -412,7 +419,7 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
         }
 
         case 2: {
-          $cities_raw = isset( $_POST['cities'] ) ? (array) sanitize_text_field(\wp_unslash( $_POST['cities'] )) : [];
+          $cities_raw = isset( $_POST['cities'] ) ? (array)  \wp_unslash( $_POST['cities'] ) : [];
           $cities_san = \array_values( \array_filter( \array_map(
             static function( $v ) {
               return \sanitize_text_field( (string) $v );
@@ -491,7 +498,6 @@ if ( ! class_exists('\Snappbox\SnappBox_Quick_Setup') ) {
         }
       }
 
-      // اگر به هیچ caseی نخورد (مثلاً step خارج از بازه بود)
       $this->snappb_redirect_step( 1 );
     }
 

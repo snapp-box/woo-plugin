@@ -18,9 +18,9 @@ class SnappBoxOrderAdmin
     {
         \add_action('admin_enqueue_scripts', [$this, 'snappb_enqueue_assets']);
         \add_action('woocommerce_admin_order_data_after_order_details', [$this, 'snappb_display_order_admin_box'], 20, 1);
-        \add_action('wp_ajax_create_snappbox_order', [$this, 'snappb_handle_create_snappbox_order']);
-        \add_action('wp_ajax_cancel_snappbox_order', [$this, 'snappb_handle_cancel_snappbox_order']);
-        \add_action('wp_ajax_get_pricing',          [$this, 'snappb_handle_get_pricing']);
+        \add_action('wp_ajax_snappb_create_order', [$this, 'snappb_handle_create_snappbox_order']);
+        \add_action('wp_ajax_snappb_cancel_order', [$this, 'snappb_handle_cancel_snappbox_order']);
+        \add_action('wp_ajax_snappb_get_pricing',          [$this, 'snappb_handle_get_pricing']);
     }
 
 

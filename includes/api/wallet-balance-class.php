@@ -6,9 +6,9 @@ class SnappBoxWalletBalance {
     private $api_key;
 
     public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
-        global $api_base_url;
+        global $snappb_api_base_url;
         $this->api_key = $api_key;
-        $this->api_url = $api_base_url . '/v1/customer/current_balance';
+        $this->api_url = $snappb_api_base_url . '/v1/customer/current_balance';
     }
 
     public function snappb_check_balance($order_data = '') {

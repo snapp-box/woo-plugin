@@ -7,7 +7,7 @@
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Author URI: http://snapp-box.com
+ * Author URI: https://snapp-box.com/wordpress-plugin
  * Text Domain: snappbox
  * Domain Path: /languages/
  * Requires Plugins: woocommerce
@@ -27,25 +27,25 @@ define('SNAPPBOX_VERSION', '0.1.1');
 define('SNAPPBOX_API_BASE_URL_STAGING', 'https://customer-stg.snapp-box.com/');
 define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://customer.snapp-box.com/');
 
-global $api_base_url;
+global $snappb_api_base_url;
 
-$settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
-$settings = is_array($settings_serialized) ? $settings_serialized : maybe_unserialize($settings_serialized);
+$snappb_settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
+$settings = is_array($snappb_settings_serialized) ? $snappb_settings_serialized : maybe_unserialize($snappb_settings_serialized);
 
 if (is_array($settings)) {
     define('SNAPPBOX_SANDBOX', isset($settings['sandbox']) ? $settings['sandbox'] : false);
-    define('ONDELIVERY', isset($settings['ondelivery']) ? $settings['ondelivery'] : false);
+    define('SNAPPBOX_ONDELIVERY', isset($settings['ondelivery']) ? $settings['ondelivery'] : false);
 } else {
     define('SNAPPBOX_SANDBOX', false);
-    define('ONDELIVERY', false);
+    define('SNAPPBOX_ONDELIVERY', false);
 }
 
-$api_base_url = (SNAPPBOX_SANDBOX === 'yes')
+$snappb_api_base_url = (SNAPPBOX_SANDBOX === 'yes')
     ? SNAPPBOX_API_BASE_URL_STAGING
     : SNAPPBOX_API_BASE_URL_PRODUCTION;
 
-$api_key = $settings['snappbox_api'] ?? '';
-define('SNAPPBOX_API_TOKEN', $api_key);
+$snappb_api_key = $settings['snappbox_api'] ?? '';
+define('SNAPPBOX_API_TOKEN', $snappb_api_key);
 
 
 require_once SNAPPBOX_DIR . 'includes/woo-checkout-map.php';
@@ -73,7 +73,7 @@ function snappbox_init() {
         if ( class_exists('\Snappbox\SnappBoxWcOrderColumn') ) {
             new \Snappbox\SnappBoxWcOrderColumn();
         }
-        if ( class_exists('\WC_Payment_Gateway') && ONDELIVERY === 'yes' ) {
+        if ( class_exists('\WC_Payment_Gateway') && SNAPPBOX_ONDELIVERY === 'yes' ) {
             require_once SNAPPBOX_DIR . 'includes/payment-method.php';
             \Snappbox\SnappBoxOnDeliveryGateway::snappb_register();
         }
@@ -91,7 +91,7 @@ function snappbox_init() {
             if ( class_exists('\Snappbox\SnappBoxWcOrderColumn') ) {
                 new \Snappbox\SnappBoxWcOrderColumn();
             }
-            if ( class_exists('\WC_Payment_Gateway') && ONDELIVERY === 'yes' ) {
+            if ( class_exists('\WC_Payment_Gateway') && SNAPPBOX_ONDELIVERY === 'yes' ) {
                 require_once SNAPPBOX_DIR . 'includes/payment-method.php';
                 \Snappbox\SnappBoxOnDeliveryGateway::snappb_register();
             }
