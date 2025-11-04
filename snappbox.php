@@ -65,37 +65,18 @@ function snappbox_init() {
     if ( class_exists('\SnappBoxCities') ) {
         new \Snappbox\Api\SnappBoxCities();
     }
-
-    if ( in_array('administrator', (array) $currentUser->roles, true) && SNAPPBOX_SANDBOX === 'yes' ) {
-        if ( class_exists('\Snappbox\SnappBoxCheckout') ) {
-            new \Snappbox\SnappBoxCheckout();
-        }
-        if ( class_exists('\Snappbox\SnappBoxWcOrderColumn') ) {
-            new \Snappbox\SnappBoxWcOrderColumn();
-        }
-        if ( class_exists('\WC_Payment_Gateway') && SNAPPBOX_ONDELIVERY === 'yes' ) {
-            require_once SNAPPBOX_DIR . 'includes/payment-method.php';
-            \Snappbox\SnappBoxOnDeliveryGateway::snappb_register();
-        }
-        if ( class_exists('\Snappbox\SnappBoxScheduleModal') ) {
-            new \Snappbox\SnappBoxScheduleModal();
-        }
-    } else {
-        if ( SNAPPBOX_SANDBOX === 'no' ) {
-            if ( class_exists('\Snappbox\SnappBoxCheckout') ) {
-                new \Snappbox\SnappBoxCheckout();
-            }
-            if ( class_exists('\Snappbox\SnappBoxScheduleModal') ) {
-                new \Snappbox\SnappBoxScheduleModal();
-            }
-            if ( class_exists('\Snappbox\SnappBoxWcOrderColumn') ) {
-                new \Snappbox\SnappBoxWcOrderColumn();
-            }
-            if ( class_exists('\WC_Payment_Gateway') && SNAPPBOX_ONDELIVERY === 'yes' ) {
-                require_once SNAPPBOX_DIR . 'includes/payment-method.php';
-                \Snappbox\SnappBoxOnDeliveryGateway::snappb_register();
-            }
-        }
+    if ( class_exists('\Snappbox\SnappBoxCheckout') ) {
+        new \Snappbox\SnappBoxCheckout();
+    }
+    if ( class_exists('\Snappbox\SnappBoxWcOrderColumn') ) {
+        new \Snappbox\SnappBoxWcOrderColumn();
+    }
+    if ( class_exists('\WC_Payment_Gateway') && SNAPPBOX_ONDELIVERY === 'yes' ) {
+        require_once SNAPPBOX_DIR . 'includes/payment-method.php';
+        \Snappbox\SnappBoxOnDeliveryGateway::snappb_register();
+    }
+    if ( class_exists('\Snappbox\SnappBoxScheduleModal') ) {
+        new \Snappbox\SnappBoxScheduleModal();
     }
 
     if ( class_exists('\WC_Shipping_Method') ) {

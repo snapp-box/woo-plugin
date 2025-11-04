@@ -13,7 +13,7 @@ class SnappBoxScheduleModal {
     public function snappb_enqueue_assets() {
         \wp_enqueue_script(
             'SnappBoxData',
-            defined('SNAPPBOX_URL') ? SNAPPBOX_URL . 'assets/js/snappbox-schedule-script.js' : \plugins_url('assets/js/snappbox-schedule-script.js', __FILE__),
+            SNAPPBOX_URL . 'assets/js/snappbox-schedule-script.js',
             [ 'jquery' ],
             '1.0.1',
             true

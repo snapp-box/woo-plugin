@@ -51,14 +51,14 @@ class SnappBoxCheckout
             'snappbox-checkout',
             \trailingslashit(SNAPPBOX_URL) . 'assets/css/snappbox-checkout.css',
             ['maplibre'],
-            \defined('SNAPPBOX_VERSION') ? SNAPPBOX_VERSION : '1.0.0'
+            '1.0.0'
         );
 
         \wp_register_script(
             'snappbox-map',
             \trailingslashit(SNAPPBOX_URL) . 'assets/js/snappbox-map.js',
             ['maplibre'],
-            \defined('SNAPPBOX_VERSION') ? SNAPPBOX_VERSION : '1.0.0',
+            '1.0.0',
             true
         );
 
@@ -66,7 +66,7 @@ class SnappBoxCheckout
             'snappbox-checkout',
             \trailingslashit(SNAPPBOX_URL) . 'assets/js/snappbox-checkout.js',
             ['jquery'],
-            \defined('SNAPPBOX_VERSION') ? SNAPPBOX_VERSION : '1.0.0',
+            '1.0.0',
             true
         );
     }
@@ -77,7 +77,8 @@ class SnappBoxCheckout
         $settings = \maybe_unserialize($settings_serialized);
         if ( empty($settings['enabled']) || $settings['enabled'] !== 'yes' ) return;
         if ( empty($settings['snappbox_latitude']) || empty($settings['snappbox_longitude']) ) return;
-        $mapTitle = $settings['map_title'];
+        $mapTitle = !empty($settings['map_title']) ? $settings['map_title'] : '';
+
 
         ?>
         <div id="snappbox-map-section" style="display:none;">
