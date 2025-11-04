@@ -57,7 +57,6 @@
       .then(function (data) {
         var city = "";
   
-        // استخراج نام شهر از result.components
         if (data && data.result && Array.isArray(data.result.components)) {
           var cityItem = data.result.components.find(function (item) {
             return item.type === "city";
@@ -67,11 +66,10 @@
           }
         }
   
-        // مقداردهی فیلدهای فرم
         $("customer_city").value = city;
         $("customer_postcode").value = "";
         $("customer_state").value = "";
-        $("customer_country").value = "IR"; // چون سرویس اسنپ ایران‌محوره
+        $("customer_country").value = "IR";
   
       })
       .catch(function (err) {
