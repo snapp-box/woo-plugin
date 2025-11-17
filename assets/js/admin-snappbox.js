@@ -41,7 +41,6 @@
     var $ctx = $('#snappbox-admin-context');
     if (!$ctx.length) return;
 
-    // nonce را از هر دو مسیر می‌خوانیم: localized و data-attribute
     var resolvedNonce =
       (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.nonce) ||
       $ctx.data('nonce') ||

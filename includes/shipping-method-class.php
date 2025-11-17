@@ -12,7 +12,9 @@ if (! \class_exists('WooCommerce')) {
 
 require_once(SNAPPBOX_DIR . 'includes/api/cities-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/wallet-balance-class.php');
+require_once(SNAPPBOX_DIR . 'includes/api/pricing-class.php');
 require_once(SNAPPBOX_DIR . 'includes/convert-woo-cities-to-snappbox.php');
+
 
 class SnappBoxShippingMethod extends \WC_Shipping_Method
 {
@@ -135,9 +137,16 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         }
 
         $city = isset($_POST['customer_city']) ? \sanitize_text_field(\wp_unslash($_POST['customer_city'])) : '';
+        $city_map    = $allCities->snappb_get_city_to_state_map();
+        $state_code  = array_search(strtolower($city), array_map('strtolower', $city_map), true);
+        $customerLat = isset($_POST['customer_latitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_latitude'])) : '';
+        $customerLong = isset($_POST['customer_longitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_longitude'])) : '';
+
 
         if ($chosen_shipping_method === 'snappbox_shipping_method') {
-            if (\in_array(\strtolower($city), \array_map('strtolower', $stored_cities), true)) {
+            $pricingHandler = new \Snappbox\Api\SnappBoxPriceHandler();
+            $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '');
+            if (!empty($result['data']['finalCustomerFare'])) {
                 $order->add_order_note('Order registered with SnappBox in ' . $shipping_city);
                 $order->update_meta_data('_snappbox_city', $shipping_city);
             } else {
@@ -155,129 +164,153 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
 
         $stored_cities  = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
         $snappBoxAPIKey = $this->get_option('snappbox_api');
+        $transient_key  = 'snappbox_cities_' . \md5($latitude . '_' . $longitude);
+        $cities         = \get_transient($transient_key);
 
-        $transient_key = 'snappbox_cities_' . \md5($latitude . '_' . $longitude);
-        $cities        = \get_transient($transient_key);
+        // $newCitySerialized = isset($settings['snappbox_new_cities'])
+        //     ? $settings['snappbox_new_cities']
+        //     : '';
+
+        // $newCityItems = maybe_unserialize($newCitySerialized);
+        // $newCityItems = is_array($newCityItems) ? $newCityItems : [];
+
+        // $lastCity = !empty($newCityItems) ? end($newCityItems) : null;
+        // -------------------------------------------
 
         if ($cities === false) {
             $citiesObj = new \Snappbox\Api\SnappBoxCities();
-            $cities    = $citiesObj->snappb_get_delivery_category($latitude, $longitude);
-
-            if (! empty($cities) && isset($cities->cities)) {
+            $cities    = $citiesObj->snappb_get_delivery_category();
+            if (!empty($cities) && isset($cities->cities)) {
                 \set_transient($transient_key, $cities, DAY_IN_SECONDS);
             }
         }
 
         $city_options = [];
-        if (! empty($cities->cities) && \is_array($cities->cities)) {
-            $filtered_cities = \array_filter($cities->cities, function ($city) {
-                return ! empty($city->cityName);
+        if (!empty($cities->cities) && is_array($cities->cities)) {
+            $filtered_cities = array_filter($cities->cities, function ($city) {
+                return !empty($city->cityName);
             });
 
-            $mapped_cities = \array_map(function ($city) {
-                if ($city->cityKey == 'gilan') {
+            $mapped_cities = array_map(function ($city) {
+                if (strtolower($city->cityKey) == 'gilan') {
                     $city->cityKey = 'rasht';
                 }
                 return $city;
             }, $filtered_cities);
 
-            $city_options = \array_column($mapped_cities, 'cityName', 'cityKey');
+            $mapped_array = array_map(function ($c) {
+                return ['cityKey' => $c->cityKey, 'cityName' => $c->cityName];
+            }, $mapped_cities);
+
+            $city_options = array_column($mapped_array, 'cityName', 'cityKey');
         }
 
         $this->form_fields = [
             'enabled' => [
-                'title'       => \__('Enable', 'snappbox'),
+                'title'       => __('Enable', 'snappbox'),
                 'type'        => 'checkbox',
-                'description' => \__('Enable this shipping method', 'snappbox'),
+                'description' => __('Enable this shipping method', 'snappbox'),
                 'default'     => 'yes',
             ],
-            // 'sandbox' => [
-            //     'title'       => \__('Enable Test Mode', 'snappbox'),
-            //     'type'        => 'checkbox',
-            //     'description' => \__('Enable test mode for this plugin', 'snappbox'),
-            //     'default'     => 'no',
-            // ],
-            'title' => [
-                'title'       => \__('Title', 'snappbox'),
-                'type'        => 'text',
-                'description' => \__('Title to display during checkout', 'snappbox'),
-                'default'     => \__('SnappBox Shipping', 'snappbox'),
+
+            'sandbox' => [
+                'title'       => __('Enable Test Mode', 'snappbox'),
+                'type'        => 'checkbox',
+                'description' => __('Enable test mode for this plugin', 'snappbox'),
+                'default'     => 'no',
             ],
+
             // 'fixed_price' => [
             //     'title'       => \__('Fixed Price', 'snappbox'),
             //     'type'        => 'number',
             //     'description' => \__('Leave it empty for canceling fixed price', 'snappbox') . '. ' . \__('You must enter a price in ', 'snappbox') . ' : ' . \get_woocommerce_currency_symbol(),
             // ],
-            'free_delivery' => [
-                'title'       => \__('Free Delivery', 'snappbox'),
-                'type'        => 'number',
-                'description' => \__('Minimum basket price for free delivery', 'snappbox') . '. ' . \__('You must enter a price in ', 'snappbox') . ' : ' . \get_woocommerce_currency_symbol(),
-            ],
-            'base_cost' => [
-                'title'       => \__('Base Shipping Cost', 'snappbox'),
-                'type'        => 'number',
-                'description' => \__('Base shipping cost for this method', 'snappbox'),
-                'default'     => '',
-                'desc_tip'    => true,
-            ],
-            'map_title' => [
-                'title'       => \__('Map Title', 'snappbox'),
+
+            'title' => [
+                'title'       => __('Title', 'snappbox'),
                 'type'        => 'text',
-                'description' => \__('Title to display under the map in checkout page', 'snappbox'),
-                'default'     => \__('Please set your location here', 'snappbox'),
+                'description' => __('Title to display during checkout', 'snappbox'),
+                'default'     => __('SnappBox Shipping', 'snappbox'),
             ],
-            // 'cost_per_kg' => [
-            //     'title'       => __('Cost per KG', 'snappbox'),
-            //     'type'        => 'number',
-            //     'description' => __('Shipping cost per kilogram', 'snappbox'),
-            //     'default'     => '',
-            //     'desc_tip'    => true,
-            // ],
+
+            'free_delivery' => [
+                'title'       => __('Free Delivery', 'snappbox'),
+                'type'        => 'number',
+                'description' => __('Minimum basket price for free delivery', 'snappbox') . '. ' . __('You must enter a price in ', 'snappbox') . ' : ' . get_woocommerce_currency_symbol(),
+            ],
+
+            'base_cost' => [
+                'title'       => __('Fixed Price', 'snappbox'),
+                'type'        => 'number',
+                'description' => __('Leave it empty for canceling fixed price', 'snappbox') . '. ' . __('You must enter a price in ', 'snappbox') . ' : ' . get_woocommerce_currency_symbol(),
+                'default'     => '',
+            ],
+
+            'map_title' => [
+                'title'       => __('Map Title', 'snappbox'),
+                'type'        => 'text',
+                'description' => __('Title to display under the map in checkout page', 'snappbox'),
+                'default'     => __('Please set your location here', 'snappbox'),
+            ],
 
             'snappbox_latitude' => [
-                'title'             => \__('Latitude', 'snappbox'),
+                'title'             => __('Latitude', 'snappbox'),
                 'type'              => 'text',
                 'default'           => $latitude,
                 'custom_attributes' => ['readonly' => 'readonly']
             ],
+
             'snappbox_longitude' => [
-                'title'             => \__('Longitude', 'snappbox'),
+                'title'             => __('Longitude', 'snappbox'),
                 'type'              => 'text',
                 'default'           => $longitude,
                 'custom_attributes' => ['readonly' => 'readonly']
             ],
+
             'snappbox_store_phone' => [
-                'title'   => \__('Phone Number', 'snappbox'),
+                'title'   => __('Phone Number', 'snappbox'),
                 'type'    => 'text',
-                'default' => \get_option('snappbox_store_phone', '')
+                'default' => get_option('snappbox_store_phone', '')
             ],
+
             'snappbox_store_name' => [
-                'title'   => \__('Store Name', 'snappbox'),
+                'title'   => __('Store Name', 'snappbox'),
                 'type'    => 'text',
-                'default' => \get_option('snappbox_store_name', '')
+                'default' => get_option('snappbox_store_name', '')
             ],
+
             'ondelivery' => [
-                'title'       => \__('Enable payment on delivery', 'snappbox'),
+                'title'       => __('Enable payment on delivery', 'snappbox'),
                 'type'        => 'checkbox',
-                'description' => \__('Pay SnappBox payment on delivery', 'snappbox'),
-                'default'     => 'no',
-            ],
-            'autofill' => [
-                'title'       => \__('Enable Address Autofill', 'snappbox'),
-                'type'        => 'checkbox',
-                'description' => \__('This option enables the address to be autofilled from SmappMap', 'snappbox'),
+                'description' => __('Pay SnappBox payment on delivery', 'snappbox'),
                 'default'     => 'no',
             ],
 
-            'snappbox_cities' => [
-                'title'       => \__('Cities', 'snappbox'),
-                'type'        => 'multiselect',
-                'options'     => $city_options,
-                'description' => \__('This Item will show after token insertion', 'snappbox'),
-                'default'     => $stored_cities,
-            ]
+            'autofill' => [
+                'title'       => __('Enable Address Autofill', 'snappbox'),
+                'type'        => 'checkbox',
+                'description' => __('This option enables the address to be autofilled from SmappMap', 'snappbox'),
+                'default'     => 'no',
+            ],
+
+            // 'snappbox_new_cities_display' => [
+            //     'title'             => __('City', 'snappbox'),
+            //     'type'              => 'text',
+            //     'default'           => $lastCity['city_fa'] ?? '',
+            //     'custom_attributes' => ['readonly' => 'readonly']
+            // ],
+
+            // 'snappbox_cities' => [
+            //     'title'       => __('Cities', 'snappbox'),
+            //     'type'        => 'multiselect',
+            //     'options'     => $city_options,
+            //     'description' => __('This Item will show after token insertion', 'snappbox'),
+            //     'default'     => $stored_cities,
+            //     'custom_attributes' => ['disabled' => 'disabled']
+            // ]
         ];
     }
+
 
     public function admin_options()
     {
@@ -293,7 +326,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
 
         $this->enqueue_maplibre_assets();
 
-        ?>
+?>
         <div style="margin-bottom: 5px; float:left;">
             <a href="#" id="snappbox-launch-modal" class="button colorful-button button-secondary">
                 <?php echo \esc_html__('Show Setup Guide', 'snappbox'); ?>
@@ -305,9 +338,9 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
 
         <?php $this->snappb_token_integeration(); ?>
         <?php $this->snappb_wallet_information(); ?>
-
         <div class="snappbox-panel">
             <h4><?php \esc_html_e('Set Store Location', 'snappbox'); ?></h4>
+            <?php $this->snappb_zone_alert_modal(); ?>
             <p><?php \esc_html_e('Please move the pin', 'snappbox'); ?></p>
 
             <div id="map" style="height:400px; position:relative;">
@@ -317,9 +350,19 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         </div>
 
         <?php $this->snappb_add_modal_box(); ?>
+    <?php
+    }
+    public function snappb_zone_alert_modal()
+    {
+    ?>
+        <div id="snapp-modal" style="display:none;">
+            <div class="snapp-modal-content">
+                <span class="snapp-close">&times;</span>
+                <p id="snapp-modal-message"></p>
+            </div>
+        </div>
         <?php
     }
-
     protected function enqueue_maplibre_assets()
     {
         if (! \wp_script_is('maplibre', 'registered')) {
@@ -336,7 +379,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         if (! \wp_style_is('maplibre', 'registered')) {
             \wp_register_style(
                 'maplibre',
-                \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.css',
+                \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
                 [],
                 null
             );
@@ -366,19 +409,44 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $inline_js .= 'maplibregl.setRTLTextPlugin(' . $rtl_plugin_url_js . ', null, true);';
         $inline_js .= 'map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");';
         $inline_js .= 'const marker = new maplibregl.Marker({ draggable: true }).setLngLat([defaultLng, defaultLat]).addTo(map);';
+
         $inline_js .= 'function updateInputs(lat, lng){';
         $inline_js .= 'var latInput=document.querySelector(\'[name="woocommerce_snappbox_shipping_method_snappbox_latitude"]\');';
         $inline_js .= 'var lngInput=document.querySelector(\'[name="woocommerce_snappbox_shipping_method_snappbox_longitude"]\');';
         $inline_js .= 'if(latInput) latInput.value=Number(lat).toFixed(9);';
         $inline_js .= 'if(lngInput) lngInput.value=Number(lng).toFixed(9);';
         $inline_js .= '}';
+
         $inline_js .= 'function onSet(lat,lng){ marker.setLngLat([lng,lat]); updateInputs(lat,lng);}';
         $inline_js .= 'marker.on("dragend", function(){ var p=marker.getLngLat(); updateInputs(p.lat,p.lng); });';
         $inline_js .= 'map.on("click", function(e){ onSet(e.lngLat.lat, e.lngLat.lng); });';
+
         $inline_js .= 'var centerPinBtn=document.getElementById("center-pin");';
-        $inline_js .= 'if(centerPinBtn){ centerPinBtn.addEventListener("click", function(){ var c=map.getCenter(); onSet(c.lat,c.lng); }); }';
+        $inline_js .= 'if(centerPinBtn){ centerPinBtn.addEventListener("click", function(){ ';
+        $inline_js .= 'var c=map.getCenter(); onSet(c.lat, c.lng); ';
+
+        $inline_js .= '
+            jQuery.post(ajaxurl, { action: "snapp_nearby", lat: c.lat, lng: c.lng }, function(res){ 
+
+                if (res && res.data && res.data.message) {
+                    jQuery("#snapp-modal").css("display", "block");
+                    jQuery("#snapp-modal p").html(res.data.message);
+                    console.log("County Info:", res.data.message);
+                } else {
+                    jQuery("#snapp-modal").css("display", "none");
+                }
+
+            });
+            ';
+
+        $inline_js .= '}); }';
+
         $inline_js .= 'updateInputs(defaultLat, defaultLng);';
         $inline_js .= '});';
+
+        $inline_js .= 'jQuery(document).on("click", ".snapp-close", function(){ jQuery("#snapp-modal").fadeOut(200); });';
+
+        $inline_js .= 'jQuery(document).on("click", "#snapp-modal", function(e){ if(e.target.id==="snapp-modal"){ jQuery("#snapp-modal").fadeOut(200);} });';
 
         \wp_add_inline_script('maplibre', $inline_js);
     }
@@ -413,7 +481,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
 
         if ($is_low && ! $was_low) {
             $notice_output = true;
-            ?>
+        ?>
             <div class="notice notice-error is-dismissible snappbox-low-balance">
                 <p>
                     <?php \esc_html_e('Your wallet balance is too low. Please contact Snappbox', 'snappbox'); ?>
@@ -422,7 +490,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                     </a>
                 </p>
             </div>
-            <?php
+        <?php
             \update_option('snappbox_wallet_was_low', true, false);
             return;
         }
@@ -458,7 +526,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     public function snappb_token_integeration()
     {
         $api_key = $this->get_option('snappbox_api');
-        ?>
+    ?>
         <div class="snappbox-panel">
             <h4><?php \esc_html_e('API Key', 'snappbox'); ?></h4>
             <table class="form-table">
@@ -504,30 +572,43 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $subtotal      = \WC()->cart ? (float) \WC()->cart->get_subtotal() : 0.0;
 
         $base_cost     = (float) $this->get_option('base_cost');
-        $cost_per_kg   = $this->get_option('cost_per_kg'); 
+        $cost_per_kg   = $this->get_option('cost_per_kg');
         $fixed_price   = $this->get_option('fixed_price');
         $free_delivery = $this->get_option('free_delivery');
 
-        if (! empty($fixed_price)) {
-            if (! empty($free_delivery) && (float) $free_delivery < $subtotal) {
+        $fixed_price = is_numeric($fixed_price) ? (float) $fixed_price : null;
+
+        if ($base_cost !== null && $free_delivery !== '') {
+            if ($free_delivery < $subtotal) {
                 $cost = 0;
             } elseif (empty($free_delivery) && empty($base_cost) && empty($cost_per_kg)) {
                 $cost = 0;
             } else {
-                $cost = (float) $fixed_price;
+                $cost = $base_cost;
             }
         } else {
-            $cost = (float) $base_cost;
+            $cost = (float)$base_cost;
         }
 
-        $rate = [
-            'id'       => $this->id,
-            'label'    => $this->title,
-            'cost'     => $cost,
-            'calc_tax' => 'per_item',
-        ];
+        if ($cost == 0) {
+            $rate = [
+                'id'       => $this->id,
+                'label'    => $this->title,
+                'cost'     => '',
+                'calc_tax' => 'per_item',
+            ];
+        } else {
+            $rate = [
+                'id'       => $this->id,
+                'label'    => $this->title,
+                'cost'     => $cost,
+                'calc_tax' => 'per_item',
+            ];
+        }
+
         $this->add_rate($rate);
     }
+
 
     public static function register()
     {
@@ -552,7 +633,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     {
         require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php');
         \wp_enqueue_script('schedule-scripts', \trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], null, true);
-        ?>
+    ?>
         <div id="snappbox-setup-modal" class="snappbox-modal">
             <div class="snappbox-modal-content" id="guide">
                 <span class="snappbox-close">&times;</span>
@@ -600,6 +681,6 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             $modal->snappb_render_modal_html();
             ?>
         </div>
-        <?php
+<?php
     }
 }

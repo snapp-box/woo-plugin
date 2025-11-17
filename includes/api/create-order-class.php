@@ -113,6 +113,9 @@ class SnappBoxCreateOrder {
     }
 
     private function snappb_get_order_details($order, int $order_id, $voucherCode): array {
+        $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
+        $settings            = \maybe_unserialize($settings_serialized);
+        ($settings['ondelivery'] == 'yes') ? $deliveryPayemnt = 2 : $deliveryPayemnt = 1;
         return [
             'city'                             => $order->get_meta('customer_city'),
             'customerWalletType'               => null,
@@ -121,15 +124,30 @@ class SnappBoxCreateOrder {
             'isReturn'                         => false,
             'loadAssistance'                   => false,
             'pricingId'                        => '',
-            'sequenceNumberDeliveryCollection' => 1,
+            'sequenceNumberDeliveryCollection' => $deliveryPayemnt,
             'customerEmail'                    => $order->get_billing_email(),
             'customerName'                     => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-            'customerPhonenumber'              => $order->get_billing_phone(),
+            'customerPhonenumber'              => $this->snappb_normalize_phone_number($order->get_billing_phone()),
             'voucherCode'                      => $voucherCode,
             'waitingTime'                      => 0,
         ];
     }
-
+    private function snappb_normalize_phone_number($phone) {
+        $phone = trim($phone);
+        $phone = str_replace(' ', '', $phone);
+    
+        if (strpos($phone, '+98') === 0) {
+            $phone = '0' . substr($phone, 3);
+        }
+        elseif (strpos($phone, '98') === 0) {
+            $phone = '0' . substr($phone, 2);
+        }
+        else{
+            $phone = $phone;
+        }
+        return $phone;
+    }
+    
     private function snappb_get_pickup_details(): array {
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);

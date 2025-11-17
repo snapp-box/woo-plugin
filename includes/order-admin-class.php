@@ -152,7 +152,8 @@ class SnappBoxOrderAdmin
             $snappboxOrder = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
             $day           = $order->get_meta('_snappbox_day');
             $time          = $order->get_meta('_snappbox_time');
-
+            $getResponse   = $snappboxOrder ? \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true) : null;
+            $onDeliver = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
             if ($day && $time) {
                 $ts        = $day ? \strtotime($day . ' 12:00:00') : false;
                 $dateLabel = $ts ? \wp_date('l j F Y', $ts) : $day;
@@ -164,8 +165,13 @@ class SnappBoxOrderAdmin
                 </div>
             <?php
             }
-
-            if (! $snappboxOrder) :
+            if ($onDeliver['ondelivery'] == 'yes'){?>
+            <div class="snappbox-order-container clearfix">
+                    <p><b><?php \esc_html_e('SnappBox Payment after delivery', 'snappbox'); ?></b></p>
+                </div>
+            <?php
+            }
+            if (! $snappboxOrder || $getResponse->status == 'CANCELLED' ) :
             ?>
                 <div class="sb-modal" id="sb-pricing-modal" hidden>
                     <div class="sb-modal__box">
@@ -213,9 +219,6 @@ class SnappBoxOrderAdmin
                 </div>
                 <?php
             else :
-                $order_meta_id = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
-                $getResponse   = $order_meta_id ? \get_post_meta($order_meta_id, '_snappbox_last_api_response', true) : null;
-
                 if ($getResponse && isset($getResponse->canCancel) && (int) $getResponse->canCancel === 1) : ?>
                     <div class="snappbox-cancel-container sb-actions-row">
                         <button id="snappbox-cancel-order"
@@ -296,17 +299,16 @@ class SnappBoxOrderAdmin
 
             $settings      = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
             $stored_cities = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
-
-            if (! $state) {
-                \wp_send_json_error('استان / شهر فعال نیست');
-            }
-            if (! \in_array($state, $stored_cities, true)) {
-                \wp_send_json_error('ارسال اسنپ‌باکس برای این شهر فعال نیست.');
-            }
+            
+            // if (empty($state)) {
+            //     \wp_send_json_error('استان / شهر فعال نیست');
+            // }
+            // if (! \in_array($state, $stored_cities, true)) {
+            //     \wp_send_json_error('ارسال اسنپ‌باکس برای این شهر فعال نیست.');
+            // }
 
             $pricing_api = new \Snappbox\Api\SnappBoxPriceHandler();
-            $response    = $pricing_api->snappb_get_pricing($order_id, $state_code, $voucherCode);
-
+            $response    = $pricing_api->snappb_get_pricing($order_id, $state_code, '', '', '',  $voucherCode);
             if (! empty($response['success']) && isset($response['data']['finalCustomerFare'])) {
                 \wp_send_json_success([
                     'finalCustomerFare' => $response['data']['finalCustomerFare'],

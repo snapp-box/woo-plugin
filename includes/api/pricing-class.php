@@ -16,11 +16,18 @@ class SnappBoxPriceHandler {
         \add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'snappb_handle_create_order']);
     }
 
-    public function snappb_get_pricing($orderId, $state_code, $voucherCode) {
-        $latitude  = \get_post_meta($orderId, '_customer_latitude', true);
-        $longitude = \get_post_meta($orderId, '_customer_longitude', true);
-        $city      = \get_post_meta($orderId, 'customer_city', true);
-        $order     = \wc_get_order($orderId);
+    public function snappb_get_pricing($orderId, $cityName, $state_code, $customerLat, $customerLong, $voucherCode) {
+        if($orderId){
+            $latitude  = \get_post_meta($orderId, '_customer_latitude', true);
+            $longitude = \get_post_meta($orderId, '_customer_longitude', true);
+            $city      = \get_post_meta($orderId, 'customer_city', true);
+            $order     = \wc_get_order($orderId);
+        }
+        else{
+            $latitude  = $customerLat;
+            $longitude = $customerLong;
+            $city      = $cityName;
+        }
 
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
@@ -93,7 +100,7 @@ class SnappBoxPriceHandler {
                     'address'              => $order ? $order->get_billing_address_1() : '',
                     'comment'              => '',
                     'contactName'          => $order ? ($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()) : '',
-                    'contactPhoneNumber'   => $order ? $order->get_billing_phone() : '',
+                    'contactPhoneNumber'   => $order ? $this->snappb_phone_number($order->get_billing_phone()) : '',
                     'plate'                => '',
                     'unit'                 => '',
                     'latitude'             => $latitude,
@@ -110,7 +117,7 @@ class SnappBoxPriceHandler {
                 ],
             ],
         ];
-
+        
         $response = \wp_remote_post($this->apiUrl, [
             'method'  => 'POST',
             'headers' => [
@@ -127,18 +134,34 @@ class SnappBoxPriceHandler {
 
         $response_body = \json_decode(\wp_remote_retrieve_body($response), true);
 
-        if (!empty($response_body['finalCustomerFare']) && empty($response_body['voucherMessage'])) {
-            \wp_send_json_success(['finalCustomerFare' => $response_body['finalCustomerFare']]);
-        } elseif (!empty($response_body['voucherMessage']) && $response_body['voucherMessage'] === 'SUCCESS') {
-            \wp_send_json_success([
-                'finalCustomerFare' => $response_body['finalCustomerFare'] ?? null,
-                'totalFare'         => $response_body['totalFare'] ?? null,
-            ]);
-        } elseif (!empty($response_body['voucherMessage']) && $response_body['voucherMessage'] !== 'SUCCESS') {
-            \wp_send_json_error(['voucherMessage' => $response_body['voucherMessage']], 400);
+        if (!empty($response_body['finalCustomerFare'])) {
+            return [
+                'success' => true,
+                'data' => $response_body
+            ];
         } else {
-            \wp_send_json_error($response_body, 400);
+            return [
+                'success' => false,
+                'data' => $response_body
+            ];
         }
+        
+    }
+
+    private function snappb_phone_number($phone) {
+        $phone = trim($phone);
+        $phone = str_replace(' ', '', $phone);
+    
+        if (strpos($phone, '+98') === 0) {
+            $phone = '0' . substr($phone, 3);
+        }
+        elseif (strpos($phone, '98') === 0) {
+            $phone = '0' . substr($phone, 2);
+        }
+        else{
+            $phone = $phone;
+        }
+        return $phone;
     }
 
     public function snappb_handle_create_order() {
@@ -146,6 +169,9 @@ class SnappBoxPriceHandler {
         $order_id     = isset($_POST['order_id']) ? \absint( \wp_unslash( $_POST['order_id'] ) ) : 0;
         $state_code   = isset($_POST['state_code']) ? \sanitize_text_field( \wp_unslash( $_POST['state_code'] ) ) : '';
         $voucher_code = isset($_POST['voucher_code']) ? \sanitize_text_field( \wp_unslash( $_POST['voucher_code'] ) ) : '';
-        return $this->snappb_get_pricing($order_id, $state_code, $voucher_code);
+        $customerLat = isset($_POST['_customer_latitude']) ? \sanitize_text_field( \wp_unslash( $_POST['_customer_latitude'] ) ) : '';
+        $customerLong = isset($_POST['_customer_longitude']) ? \sanitize_text_field( \wp_unslash( $_POST['_customer_longitude'] ) ) : '';
+        $cityName = isset($_POST['customer_city']) ? \sanitize_text_field( \wp_unslash( $_POST['customer_city'] ) ) : '';
+        return $this->snappb_get_pricing($order_id, $cityName, $state_code, $customerLat, $customerLong, $voucher_code);
     }
 }

@@ -17,7 +17,9 @@
 
 namespace Snappbox;
 
-if ( ! defined('ABSPATH') ) {
+use WpOrg\Requests\Response;
+
+if (! defined('ABSPATH')) {
     exit;
 }
 
@@ -54,46 +56,104 @@ require_once SNAPPBOX_DIR . 'includes/order-admin-class.php';
 require_once SNAPPBOX_DIR . 'includes/schedule-modal.php';
 require_once SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php';
 require_once SNAPPBOX_DIR . 'includes/quick-setup-wizard.php';
+require_once SNAPPBOX_DIR . 'includes/api/near-by-class.php';
+require_once SNAPPBOX_DIR . 'includes/api/snapp-reverse-class.php';
 
 
-function snappbox_init() {
+
+function snappbox_init()
+{
     $currentUser = wp_get_current_user();
 
-    if ( class_exists('\Snappbox\SnappBoxOrderAdmin') ) {
+    if (class_exists('\Snappbox\SnappBoxOrderAdmin')) {
         new \Snappbox\SnappBoxOrderAdmin();
     }
-    if ( class_exists('\SnappBoxCities') ) {
+    if (class_exists('\SnappBoxCities')) {
         new \Snappbox\Api\SnappBoxCities();
     }
-    if ( class_exists('\Snappbox\SnappBoxCheckout') ) {
+    if (class_exists('\Snappbox\SnappBoxCheckout')) {
         new \Snappbox\SnappBoxCheckout();
     }
-    if ( class_exists('\Snappbox\SnappBoxWcOrderColumn') ) {
+    if (class_exists('\Snappbox\SnappBoxWcOrderColumn')) {
         new \Snappbox\SnappBoxWcOrderColumn();
     }
-    if ( class_exists('\WC_Payment_Gateway') && SNAPPBOX_ONDELIVERY === 'yes' ) {
-        require_once SNAPPBOX_DIR . 'includes/payment-method.php';
-        \Snappbox\SnappBoxOnDeliveryGateway::snappb_register();
-    }
-    if ( class_exists('\Snappbox\SnappBoxScheduleModal') ) {
+    if (class_exists('\Snappbox\SnappBoxScheduleModal')) {
         new \Snappbox\SnappBoxScheduleModal();
     }
 
-    if ( class_exists('\WC_Shipping_Method') ) {
+    if (class_exists('\WC_Shipping_Method')) {
         require_once SNAPPBOX_DIR . 'includes/shipping-method-class.php';
         add_action('woocommerce_shipping_init', function () {
             \Snappbox\SnappBoxShippingMethod::register();
         });
     }
-
-    if ( ! function_exists('register_block_type') ) {
+    if (class_exists('\Snappbox\Api\SnappBoxNearBy')) {
+        new \Snappbox\Api\SnappBoxNearBy();
+    }
+    if (! function_exists('register_block_type')) {
         return;
     }
 }
 add_action('plugins_loaded', __NAMESPACE__ . '\\snappbox_init');
 
+add_action('wp_ajax_snapp_nearby',  __NAMESPACE__ . '\snappb_ajax_nearby');
+add_action('wp_ajax_nopriv_snapp_nearby',  __NAMESPACE__ . '\\snappb_ajax_nearby');
 
-function snappbox_activate() {
+function snappb_ajax_nearby()
+{
+    $lat = isset($_POST['lat']) ? floatval(sanitize_text_field(wp_unslash($_POST['lat']))) : null;
+    $lng = isset($_POST['lng']) ? floatval(sanitize_text_field(wp_unslash($_POST['lng']))) : null;
+    
+    if ($lat === null || $lng === null) {
+        wp_send_json_error(['message' => 'Invalid coordinates']);
+    }
+
+    $api = new \Snappbox\Api\SnappBoxNearBy();
+
+    $response = $api->snappb_check_nearby([
+        'latitude'  => $lat,
+        'longitude' => $lng,
+        'zoom'      => 15,
+    ]);
+
+    $items = $response['response'] ?? [];
+    $found_valid = false;
+
+    foreach ($items as $res) {
+        if (
+            isset($res['apiValue'], $res['count']) &&
+            $res['apiValue'] === 'bike-without-box' &&
+            $res['count'] > -1
+        ) {
+            $found_valid = true;
+            break;
+        }
+    }
+    if (!class_exists('\Snappbox\Api\SnappMapsReverseGeocoder')) {
+        wp_send_json_error(['message' => 'Reverse geocoder class not found']);
+    }
+    
+    if (!$found_valid) {
+        wp_send_json_error(['message' => __('Your location is NOT supported by SnappBox', 'snappbox')]);
+    }
+    else{
+        snappbox_store_city( $lat, $lng);
+    }
+    
+}
+function snappbox_store_city($lat, $lng)
+{
+    $settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
+    $settings = maybe_unserialize($settings_serialized);
+    $settings['snappbox_latitude'] = $lat;
+    $settings['snappbox_longitude'] = $lng;
+    update_option('woocommerce_snappbox_shipping_method_settings', $settings);
+}
+
+
+
+function snappbox_activate()
+{
     update_option('snappbox_qs_do_activation_redirect', 'yes', false);
     delete_transient('woocommerce_shipping_zones_cache');
 }
@@ -101,18 +161,19 @@ function snappbox_activate() {
 
 
 add_action('before_woocommerce_init', function () {
-    if ( class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class) ) {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
     }
 });
 
 
 add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\snappbox_enqueue_leaflet_map_js');
-function snappbox_enqueue_leaflet_map_js() {
-    if ( ! is_checkout() ) {
+function snappbox_enqueue_leaflet_map_js()
+{
+    if (! is_checkout()) {
         return;
     }
-
+    
     wp_enqueue_script(
         'leaflet',
         trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
@@ -146,14 +207,14 @@ add_action('woocommerce_after_order_notes', function () {
 add_action('woocommerce_checkout_create_order', function ($order, $data) {
     if (
         empty($_POST['snappbox_geo_nonce'])
-        || ! wp_verify_nonce( sanitize_text_field( wp_unslash($_POST['snappbox_geo_nonce']) ), 'snappbox_geo_meta')
+        || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['snappbox_geo_nonce'])), 'snappbox_geo_meta')
     ) {
         return;
     }
 
-    if ( isset($_POST['customer_latitude'], $_POST['customer_longitude']) ) {
-        $lat = (float) sanitize_text_field( wp_unslash($_POST['customer_latitude']) );
-        $lng = (float) sanitize_text_field( wp_unslash($_POST['customer_longitude']) );
+    if (isset($_POST['customer_latitude'], $_POST['customer_longitude'])) {
+        $lat = (float) sanitize_text_field(wp_unslash($_POST['customer_latitude']));
+        $lng = (float) sanitize_text_field(wp_unslash($_POST['customer_longitude']));
 
         if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
             $order->update_meta_data('_customer_latitude',  $lat);
@@ -163,21 +224,22 @@ add_action('woocommerce_checkout_create_order', function ($order, $data) {
 }, 10, 2);
 
 
-function snappbox_admin_notice() {
+function snappbox_admin_notice()
+{
     static $notice_displayed = false;
 
-    if ( $notice_displayed || ! is_admin() ) {
+    if ($notice_displayed || ! is_admin()) {
         return;
     }
-    if ( isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+    if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         return;
     }
 
     $screen = get_current_screen();
-    if ( isset($screen->id) && ( $screen->id === 'dashboard' || $screen->id === 'woocommerce_page_wc-settings' ) ) {
+    if (isset($screen->id) && ($screen->id === 'dashboard' || $screen->id === 'woocommerce_page_wc-settings')) {
         $notice_displayed = true;
 
-        if ( class_exists('\Snappbox\SnappBoxShippingMethod') && class_exists('\Snappbox\Api\SnappBoxWalletBalance') ) {
+        if (class_exists('\Snappbox\SnappBoxShippingMethod') && class_exists('\Snappbox\Api\SnappBoxWalletBalance')) {
             $newNoticeObj = new  \Snappbox\SnappBoxShippingMethod();
             $walletObj = new \Snappbox\Api\SnappBoxWalletBalance();
             $walletObjResult = $walletObj->snappb_check_balance();
@@ -189,13 +251,15 @@ add_action('admin_notices', __NAMESPACE__ . '\\snappbox_admin_notice');
 
 
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), __NAMESPACE__ . '\\snappbox_settings_link');
-function snappbox_settings_link($links) {
-    $settings_link = '<a href="' . esc_url( get_admin_url(null, 'admin.php?page=wc-settings&tab=shipping&section=snappbox_shipping_method') ) . '">' . esc_html__('Settings', 'snappbox') . '</a>';
+function snappbox_settings_link($links)
+{
+    $settings_link = '<a href="' . esc_url(get_admin_url(null, 'admin.php?page=wc-settings&tab=shipping&section=snappbox_shipping_method')) . '">' . esc_html__('Settings', 'snappbox') . '</a>';
     array_unshift($links, $settings_link);
     return $links;
 }
 
 add_action('add_meta_boxes', __NAMESPACE__ . '\\snappbox_remove_shipping_address_admin_order_page', 100);
-function snappbox_remove_shipping_address_admin_order_page() {
+function snappbox_remove_shipping_address_admin_order_page()
+{
     remove_action('woocommerce_admin_order_data_after_shipping_address', 'woocommerce_admin_shipping_address');
 }

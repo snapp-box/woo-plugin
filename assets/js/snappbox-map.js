@@ -138,7 +138,7 @@
       centerPinBtn.addEventListener("click", function () {
         var c = map.getCenter();
         updateMarkerTo(c.lat, c.lng);
-        onSet(c.lat, c.lng);      
+        onSet(c.lat, c.lng); 
       });
     }
 

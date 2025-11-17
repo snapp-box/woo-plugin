@@ -1,55 +1,72 @@
-(function($){
-    if (typeof SNAPPB_QS !== 'undefined' && SNAPPB_QS.isStep3 && typeof maplibregl !== 'undefined') {
-      var rtlPluginUrl = SNAPPB_QS.rtlPluginUrl;
-  
-      try {
-        maplibregl.setRTLTextPlugin(rtlPluginUrl, true);
-      } catch(e) {
-        console.error('RTL plugin failed to load', e);
-      }
-  
-      var latInput = document.getElementById('sb_lat');
-      var lngInput = document.getElementById('sb_lng');
-      var mapStyle = SNAPPB_QS.mapStyle || '';
-  
-      var lat = parseFloat(latInput ? latInput.value : '0') || 0;
-      var lng = parseFloat(lngInput ? lngInput.value : '0') || 0;
-  
-      var map = new maplibregl.Map({
-        container: 'sbqs-map',
-        style: mapStyle,
-        center: [lng, lat],
-        zoom: 16,
-        attributionControl: true
-      });
-  
-      try {
-        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-      } catch(e){}
-  
-      function updateInputsFrom(center) {
-        if (!latInput || !lngInput) return;
-        latInput.value = Number(center.lat).toFixed(7);
-        lngInput.value = Number(center.lng).toFixed(7);
-      }
-      function setToCenter() {
-        updateInputsFrom(map.getCenter());
-      }
-  
-      map.on('load', setToCenter);
-      map.on('moveend', setToCenter);
-  
-      map.on('click', function(e){
-        map.easeTo({ center: e.lngLat });
-        updateInputsFrom(e.lngLat);
-      });
-  
-      var pinBtn = document.getElementById('sbqs-center-pin');
-      if (pinBtn) {
-        pinBtn.addEventListener('click', function(){
-          setToCenter();
-        });
-      }
+(function ($) {
+  if (typeof SNAPPB_QS !== 'undefined' && SNAPPB_QS.isStep3 && typeof maplibregl !== 'undefined') {
+    var rtlPluginUrl = SNAPPB_QS.rtlPluginUrl;
+
+    try {
+      maplibregl.setRTLTextPlugin(rtlPluginUrl, true);
+    } catch (e) {
+      console.error('RTL plugin failed to load', e);
     }
-  })(jQuery);
-  
+
+    var latInput = document.getElementById('sb_lat');
+    var lngInput = document.getElementById('sb_lng');
+    var mapStyle = SNAPPB_QS.mapStyle || '';
+
+    var lat = parseFloat(latInput ? latInput.value : '0') || 0;
+    var lng = parseFloat(lngInput ? lngInput.value : '0') || 0;
+
+    var map = new maplibregl.Map({
+      container: 'sbqs-map',
+      style: mapStyle,
+      center: [lng, lat],
+      zoom: 16,
+      attributionControl: true
+    });
+
+    try {
+      map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    } catch (e) { }
+
+    function updateInputsFrom(center) {
+      if (!latInput || !lngInput) return;
+      latInput.value = Number(center.lat).toFixed(7);
+      lngInput.value = Number(center.lng).toFixed(7);
+    }
+    function setToCenter() {
+      updateInputsFrom(map.getCenter());
+      jQuery.post(ajaxurl, {
+        action: "snapp_nearby",
+        lat: map.getCenter().lat,
+        lng: map.getCenter().lng
+      },
+        function (res) {
+          if (res && res.data && res.data.message) {
+            jQuery("#snapp-modal").css("display", "block");
+            jQuery("#snapp-modal p").html(res.data.message);
+            jQuery(".sbqs-btn[type='submit']").attr('disabled', 'disabled');
+          }
+          else{
+            jQuery("#snapp-modal").css("display", "none");  
+            jQuery(".sbqs-btn[type='submit']").removeAttr('disabled');          
+          }
+        });
+    }
+
+    map.on('load', setToCenter);
+    map.on('moveend', setToCenter);
+
+    map.on('click', function (e) {
+      map.easeTo({ center: e.lngLat });
+      updateInputsFrom(e.lngLat);
+    });
+
+    var pinBtn = document.getElementById('sbqs-center-pin');
+    if (pinBtn) {
+      pinBtn.addEventListener('click', function () {
+        setToCenter();
+      });
+    }
+  }
+})(jQuery);
+jQuery(document).on("click", ".snapp-close", function () { jQuery("#snapp-modal").fadeOut(200); });
+jQuery(document).on("click", "#snapp-modal", function (e) { if (e.target.id === "snapp-modal") { jQuery("#snapp-modal").fadeOut(200); } });
