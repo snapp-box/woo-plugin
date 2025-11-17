@@ -213,12 +213,12 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 'default'     => 'yes',
             ],
 
-            'sandbox' => [
-                'title'       => __('Enable Test Mode', 'snappbox'),
-                'type'        => 'checkbox',
-                'description' => __('Enable test mode for this plugin', 'snappbox'),
-                'default'     => 'no',
-            ],
+            // 'sandbox' => [
+            //     'title'       => __('Enable Test Mode', 'snappbox'),
+            //     'type'        => 'checkbox',
+            //     'description' => __('Enable test mode for this plugin', 'snappbox'),
+            //     'default'     => 'no',
+            // ],
 
             // 'fixed_price' => [
             //     'title'       => \__('Fixed Price', 'snappbox'),
