@@ -151,7 +151,6 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
       // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only access.
       $raw = isset($_GET['step']) ? \sanitize_text_field(\wp_unslash($_GET['step'])) : '1';
       $s   = (int) $raw;
-      // Wizard now has 4 steps
       return \max(1, \min(4, $s));
     }
 
@@ -226,7 +225,12 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
 
           <button
             type="submit"
-            class="button button-primary sbqs-btn">
+            class="button button-primary sbqs-btn"
+            <?php if ($step  == 2){?> disabled="disabled" <?php }?>
+            <?php if($step  == 1)  {?>onclick="ym(105087875,'reachGoal',' step-1'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>
+            <?php if($step  == 2)  {?>onclick="ym(105087875,'reachGoal','step-2'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>
+            <?php if($step  == 3)  {?>onclick="ym(105087875,'reachGoal','step-3'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>
+            <?php if($is_last)  {?>onclick="ym(105087875,'reachGoal',' step-4'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>>
             <?php echo esc_html($is_last ? _x('Finish', 'Button', 'snappbox') : _x('Save & Continue', 'Button', 'snappbox')); ?>
           </button>
         </div>
@@ -237,9 +241,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
 
     private function snappb_render_step_1(): void
     {
-      // Storing WooCommerce shipping method settings uses the official option key pattern:
-      // woocommerce_{method_id}_settings
-      // I defined wc_option_key at the first of my class
+      
       $settings = \maybe_unserialize(\get_option($this->wc_option_key));
       $api      = \is_array($settings) ? ($settings['snappbox_api'] ?? '') : '';
 
@@ -458,7 +460,6 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
             break;
           }
 
-          // Step 4: Other settings & finish (previously step 5)
         case 4: {
             $settings['ondelivery'] = (isset($_POST['ondelivery']) && $_POST['ondelivery'] === 'yes') ? 'yes' : 'no';
 

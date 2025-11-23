@@ -59,8 +59,8 @@ class SnappBoxCreateOrder {
         if (! isset($_POST['order_id'])) {
             \wp_send_json_error(['message' => 'Order ID is missing'], 400);
         }
-
-        $voucherCode = \sanitize_text_field(wp_unslash(isset($_POST['voucher_code'])) ?? '');
+        
+        $voucherCode = \sanitize_text_field( \wp_unslash( $_POST['voucher_code'] ?? '' ) );
         $order_id    = (int) \sanitize_text_field(wp_unslash($_POST['order_id']));
         $order       = \wc_get_order($order_id);
 
@@ -111,27 +111,6 @@ class SnappBoxCreateOrder {
         }
         return $items;
     }
-
-    private function snappb_get_order_details($order, int $order_id, $voucherCode): array {
-        $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
-        $settings            = \maybe_unserialize($settings_serialized);
-        ($settings['ondelivery'] == 'yes') ? $deliveryPayemnt = 2 : $deliveryPayemnt = 1;
-        return [
-            'city'                             => $order->get_meta('customer_city'),
-            'customerWalletType'               => null,
-            'deliveryCategory'                 => 'bike-without-box',
-            'deliveryFarePaymentType'          => 'cod',
-            'isReturn'                         => false,
-            'loadAssistance'                   => false,
-            'pricingId'                        => '',
-            'sequenceNumberDeliveryCollection' => $deliveryPayemnt,
-            'customerEmail'                    => $order->get_billing_email(),
-            'customerName'                     => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-            'customerPhonenumber'              => $this->snappb_normalize_phone_number($order->get_billing_phone()),
-            'voucherCode'                      => $voucherCode,
-            'waitingTime'                      => 0,
-        ];
-    }
     private function snappb_normalize_phone_number($phone) {
         $phone = trim($phone);
         $phone = str_replace(' ', '', $phone);
@@ -147,15 +126,39 @@ class SnappBoxCreateOrder {
         }
         return $phone;
     }
+    private function snappb_get_order_details($order, int $order_id, $voucherCode): array {
+        $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
+        $settings            = \maybe_unserialize($settings_serialized);
+        ($settings['ondelivery'] == 'yes') ? $deliveryPayemnt = 2 : $deliveryPayemnt = 1;
+        $phoneNumber = strval($this->snappb_normalize_phone_number($order->get_billing_phone()));
+        return [
+            'city'                             => $order->get_meta('customer_city'),
+            'customerWalletType'               => null,
+            'deliveryCategory'                 => 'bike-without-box',
+            'deliveryFarePaymentType'          => 'cod',
+            'isReturn'                         => false,
+            'loadAssistance'                   => false,
+            'pricingId'                        => '',
+            'sequenceNumberDeliveryCollection' => $deliveryPayemnt,
+            'customerEmail'                    => $order->get_billing_email(),
+            'customerName'                     => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+            'customerPhonenumber'              => $phoneNumber,
+            'voucherCode'                      => $voucherCode,
+            'waitingTime'                      => 0,
+        ];
+        
+    }
+    
     
     private function snappb_get_pickup_details(): array {
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
+        $contactPhoneNumber = $this->snappb_normalize_phone_number($settings['snappbox_store_phone']);
         return [[
             'id'                  => null,
             'contactName'         => \get_option('snappbox_store_name', ''),
             'address'             => \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
-            'contactPhoneNumber'  => $settings['snappbox_store_phone'] ?? '',
+            'contactPhoneNumber'  => $contactPhoneNumber ?? '',
             'plate'               => '',
             'sequenceNumber'      => 1,
             'unit'                => '',
@@ -178,7 +181,7 @@ class SnappBoxCreateOrder {
             'id'                               => null,
             'contactName'                      => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
             'address'                          => $order->get_billing_address_1(),
-            'contactPhoneNumber'               => $order->get_billing_phone(),
+            'contactPhoneNumber'               => $this->snappb_normalize_phone_number($order->get_billing_phone()),
             'editMerchandiseInfo'              => null,
             'plate'                            => '',
             'sequenceNumber'                   => 2,

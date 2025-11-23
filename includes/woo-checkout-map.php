@@ -3,12 +3,12 @@
 
 namespace Snappbox;
 
-if ( ! defined('ABSPATH') ) {
+if (! defined('ABSPATH')) {
     exit;
 }
 
-require_once( SNAPPBOX_DIR . 'includes/api/cities-class.php' );
-require_once( SNAPPBOX_DIR . 'includes/api/create-order-class.php' );
+require_once(SNAPPBOX_DIR . 'includes/api/cities-class.php');
+require_once(SNAPPBOX_DIR . 'includes/api/create-order-class.php');
 
 class SnappBoxCheckout
 {
@@ -75,35 +75,35 @@ class SnappBoxCheckout
     {
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings = \maybe_unserialize($settings_serialized);
-        if ( empty($settings['enabled']) || $settings['enabled'] !== 'yes' ) return;
-        if ( empty($settings['snappbox_latitude']) || empty($settings['snappbox_longitude']) ) return;
+        if (empty($settings['enabled']) || $settings['enabled'] !== 'yes') return;
+        if (empty($settings['snappbox_latitude']) || empty($settings['snappbox_longitude'])) return;
         $mapTitle = !empty($settings['map_title']) ? $settings['map_title'] : '';
 
 
-        ?>
+?>
         <div id="snappbox-map-section" style="display:none;">
             <h3><?php \esc_html_e('Select your location', 'snappbox'); ?></h3>
-            <?php if(!empty($mapTitle)) {?>
-                <h3><?php esc_html($mapTitle);?></h3>
-            <?php }?>
+            <?php if (!empty($mapTitle)) { ?>
+                <h3><?php esc_html($mapTitle); ?></h3>
+            <?php } ?>
             <div id="osm-map" style="height:400px; margin-bottom:12px; z-index:1; position:relative;">
                 <button id="center-pin" type="button" aria-label="<?php \esc_attr_e('Set this location', 'snappbox'); ?>"></button>
             </div>
 
-            <input type="hidden" id="customer_latitude"  name="customer_latitude" />
+            <input type="hidden" id="customer_latitude" name="customer_latitude" />
             <input type="hidden" id="customer_longitude" name="customer_longitude" />
-            <input type="hidden" id="customer_city"      name="customer_city" />
-            <input type="hidden" id="customer_address"   name="customer_address" />
-            <input type="hidden" id="customer_postcode"  name="customer_postcode" />
-            <input type="hidden" id="customer_state"     name="customer_state" />
-            <input type="hidden" id="customer_country"   name="customer_country" />
+            <input type="hidden" id="customer_city" name="customer_city" />
+            <input type="hidden" id="customer_address" name="customer_address" />
+            <input type="hidden" id="customer_postcode" name="customer_postcode" />
+            <input type="hidden" id="customer_state" name="customer_state" />
+            <input type="hidden" id="customer_country" name="customer_country" />
 
             <?php \wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD); ?>
         </div>
-        <?php
+<?php
     }
 
-  
+
     private function snappb_get_selected_shipping_methods_from_post(): array
     {
         $methods = [];
@@ -115,9 +115,9 @@ class SnappBoxCheckout
                 'woocommerce-process_checkout'
             )
         ) {
-            if ( isset($_POST['shipping_method']) ) {
+            if (isset($_POST['shipping_method'])) {
                 $raw = \sanitize_text_field(wp_unslash($_POST['shipping_method']));
-                if ( ! \is_array($raw) ) {
+                if (! \is_array($raw)) {
                     $raw = [$raw];
                 }
                 $methods = \wc_clean($raw);
@@ -130,9 +130,9 @@ class SnappBoxCheckout
             }
         }
 
-        if ( empty($methods) && function_exists('WC') && null !== \WC()->session ) {
+        if (empty($methods) && function_exists('WC') && null !== \WC()->session) {
             $chosen = \WC()->session->get('chosen_shipping_methods', []);
-            if ( ! \is_array($chosen) ) {
+            if (! \is_array($chosen)) {
                 $chosen = [$chosen];
             }
             $methods = \array_values(\array_filter(\array_map(
@@ -150,10 +150,13 @@ class SnappBoxCheckout
     {
         $selected_methods = $this->snappb_get_selected_shipping_methods_from_post();
         $snapp_selected = false;
-        foreach ( $selected_methods as $m ) {
-            if ( \strpos((string) $m, 'snappbox_shipping_method') === 0 ) { $snapp_selected = true; break; }
+        foreach ($selected_methods as $m) {
+            if (\strpos((string) $m, 'snappbox_shipping_method') === 0) {
+                $snapp_selected = true;
+                break;
+            }
         }
-        if ( ! $snapp_selected ) return;
+        if (! $snapp_selected) return;
 
         if (
             empty($_POST[self::NONCE_FIELD]) ||
@@ -162,7 +165,7 @@ class SnappBoxCheckout
             return;
         }
 
-        if ( isset($_POST['customer_latitude'], $_POST['customer_longitude']) ) {
+        if (isset($_POST['customer_latitude'], $_POST['customer_longitude'])) {
             $latitude        = (float) \sanitize_text_field(\wp_unslash($_POST['customer_latitude']));
             $longitude       = (float) \sanitize_text_field(\wp_unslash($_POST['customer_longitude']));
             $customerCity    = isset($_POST['customer_city'])     ? \sanitize_text_field(\wp_unslash($_POST['customer_city']))     : '';
@@ -171,7 +174,7 @@ class SnappBoxCheckout
             $customerState   = isset($_POST['customer_state'])    ? \sanitize_text_field(\wp_unslash($_POST['customer_state']))    : '';
             $customerCountry = isset($_POST['customer_country'])  ? \sanitize_text_field(\wp_unslash($_POST['customer_country']))  : '';
 
-            if ( $latitude >= -90 && $latitude <= 90 && $longitude >= -180 && $longitude <= 180 ) {
+            if ($latitude >= -90 && $latitude <= 90 && $longitude >= -180 && $longitude <= 180) {
                 \update_post_meta($order_id, '_customer_latitude',  $latitude);
                 \update_post_meta($order_id, '_customer_longitude', $longitude);
             }
@@ -188,10 +191,13 @@ class SnappBoxCheckout
     {
         $selected_methods = $this->snappb_get_selected_shipping_methods_from_post();
         $snapp_selected = false;
-        foreach ( $selected_methods as $m ) {
-            if ( \strpos((string) $m, 'snappbox_shipping_method') === 0 ) { $snapp_selected = true; break; }
+        foreach ($selected_methods as $m) {
+            if (\strpos((string) $m, 'snappbox_shipping_method') === 0) {
+                $snapp_selected = true;
+                break;
+            }
         }
-        if ( ! $snapp_selected ) return;
+        if (! $snapp_selected) return;
 
         if (
             empty($_POST[self::NONCE_FIELD]) ||
@@ -201,7 +207,7 @@ class SnappBoxCheckout
             return;
         }
 
-        if ( empty($_POST['customer_latitude']) || empty($_POST['customer_longitude']) ) {
+        if (empty($_POST['customer_latitude']) || empty($_POST['customer_longitude'])) {
             \wc_add_notice(\__('Please select your location on the map.', 'snappbox'), 'error');
         }
     }
@@ -209,7 +215,26 @@ class SnappBoxCheckout
     public function snappb_render_snappbox_dates_row()
     {
         $schedule = \get_option('snappbox_schedule', []);
-        if ( empty($schedule) || ! \is_array($schedule) ) return;
+        if (empty($schedule) || !is_array($schedule)) {
+            return;
+        }
+
+        $has_valid_time = false;
+
+        foreach ($schedule as $day => $times) {
+            if (!empty($times) && is_array($times)) {
+                foreach ($times as $t) {
+                    if (!empty($t)) {
+                        $has_valid_time = true;
+                        break 2; 
+                    }
+                }
+            }
+        }
+
+        if (!$has_valid_time) {
+            return;
+        }
 
         echo '<tr class="snappbox-delivery-tr" style="display:none;">';
         echo '  <td colspan="2" style="padding:0;border:0;">';
@@ -225,7 +250,7 @@ class SnappBoxCheckout
 
     public function snappb_add_checkout_scripts()
     {
-        if ( ! \is_checkout() ) return;
+        if (! \is_checkout()) return;
 
         \wp_enqueue_style('maplibre');
         \wp_enqueue_style('snappbox-checkout');
@@ -260,29 +285,29 @@ class SnappBoxCheckout
         $candidates    = [];
         $times_by_date = [];
 
-        if ( ! empty($weekly) ) {
+        if (! empty($weekly)) {
             $tz        = \function_exists('wp_timezone') ? \wp_timezone() : new \DateTimeZone(\wp_timezone_string());
             $now_ts    = \current_time('timestamp');
             $lookahead = 60;
 
-            for ( $i = 0; $i < $lookahead && \count($candidates) < 10; $i++ ) {
+            for ($i = 0; $i < $lookahead && \count($candidates) < 10; $i++) {
                 $ts = $now_ts + ($i * DAY_IN_SECONDS);
                 $dt = new \DateTime('@' . $ts);
                 $dt->setTimezone($tz);
 
                 $w = (int) $dt->format('w');
-                if ( empty($weekly[$w]) ) continue;
+                if (empty($weekly[$w])) continue;
 
                 $slots = [];
-                foreach ( (array) $weekly[$w] as $slot ) {
-                    if ( \is_array($slot) && isset($slot['start'], $slot['end']) ) {
+                foreach ((array) $weekly[$w] as $slot) {
+                    if (\is_array($slot) && isset($slot['start'], $slot['end'])) {
                         $slots[] = \trim($slot['start']) . ' - ' . \trim($slot['end']);
-                    } elseif ( \is_string($slot) && $slot !== '' ) {
+                    } elseif (\is_string($slot) && $slot !== '') {
                         $slots[] = \trim($slot);
                     }
                 }
                 $slots = \array_values(\array_unique(\array_filter($slots)));
-                if ( empty($slots) ) continue;
+                if (empty($slots)) continue;
 
                 $date_iso = $dt->format('Y-m-d');
                 $candidates[] = [
@@ -306,22 +331,27 @@ class SnappBoxCheckout
     private function snappb_sb_normalize_schedule_to_w(array $schedule): array
     {
         $name_to_w = [
-            'sunday'    => 0, 'monday' => 1, 'tuesday' => 2, 'wednesday' => 3,
-            'thursday'  => 4, 'friday' => 5, 'saturday' => 6,
+            'sunday'    => 0,
+            'monday' => 1,
+            'tuesday' => 2,
+            'wednesday' => 3,
+            'thursday'  => 4,
+            'friday' => 5,
+            'saturday' => 6,
         ];
         $out = [];
-        foreach ( $schedule as $key => $slots ) {
+        foreach ($schedule as $key => $slots) {
             $w = null;
-            if ( \is_numeric($key) ) {
+            if (\is_numeric($key)) {
                 $w = \max(0, \min(6, (int) $key));
             } else {
                 $k = \strtolower(\trim((string) $key));
-                if ( isset($name_to_w[$k]) ) {
+                if (isset($name_to_w[$k])) {
                     $w = $name_to_w[$k];
                 }
             }
-            if ( $w === null ) continue;
-            if ( ! isset($out[$w]) ) $out[$w] = [];
+            if ($w === null) continue;
+            if (! isset($out[$w])) $out[$w] = [];
             $out[$w] = \array_merge($out[$w], (array) $slots);
         }
         return $out;
@@ -335,10 +365,10 @@ class SnappBoxCheckout
         ) {
             return;
         }
-        if ( ! empty($_POST['snappbox_day']) ) {
+        if (! empty($_POST['snappbox_day'])) {
             $order->update_meta_data('_snappbox_day', \sanitize_text_field(\wp_unslash($_POST['snappbox_day'])));
         }
-        if ( ! empty($_POST['snappbox_time']) ) {
+        if (! empty($_POST['snappbox_time'])) {
             $order->update_meta_data('_snappbox_time', \sanitize_text_field(\wp_unslash($_POST['snappbox_time'])));
         }
     }
@@ -347,7 +377,7 @@ class SnappBoxCheckout
     {
         $dateIso = $order->get_meta('_snappbox_day');
         $time    = $order->get_meta('_snappbox_time');
-        if ( $dateIso || $time ) {
+        if ($dateIso || $time) {
             $ts = $dateIso ? \strtotime($dateIso . ' 12:00:00') : false;
             $dateLabel = $ts ? \wp_date('l j F Y', $ts) : $dateIso;
             echo '<p><strong>' . \esc_html__('SnappBox Delivery:', 'snappbox') . '</strong><br>';
@@ -355,4 +385,3 @@ class SnappBoxCheckout
         }
     }
 }
-

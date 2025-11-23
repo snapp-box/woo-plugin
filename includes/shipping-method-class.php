@@ -167,15 +167,6 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $transient_key  = 'snappbox_cities_' . \md5($latitude . '_' . $longitude);
         $cities         = \get_transient($transient_key);
 
-        // $newCitySerialized = isset($settings['snappbox_new_cities'])
-        //     ? $settings['snappbox_new_cities']
-        //     : '';
-
-        // $newCityItems = maybe_unserialize($newCitySerialized);
-        // $newCityItems = is_array($newCityItems) ? $newCityItems : [];
-
-        // $lastCity = !empty($newCityItems) ? end($newCityItems) : null;
-        // -------------------------------------------
 
         if ($cities === false) {
             $citiesObj = new \Snappbox\Api\SnappBoxCities();

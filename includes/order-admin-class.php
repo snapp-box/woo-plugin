@@ -86,6 +86,9 @@ class SnappBoxOrderAdmin
     public function snappb_display_order_admin_box($order)
     {
         $nonce = \wp_create_nonce('snappbox_admin_actions');
+        $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
+        $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
+        if($latitude && $longitude) {
 ?>
         </div>
         <div class="order_data_column_fullwidth">
@@ -117,6 +120,7 @@ class SnappBoxOrderAdmin
         </div>
         <div>
             <?php
+            }
         }
 
 
@@ -300,12 +304,6 @@ class SnappBoxOrderAdmin
             $settings      = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
             $stored_cities = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
             
-            // if (empty($state)) {
-            //     \wp_send_json_error('استان / شهر فعال نیست');
-            // }
-            // if (! \in_array($state, $stored_cities, true)) {
-            //     \wp_send_json_error('ارسال اسنپ‌باکس برای این شهر فعال نیست.');
-            // }
 
             $pricing_api = new \Snappbox\Api\SnappBoxPriceHandler();
             $response    = $pricing_api->snappb_get_pricing($order_id, $state_code, '', '', '',  $voucherCode);

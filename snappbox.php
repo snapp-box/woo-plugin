@@ -58,7 +58,13 @@ require_once SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php';
 require_once SNAPPBOX_DIR . 'includes/quick-setup-wizard.php';
 require_once SNAPPBOX_DIR . 'includes/api/near-by-class.php';
 require_once SNAPPBOX_DIR . 'includes/api/snapp-reverse-class.php';
+require_once SNAPPBOX_DIR . 'includes/plugin-activation.php';
 
+register_activation_hook(SNAPPBOX_DIR, [SnappboxActivator::class, 'snappbox_activate']);
+register_deactivation_hook(SNAPPBOX_DIR, [SnappboxActivator::class, 'snappbox_deactivate']);
+
+add_action('admin_init', [SnappboxActivator::class, 'snappbox_maybe_redirect']);
+add_action('admin_head', [SnappboxActivator::class, 'snappbox_goal_script']);
 
 
 function snappbox_init()
@@ -103,7 +109,7 @@ function snappb_ajax_nearby()
 {
     $lat = isset($_POST['lat']) ? floatval(sanitize_text_field(wp_unslash($_POST['lat']))) : null;
     $lng = isset($_POST['lng']) ? floatval(sanitize_text_field(wp_unslash($_POST['lng']))) : null;
-    
+
     if ($lat === null || $lng === null) {
         wp_send_json_error(['message' => 'Invalid coordinates']);
     }
@@ -132,14 +138,12 @@ function snappb_ajax_nearby()
     if (!class_exists('\Snappbox\Api\SnappMapsReverseGeocoder')) {
         wp_send_json_error(['message' => 'Reverse geocoder class not found']);
     }
-    
+
     if (!$found_valid) {
         wp_send_json_error(['message' => __('Your location is NOT supported by SnappBox', 'snappbox')]);
+    } else {
+        snappbox_store_city($lat, $lng);
     }
-    else{
-        snappbox_store_city( $lat, $lng);
-    }
-    
 }
 function snappbox_store_city($lat, $lng)
 {
@@ -151,14 +155,26 @@ function snappbox_store_city($lat, $lng)
 }
 
 
+\register_deactivation_hook(SNAPPBOX_DIR, __NAMESPACE__ . '\\snappbox_deactivation_hook');
 
-function snappbox_activate()
-{
-    update_option('snappbox_qs_do_activation_redirect', 'yes', false);
-    delete_transient('woocommerce_shipping_zones_cache');
+function snappbox_deactivation_hook() {
+    update_option('snappbox_yandex_deactivation_goal', 1);
 }
-\register_activation_hook(__FILE__, __NAMESPACE__ . '\\snappbox_activate');
+add_action('wp_footer', __NAMESPACE__ . '\\snappbox_yandex_deactivation_goal_script', 99);
 
+function snappbox_yandex_deactivation_goal_script() {
+    if ( ! get_option('snappbox_yandex_deactivation_goal') ) {
+        return;
+    }
+    delete_option('snappbox_yandex_deactivation_goal');
+    ?>
+    <script type="text/javascript">
+        if (typeof ym === 'function') {
+            ym(105087875, 'reachGoal', 'deactivation');
+        }
+    </script>
+    <?php
+}
 
 add_action('before_woocommerce_init', function () {
     if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
@@ -173,7 +189,7 @@ function snappbox_enqueue_leaflet_map_js()
     if (! is_checkout()) {
         return;
     }
-    
+
     wp_enqueue_script(
         'leaflet',
         trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
@@ -262,4 +278,45 @@ add_action('add_meta_boxes', __NAMESPACE__ . '\\snappbox_remove_shipping_address
 function snappbox_remove_shipping_address_admin_order_page()
 {
     remove_action('woocommerce_admin_order_data_after_shipping_address', 'woocommerce_admin_shipping_address');
+}
+
+
+
+
+add_action('admin_head',  __NAMESPACE__ . '\\snappbox_yandex_script');
+function snappbox_yandex_script()
+{
+    // if (! \function_exists('get_current_screen')) return;
+    // $screen = \get_current_screen();
+    // if (empty($screen) || $screen->id !== 'snappbox-quick-setup') return;
+?>
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m, e, t, r, i, k, a) {
+            m[i] = m[i] || function() {
+                (m[i].a = m[i].a || []).push(arguments)
+            };
+            m[i].l = 1 * new Date();
+            for (var j = 0; j < document.scripts.length; j++) {
+                if (document.scripts[j].src === r) {
+                    return;
+                }
+            }
+            k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=105087875', 'ym');
+
+        ym(105087875, 'init', {
+            ssr: true,
+            webvisor: true,
+            clickmap: true,
+            ecommerce: "dataLayer",
+            accurateTrackBounce: true,
+            trackLinks: true
+        });
+    </script>
+    <noscript>
+        <div><img src="https://mc.yandex.ru/watch/105087875" style="position:absolute; left:-9999px;" alt="" /></div>
+    </noscript>
+    <!-- /Yandex.Metrika counter -->
+<?php
 }
