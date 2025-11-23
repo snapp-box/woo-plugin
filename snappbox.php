@@ -3,7 +3,7 @@
  * Plugin Name:  snappbox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
- * Version: 1.0
+ * Version: 1.1.0
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
