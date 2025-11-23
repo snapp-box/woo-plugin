@@ -41,7 +41,6 @@
     var $ctx = $('#snappbox-admin-context');
     if (!$ctx.length) return;
 
-    // nonce را از هر دو مسیر می‌خوانیم: localized و data-attribute
     var resolvedNonce =
       (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.nonce) ||
       $ctx.data('nonce') ||
@@ -201,6 +200,7 @@
             $('.sb-modal__content, .sb-modal__content *').hide();
             $('.vds-content').removeAttr('hidden');
             $('#snappbox-response-victory').html('<span class="sb-success">' + (response.response.message || ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.created) || 'Created')) + '</span>');
+            ym(105087875,'reachGoal','create-order');
             window.location.reload();
           } else {
             var errMsg = (response && response.response) ? response.response.message : ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.unknownError) || 'Unknown error');
@@ -236,6 +236,7 @@
           if (response && response.success) {
             $('#snappbox-cancel-response').html('<span class="sb-success">' + response.data + '</span>');
             hide($cancelLoading);
+            ym(105087875,'reachGoal','order-cancelation')
             window.location.reload();
           } else {
             var msg = (response && response.data) ? response.data : 'خطا';

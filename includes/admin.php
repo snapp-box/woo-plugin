@@ -1,4 +1,5 @@
 <?php
+namespace Snappbox;
 
 if ( ! defined( 'ABSPATH' ) ) exit; 
 class SnappBoxAdminPage {
@@ -21,7 +22,7 @@ class SnappBoxAdminPage {
     public function admin_page_content() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'SnappBox Admin Page', 'sb-delivery' ); ?></h1>
+            <h1><?php esc_html_e( 'SnappBox Admin Page', 'snappbox' ); ?></h1>
             <form method="post" action="options.php">
                 <?php
                 settings_fields( 'snappbox-settings' );
@@ -34,17 +35,23 @@ class SnappBoxAdminPage {
     }
 
     public function register_settings() {
-        register_setting( 'snappbox-settings', 'snappbox_api' );
+        register_setting(
+            'snappbox-settings',
+            'snappbox_api',
+            array(
+                'sanitize_callback' => 'sanitize_text_field'
+            )
+        );
         add_settings_section(
             'snappbox-page-section',
-            __( 'SnappBox Settings Section', 'sb-delivery' ),
+            __( 'SnappBox Settings Section', 'snappbox' ),
             null,
             'snappbox-page'
         );
     
         add_settings_field(
             'snappbox_api',
-            __( 'SnappBox API Key', 'sb-delivery' ),
+            __( 'SnappBox API Key', 'snappbox' ),
             array( $this, 'snappbox_api_callback' ),
             'snappbox-page',
             'snappbox-page-section'
