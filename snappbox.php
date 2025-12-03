@@ -51,7 +51,7 @@ define('SNAPPBOX_API_TOKEN', $snappb_api_key);
 
 
 require_once SNAPPBOX_DIR . 'includes/woo-checkout-map.php';
-require_once SNAPPBOX_DIR . 'includes/api/cities-class.php';
+// require_once SNAPPBOX_DIR . 'includes/api/cities-class.php';
 require_once SNAPPBOX_DIR . 'includes/order-admin-class.php';
 require_once SNAPPBOX_DIR . 'includes/schedule-modal.php';
 require_once SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php';
@@ -74,9 +74,9 @@ function snappbox_init()
     if (class_exists('\Snappbox\SnappBoxOrderAdmin')) {
         new \Snappbox\SnappBoxOrderAdmin();
     }
-    if (class_exists('\SnappBoxCities')) {
-        new \Snappbox\Api\SnappBoxCities();
-    }
+    // if (class_exists('\SnappBoxCities')) {
+    //     new \Snappbox\Api\SnappBoxCities();
+    // }
     if (class_exists('\Snappbox\SnappBoxCheckout')) {
         new \Snappbox\SnappBoxCheckout();
     }
@@ -124,7 +124,7 @@ function snappb_ajax_nearby()
 
     $items = $response['response'] ?? [];
     $found_valid = false;
-
+    
     foreach ($items as $res) {
         if (
             isset($res['apiValue'], $res['count']) &&

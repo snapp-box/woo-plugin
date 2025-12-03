@@ -35,7 +35,7 @@ class SnappBoxNearBy {
         ];
 
         $response = \wp_remote_post($this->api_url, $args);
-
+        
         if (\is_wp_error($response)) {
             return [
                 'success' => false,
@@ -44,7 +44,6 @@ class SnappBoxNearBy {
         }
 
         $decoded = json_decode(wp_remote_retrieve_body($response), true);
-
         return [
             'success'  => true,
             'response' => $decoded,
