@@ -195,8 +195,7 @@
         },
         beforeSend: function(){ show($orderLoading); },
         success: function(response){
-          if (response && response.success && response.response && response.response.data &&
-              (response.response.status_code === 201 || response.response.status_code === '201')) {
+          if (response && response.success == true && response.response && response.response.orderId) {
             $('.sb-modal__content, .sb-modal__content *').hide();
             $('.vds-content').removeAttr('hidden');
             $('#snappbox-response-victory').html('<span class="sb-success">' + (response.response.message || ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.created) || 'Created')) + '</span>');

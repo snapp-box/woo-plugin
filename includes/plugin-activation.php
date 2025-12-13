@@ -18,7 +18,7 @@ class SnappboxActivator {
         if (get_option(self::REDIRECT_OPTION) === 'yes') {
             delete_option(self::REDIRECT_OPTION);
 
-            wp_safe_redirect(admin_url('admin.php?page=snappbox'));
+            wp_safe_redirect(admin_url('admin.php?page=snappbox-quick-setup'));
             exit;
         }
     }

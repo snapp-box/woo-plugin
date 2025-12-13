@@ -8,16 +8,15 @@ class SnappBoxWalletBalance {
     public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
         global $snappb_api_base_url;
         $this->api_key = $api_key;
-        $this->api_url = $snappb_api_base_url . '/v1/customer/current_balance';
+        $this->api_url = $snappb_api_base_url . '/v1/wallets';
     }
 
     public function snappb_check_balance($order_data = '') {
         $args = [
-            'body'    => \json_encode($order_data, JSON_UNESCAPED_UNICODE),
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
-            'method'  => 'POST',
+            'method'  => 'GET',
             'timeout' => 45,
         ];
 
@@ -25,7 +24,8 @@ class SnappBoxWalletBalance {
             $args['headers']['Authorization'] = $this->api_key;
         }
 
-        $response = \wp_remote_post($this->api_url, $args);
+        $response = \wp_remote_get($this->api_url, $args);
+        
         if (\is_wp_error($response)) {
             return [
                 'success' => false,

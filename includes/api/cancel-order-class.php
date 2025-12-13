@@ -8,14 +8,16 @@ class SnappBoxCancelOrder {
 
     public function __construct() {
         global $snappb_api_base_url;
-        $this->api_url   = $snappb_api_base_url . '/v1/customer/cancel_order';
+        $this->api_url   = $snappb_api_base_url . '/v1/orders/';
         $this->api_token = \SNAPPBOX_API_TOKEN;
     }
 
     public function snappb_cancel_order($order_id) {
-        $response = \wp_remote_post($this->api_url, [
-            'method'  => 'POST',
-            'body'    => \json_encode(['orderId' => $order_id]),
+
+        $url = $this->api_url . $order_id;
+
+        $response = \wp_remote_request($url, [
+            'method'  => 'DELETE',
             'headers' => [
                 'Content-Type'  => 'application/json',
                 'Authorization' => $this->api_token,
@@ -34,15 +36,14 @@ class SnappBoxCancelOrder {
         if (!empty($body) && isset($body['success']) && $body['success'] === true) {
             return [
                 'success' => true,
-                'message' => 'Order cancelled successfully.',
+                'message' => 'Order deleted successfully.',
             ];
         }
 
         return [
             'success' => false,
-            'message' => $body['message'] ?? 'Cancellation failed.',
+            'message' => $body['message'] ?? 'Delete request failed.',
         ];
     }
-
 }
 ?>

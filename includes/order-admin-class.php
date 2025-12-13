@@ -169,6 +169,7 @@ class SnappBoxOrderAdmin
                 </div>
             <?php
             }
+            // print_r($getResponse);
             if ($onDeliver['ondelivery'] == 'yes'){?>
             <div class="snappbox-order-container clearfix">
                     <p><b><?php \esc_html_e('SnappBox Payment after delivery', 'snappbox'); ?></b></p>
@@ -358,11 +359,10 @@ class SnappBoxOrderAdmin
         {
             $meta_order_id = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
             $getResponse   = $meta_order_id ? \get_post_meta($meta_order_id, '_snappbox_last_api_response', true) : null;
-
-            if ($getResponse && isset($getResponse->statusText)) {
-                echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->statusText) . '</p>';
+            if ($getResponse && isset($getResponse->status)) {
+                echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->status) . '</p>';
             }
-
+            
             if ($meta_order_id) {
                 $statusCheck = new \Snappbox\Api\SnappOrderStatus();
                 $response    = $statusCheck->get_order_status($meta_order_id);

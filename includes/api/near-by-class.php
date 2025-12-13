@@ -8,7 +8,7 @@ class SnappBoxNearBy {
     private $auth_token;
 
     public function __construct() {
-        $this->api_url = 'https://app.snapp-box.com/api/v1/customer/nearby_biker_locations';
+        $this->api_url = 'https://app-stg.snapp-box.com/api/v1/customer/nearby_biker_locations';
         $this->auth_token = \SNAPPBOX_API_TOKEN;
     }
 
