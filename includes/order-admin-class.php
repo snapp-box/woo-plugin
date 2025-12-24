@@ -25,61 +25,61 @@ class SnappBoxOrderAdmin
 
 
     public function snappb_enqueue_assets()
-{
-    \wp_enqueue_style(
-        'maplibre-gl',
-        \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
-        [],
-        '1.9.4'
-    );
-    \wp_enqueue_script(
-        'maplibre-gl',
-        \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
-        [],
-        '1.9.4',
-        true
-    );
+    {
+        \wp_enqueue_style(
+            'maplibre-gl',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
+            [],
+            '1.9.4'
+        );
+        \wp_enqueue_script(
+            'maplibre-gl',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
+            [],
+            '1.9.4',
+            true
+        );
 
-    \wp_enqueue_style(
-        'snappbox-style',
-        \trailingslashit(SNAPPBOX_URL) . 'assets/css/style.css',
-        [],
-        \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/css/style.css')
-    );
+        \wp_enqueue_style(
+            'snappbox-style',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/css/style.css',
+            [],
+            \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/css/style.css')
+        );
 
-    \wp_enqueue_style(
-        'snappbox-admin',
-        \trailingslashit(SNAPPBOX_URL) . 'assets/css/admin-snappbox.css',
-        ['snappbox-style'],
-        \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/css/admin-snappbox.css')
-    );
+        \wp_enqueue_style(
+            'snappbox-admin',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/css/admin-snappbox.css',
+            ['snappbox-style'],
+            \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/css/admin-snappbox.css')
+        );
 
-    \wp_enqueue_script(
-        'snappbox-admin',
-        \trailingslashit(SNAPPBOX_URL) . 'assets/js/admin-snappbox.js',
-        ['jquery', 'maplibre-gl'],
-        \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/js/admin-snappbox.js'),
-        true
-    );
+        \wp_enqueue_script(
+            'snappbox-admin',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/js/admin-snappbox.js',
+            ['jquery', 'maplibre-gl'],
+            \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/js/admin-snappbox.js'),
+            true
+        );
 
-    \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
-        'ajaxUrl'      => \admin_url('admin-ajax.php'),
-        'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
-        'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-        'mapStyleUrl'  => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
-        'i18n'         => [
-            'priceFetching' => 'در حال دریافت قیمت...',
-            'priceError'    => 'خطا در دریافت قیمت.',
-            'requestError'  => 'خطا در ارسال درخواست.',
-            'unknownError'  => 'Unknown error',
-            'cancelError'   => 'Error cancelling order.',
-            'orderSendErr'  => 'Error sending order.',
-            'popupCustomer' => 'موقعیت مشتری',
-            'close'         => \__('Close', 'snappbox'),
-            'created'       => 'Created',
-        ],
-    ]);
-}
+        \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
+            'ajaxUrl'      => \admin_url('admin-ajax.php'),
+            'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
+            'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
+            'mapStyleUrl'  => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+            'i18n'         => [
+                'priceFetching' => 'در حال دریافت قیمت...',
+                'priceError'    => 'خطا در دریافت قیمت.',
+                'requestError'  => 'خطا در ارسال درخواست.',
+                'unknownError'  => 'Unknown error',
+                'cancelError'   => 'Error cancelling order.',
+                'orderSendErr'  => 'Error sending order.',
+                'popupCustomer' => 'موقعیت مشتری',
+                'close'         => \__('Close', 'snappbox'),
+                'created'       => 'Created',
+            ],
+        ]);
+    }
 
 
 
@@ -88,79 +88,74 @@ class SnappBoxOrderAdmin
         $nonce = \wp_create_nonce('snappbox_admin_actions');
         $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
         $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
-        if($latitude && $longitude) {
+        if ($latitude && $longitude) {
 ?>
-        </div>
-        <div class="order_data_column_fullwidth">
-            <?php \wp_nonce_field('snappbox_admin_actions', 'nonce'); ?>
+            </div>
+            <div class="order_data_column_fullwidth">
+                <?php \wp_nonce_field('snappbox_admin_actions', 'nonce'); ?>
 
-            <h3><?php \esc_html_e('SnappBox', 'snappbox'); ?></h3>
+                <h3><?php \esc_html_e('SnappBox', 'snappbox'); ?></h3>
 
+                <?php
+                $this->snappb_display_map_in_admin_order($order);
+                $this->snappb_display_location_in_order_admin($order);
+
+                echo '<b>' . \esc_html__('Address', 'snappbox') . '</b> : ' . \esc_html($order->get_shipping_address_1());
+
+                $free_delivery = $order->get_meta('_free_delivery');
+                if ($free_delivery) {
+                    echo '<div><b>' . \esc_html($free_delivery) . '</b></div>';
+                }
+                $echoText = "yes";
+                $this->snappb_check_order_status($order, $echoText);
+
+                $this->snappb_display_snappbox_order_button($order, $nonce);
+                ?>
+            </div>
+            <div>
             <?php
-            $this->snappb_display_map_in_admin_order($order);
-            $this->snappb_display_location_in_order_admin($order);
-
-            echo '<b>' . \esc_html__('Address', 'snappbox') . '</b> : ' . \esc_html($order->get_shipping_address_1());
-
-            $free_delivery = $order->get_meta('_free_delivery');
-            if ($free_delivery) {
-                echo '<div><b>' . \esc_html($free_delivery) . '</b></div>';
-            }
-
-            $this->snappb_check_order_status($order);
-
-            echo '<div id="snappbox-admin-context"
-                     data-nonce="' . \esc_attr($nonce) . '"
-                     data-currency="' . \esc_attr(\get_woocommerce_currency()) . '"
-                     data-woo-order-id="' . (int) $order->get_id() . '"
-                   ></div>';
-
-            $this->snappb_display_snappbox_order_button($order, $nonce);
-            ?>
-        </div>
-        <div>
-            <?php
-            }
         }
+    }
 
 
-        public function snappb_display_location_in_order_admin($order)
-        {
-            $orderID = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
-            if ($orderID) {
-                echo '<div class="sb-mb-20"><strong>' . \esc_html__('Order ID', 'snappbox') . ': </strong>' . \esc_html($orderID) . '</div>';
-            }
+    public function snappb_display_location_in_order_admin($order)
+    {
+        $orderID = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
+        if ($orderID) {
+            echo '<div class="sb-mb-20"><strong>' . \esc_html__('Order ID', 'snappbox') . ': </strong>' . \esc_html($orderID) . '</div>';
         }
+    }
 
 
-        public function snappb_display_map_in_admin_order($order)
-        {
-            $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
-            $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
+    public function snappb_display_map_in_admin_order($order)
+    {
+        $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
+        $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
 
-            if ($latitude && $longitude) {
-                $lat = (float) $latitude;
-                $lng = (float) $longitude;
+        if ($latitude && $longitude) {
+            $lat = (float) $latitude;
+            $lng = (float) $longitude;
 
-                echo '<div id="admin-osm-map"
+            echo '<div id="admin-osm-map"
                      class="sb-admin-map"
                      data-lat="' . \esc_attr($lat) . '"
                      data-lng="' . \esc_attr($lng) . '"
                   ></div>';
-            }
         }
+    }
 
 
-        public function snappb_display_snappbox_order_button($order, $nonce)
-        {
-            $snappboxOrder = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
-            $day           = $order->get_meta('_snappbox_day');
-            $time          = $order->get_meta('_snappbox_time');
-            $getResponse   = $snappboxOrder ? \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true) : null;
-            $onDeliver = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
-            if ($day && $time) {
-                $ts        = $day ? \strtotime($day . ' 12:00:00') : false;
-                $dateLabel = $ts ? \wp_date('l j F Y', $ts) : $day;
+    public function snappb_display_snappbox_order_button($order, $nonce)
+    {
+
+        $snappboxOrder = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
+        $day           = $order->get_meta('_snappbox_day');
+        $time          = $order->get_meta('_snappbox_time');
+        $getResponse   = $snappboxOrder ? \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true) : null;
+        $onDeliver = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
+        if ($day && $time) {
+            $ts        = $day ? \strtotime($day . ' 12:00:00') : false;
+            $dateLabel = $ts ? \wp_date('l j F Y', $ts) : $day;
             ?>
                 <div class="snappbox-order-container clearfix">
                     <p><b><?php \esc_html_e('Delivery Date and Time', 'snappbox'); ?> :</b>
@@ -168,15 +163,32 @@ class SnappBoxOrderAdmin
                     </p>
                 </div>
             <?php
-            }
-            // print_r($getResponse);
-            if ($onDeliver['ondelivery'] == 'yes'){?>
-            <div class="snappbox-order-container clearfix">
+        }
+        if ($onDeliver['ondelivery'] == 'yes') { ?>
+                <div class="snappbox-order-container clearfix">
                     <p><b><?php \esc_html_e('SnappBox Payment after delivery', 'snappbox'); ?></b></p>
                 </div>
             <?php
-            }
-            if (! $snappboxOrder || $getResponse->status == 'CANCELLED' ) :
+        }
+        echo ($this->snappb_pricing_modal($snappboxOrder, $getResponse, $order, $nonce));
+    }
+
+
+    public function snappb_pricing_modal($snappBoxOrder, $getResponse, $order, $nonce)
+    {
+        echo '<div id="snappbox-admin-context"
+                     data-nonce="' . \esc_attr($nonce) . '"
+                     data-currency="' . \esc_attr(\get_woocommerce_currency()) . '"
+                     data-woo-order-id="' . (int) $order->get_id() . '"
+                   ></div>';
+        if (
+            ! $snappBoxOrder ||
+            (
+                is_object($getResponse) &&
+                isset($getResponse->status) &&
+                $getResponse->status === 'CANCELLED'
+            )
+        ) :
             ?>
                 <div class="sb-modal" id="sb-pricing-modal" hidden>
                     <div class="sb-modal__box">
@@ -198,9 +210,9 @@ class SnappBoxOrderAdmin
                                     class="snappbox-btn button button-primary"
                                     hidden>
                                     <?php \esc_html_e('Send to SnappBox', 'snappbox'); ?>
+                                    
                                 </button>
                             </div>
-
                             <img class="ct-order-loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
                             <span id="snappbox-response"></span>
                         </div>
@@ -215,30 +227,37 @@ class SnappBoxOrderAdmin
                 </div>
 
                 <div class="snappbox-order-container clearfix sb-actions-row">
-                    <button id="snappbox-pricing-order"
+                    <button
                         data-order-id="<?php echo \esc_attr($order->get_id()); ?>"
-                        class="snappbox-btn button button-primary">
-                        <?php \esc_html_e('Get SnappBox Price', 'snappbox'); ?>
+                        class="snappbox-pricing-order snappbox-btn button button-primary">
+                        <span class="button-text"><?php \esc_html_e('Get SnappBox Price', 'snappbox'); ?></span>
+                        <div class="loader loading" aria-label="Loading" role="status" hidden>
+                            <span></span><span></span><span></span>
+                        </div>
                     </button>
-                    <img class="loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
+
+                    <!-- <img class="loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden /> -->
                 </div>
                 <?php
             else :
                 if ($getResponse && isset($getResponse->canCancel) && (int) $getResponse->canCancel === 1) : ?>
+
                     <div class="snappbox-cancel-container sb-actions-row">
                         <button id="snappbox-cancel-order"
-                            data-order-id="<?php echo \esc_attr($snappboxOrder); ?>"
+                            data-order-id="<?php echo \esc_attr($snappBoxOrder); ?>"
                             class="cancel-order button button-secondary">
-                            <?php \esc_html_e('Cancel Order', 'snappbox'); ?>
+                            <span class="button-text"><?php \esc_html_e('Cancel Order', 'snappbox'); ?></span>
+                            <div class="loader loading cancel-order-loading" aria-label="Loading" role="status" hidden>
+                                <span></span><span></span><span></span>
+                            </div>
                         </button>
-                        <img class="cancel-order-loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
+                        
                         <span id="snappbox-cancel-response"></span>
                     </div>
     <?php
                 endif;
             endif;
         }
-
         public function snappb_handle_create_snappbox_order()
         {
             \check_ajax_referer('snappbox_admin_actions', 'nonce');
@@ -272,7 +291,7 @@ class SnappBoxOrderAdmin
             }
         }
 
-   
+
         public function snappb_handle_get_pricing()
         {
             \check_ajax_referer('snappbox_admin_actions', 'nonce');
@@ -304,7 +323,7 @@ class SnappBoxOrderAdmin
 
             $settings      = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
             $stored_cities = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
-            
+
 
             $pricing_api = new \Snappbox\Api\SnappBoxPriceHandler();
             $response    = $pricing_api->snappb_get_pricing($order_id, $state_code, '', '', '',  $voucherCode);
@@ -355,14 +374,15 @@ class SnappBoxOrderAdmin
             }
         }
 
-        public function snappb_check_order_status($order)
+        public function snappb_check_order_status($order, $echoText)
         {
             $meta_order_id = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
             $getResponse   = $meta_order_id ? \get_post_meta($meta_order_id, '_snappbox_last_api_response', true) : null;
-            if ($getResponse && isset($getResponse->status)) {
-                echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->status) . '</p>';
+
+            if ($getResponse && isset($getResponse->statusText) && $echoText) {
+                echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->statusText) . '</p>';
             }
-            
+
             if ($meta_order_id) {
                 $statusCheck = new \Snappbox\Api\SnappOrderStatus();
                 $response    = $statusCheck->get_order_status($meta_order_id);

@@ -26,8 +26,8 @@ if (! defined('ABSPATH')) {
 define('SNAPPBOX_DIR', plugin_dir_path(__FILE__));
 define('SNAPPBOX_URL', plugin_dir_url(__FILE__));
 define('SNAPPBOX_VERSION', '0.1.1');
-define('SNAPPBOX_API_BASE_URL_STAGING', 'https://b2b-stg.snapp-box.com');
-define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://b2b.snapp-box.com');
+define('SNAPPBOX_API_BASE_URL_STAGING', 'https://customer-stg.snapp-box.com/');
+define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://customer.snapp-box.com/');
 
 global $snappb_api_base_url;
 
@@ -51,6 +51,7 @@ define('SNAPPBOX_API_TOKEN', $snappb_api_key);
 
 
 require_once SNAPPBOX_DIR . 'includes/woo-checkout-map.php';
+// require_once SNAPPBOX_DIR . 'includes/api/cities-class.php';
 require_once SNAPPBOX_DIR . 'includes/order-admin-class.php';
 require_once SNAPPBOX_DIR . 'includes/schedule-modal.php';
 require_once SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php';
@@ -73,7 +74,9 @@ function snappbox_init()
     if (class_exists('\Snappbox\SnappBoxOrderAdmin')) {
         new \Snappbox\SnappBoxOrderAdmin();
     }
-   
+    // if (class_exists('\SnappBoxCities')) {
+    //     new \Snappbox\Api\SnappBoxCities();
+    // }
     if (class_exists('\Snappbox\SnappBoxCheckout')) {
         new \Snappbox\SnappBoxCheckout();
     }
@@ -283,6 +286,9 @@ function snappbox_remove_shipping_address_admin_order_page()
 add_action('admin_head',  __NAMESPACE__ . '\\snappbox_yandex_script');
 function snappbox_yandex_script()
 {
+    // if (! \function_exists('get_current_screen')) return;
+    // $screen = \get_current_screen();
+    // if (empty($screen) || $screen->id !== 'snappbox-quick-setup') return;
 ?>
     <!-- Yandex.Metrika counter -->
     <script type="text/javascript">

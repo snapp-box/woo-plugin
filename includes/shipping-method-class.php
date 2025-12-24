@@ -107,8 +107,10 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         }
         return $fields;
     }
-   
-    private function snappb_point_in_polygon($point, $polygon)
+        /**
+     * Check if point is inside polygon (Ray Casting Algorithm)
+     */
+    private function point_in_polygon($point, $polygon)
     {
         $x = $point[0]; // lng
         $y = $point[1]; // lat
@@ -177,7 +179,6 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         if ($chosen_shipping_method === 'snappbox_shipping_method') {
             $pricingHandler = new \Snappbox\Api\SnappBoxPriceHandler();
             $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '');
-
             $polygon_json = $this->get_option('polygon_coords');
             if (!empty($polygon_json) && !empty($result['data']['finalCustomerFare'])) {
                 $polygon = json_decode($polygon_json, true);
@@ -187,7 +188,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 }
     
                 $polygon = $polygon[0];
-                $is_inside = $this->snappb_point_in_polygon(
+                $is_inside = $this->point_in_polygon(
                     [$customerLong, $customerLat], 
                     $polygon
                 );
@@ -216,6 +217,39 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
 
+        // $stored_cities  = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
+        // $snappBoxAPIKey = $this->get_option('snappbox_api');
+        // $transient_key  = 'snappbox_cities_' . \md5($latitude . '_' . $longitude);
+        // $cities         = \get_transient($transient_key);
+
+        // if ($cities === false) {
+        //     $citiesObj = new \Snappbox\Api\SnappBoxCities();
+        //     $cities    = $citiesObj->snappb_get_delivery_category();
+        //     if (!empty($cities) && isset($cities->cities)) {
+        //         \set_transient($transient_key, $cities, DAY_IN_SECONDS);
+        //     }
+        // }
+
+        // $city_options = [];
+        // if (!empty($cities->cities) && is_array($cities->cities)) {
+        //     $filtered_cities = array_filter($cities->cities, function ($city) {
+        //         return !empty($city->cityName);
+        //     });
+
+        //     $mapped_cities = array_map(function ($city) {
+        //         if (strtolower($city->cityKey) == 'gilan') {
+        //             $city->cityKey = 'rasht';
+        //         }
+        //         return $city;
+        //     }, $filtered_cities);
+
+        //     $mapped_array = array_map(function ($c) {
+        //         return ['cityKey' => $c->cityKey, 'cityName' => $c->cityName];
+        //     }, $mapped_cities);
+
+        //     $city_options = array_column($mapped_array, 'cityName', 'cityKey');
+        // }
+
         $this->form_fields = [
             'enabled' => [
                 'title'       => __('Enable', 'snappbox'),
@@ -224,12 +258,12 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 'default'     => 'yes',
             ],
 
-            // 'sandbox' => [
-            //     'title'       => __('Enable Test Mode', 'snappbox'),
-            //     'type'        => 'checkbox',
-            //     'description' => __('Enable test mode for this plugin', 'snappbox'),
-            //     'default'     => 'no',
-            // ],
+            'sandbox' => [
+                'title'       => __('Enable Test Mode', 'snappbox'),
+                'type'        => 'checkbox',
+                'description' => __('Enable test mode for this plugin', 'snappbox'),
+                'default'     => 'no',
+            ],
 
             // 'fixed_price' => [
             //     'title'       => \__('Fixed Price', 'snappbox'),
@@ -306,11 +340,25 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             'polygon_coords' => [
                 'title'       => __('Polygon Coordinates', 'snappbox'),
                 'type'        => 'text',
-                'default'     => $settings['polygon_coords'] ?? '',
+                'default'     => $settings['polygon_coords'],
                 'description' => 'Saved polygon area',
                 'class'       => 'snappbox-hidden-field'
             ],
-            
+            // 'snappbox_new_cities_display' => [
+            //     'title'             => __('City', 'snappbox'),
+            //     'type'              => 'text',
+            //     'default'           => $lastCity['city_fa'] ?? '',
+            //     'custom_attributes' => ['readonly' => 'readonly']
+            // ],
+
+            // 'snappbox_cities' => [
+            //     'title'       => __('Cities', 'snappbox'),
+            //     'type'        => 'multiselect',
+            //     'options'     => $city_options,
+            //     'description' => __('This Item will show after token insertion', 'snappbox'),
+            //     'default'     => $stored_cities,
+            //     'custom_attributes' => ['disabled' => 'disabled']
+            // ]
         ];
     }
 
@@ -393,6 +441,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         }
         \wp_enqueue_style('maplibre');
 
+        // Load MapboxDraw (works with MapLibre)
         if (! \wp_script_is('maplibre-draw', 'registered')) {
             \wp_register_script(
                 'maplibre-draw',
@@ -404,6 +453,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         }
         \wp_enqueue_script('maplibre-draw');
 
+        // Draw CSS
         if (! \wp_style_is('maplibre-draw-css', 'registered')) {
             \wp_register_style(
                 'maplibre-draw-css',
@@ -436,6 +486,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             const defaultLat = ' . $defaultLat . ';
             const defaultLng = ' . $defaultLng . ';
     
+            // MAP INIT
             const map = new maplibregl.Map({
                 container:"map",
                 style:"https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json",
@@ -448,6 +499,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
             map.getCanvas().style.cursor = "pointer";
     
+            // INPUT UPDATE
             function updateInputs(lat, lng){
                 var latInput=document.querySelector(\'[name="woocommerce_snappbox_shipping_method_snappbox_latitude"]\');
                 var lngInput=document.querySelector(\'[name="woocommerce_snappbox_shipping_method_snappbox_longitude"]\');
@@ -455,10 +507,12 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 if(lngInput) lngInput.value=Number(lng).toFixed(9);
             }
     
+            // SAVED LOCATION PIN (MAP MARKER)
             const savedMarker = new maplibregl.Marker({ draggable: false })
                 .setLngLat([defaultLng, defaultLat])
                 .addTo(map);
     
+            // SAVE LOCATION (CALLED ONLY WHEN BUTTON CLICKED)
             function onSet(lat, lng){
                 updateInputs(lat, lng);
                 savedMarker.setLngLat([lng, lat]);
@@ -466,6 +520,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
             updateInputs(defaultLat, defaultLng);
     
+            // AJAX NEARBY (NO SAVING)
             let moveTimeout;
             function runNearbyAjax(c){
                 jQuery.post(ajaxurl, {
@@ -490,6 +545,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 }, 150);
             });
     
+            // DRAW + POLYGON VALIDATION
             let Draw = null;
             let currentPolygonCoords = null;
     
@@ -504,6 +560,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
                 map.addControl(Draw, "top-right");
     
+                // Load saved polygon
                 const polyInputEl = document.querySelector(\'[name="woocommerce_snappbox_shipping_method_polygon_coords"]\');
                 const savedPolygon = polyInputEl ? polyInputEl.value : "";
     
@@ -547,9 +604,12 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
                     const polygon = data.features[0].geometry.coordinates[0];
     
+                    // Current saved location pin
                     const saved = savedMarker.getLngLat();
                     const lat = saved.lat;
                     const lng = saved.lng;
+                    console.log(typeof turf)
+                    // Check inside polygon
                     if (typeof turf !== "undefined") {
                         const pt = turf.point([lng, lat]);
                         const poly = turf.polygon([polygon]);
@@ -583,11 +643,13 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
             });
     
+            // SAVE LOCATION BY BUTTON CLICK
             var centerPinBtn=document.getElementById("center-pin");
             if(centerPinBtn){
                 centerPinBtn.addEventListener("click", function(){
                     var c = map.getCenter();
     
+                    // If polygon exists, check
                     if (currentPolygonCoords && typeof turf !== "undefined") {
                         try {
                             var pt = turf.point([c.lng, c.lat]);
@@ -601,12 +663,14 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                         } catch (e) {}
                     }
     
+                    // FINAL SAVE
                     onSet(c.lat, c.lng);
                 });
             }
     
         });';
     
+        // MODAL CLOSE
         $inline_js .= '
             jQuery(document).on("click", ".snapp-close", function(){ jQuery("#snapp-modal").fadeOut(200); });
             jQuery(document).on("click", "#snapp-modal", function(e){ if(e.target.id==="snapp-modal"){ jQuery("#snapp-modal").fadeOut(200);} });
@@ -633,8 +697,8 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
 
         if (empty($walletObjResult)) return;
 
-        $currentBalance = isset($walletObjResult['response']['balance'])
-            ? (float) $walletObjResult['response']['balance']
+        $currentBalance = isset($walletObjResult['response']['currentBalance'])
+            ? (float) $walletObjResult['response']['currentBalance']
             : 0.0;
 
         $balanceDefaultResponse = \wp_remote_get('https://assets.snapp-box.com/static/plugin/woo-config.json');
@@ -678,11 +742,11 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             $walletObj       = new \Snappbox\Api\SnappBoxWalletBalance();
             $walletObjResult = $walletObj->snappb_check_balance();
 
-            if (! empty($walletObjResult) && isset($walletObjResult['response']['balance'])) {
+            if (! empty($walletObjResult) && isset($walletObjResult['response']['currentBalance'])) {
                 if (\get_woocommerce_currency() === 'IRT') {
-                    $currentBalance = $this->snappb_rial_to_toman($walletObjResult['response']['balance']);
+                    $currentBalance = $this->snappb_rial_to_toman($walletObjResult['response']['currentBalance']);
                 } else {
-                    $currentBalance = $walletObjResult['response']['balance'];
+                    $currentBalance = $walletObjResult['response']['currentBalance'];
                 }
                 echo '<p>' . \esc_html__('Your current balance is: ', 'snappbox') . \esc_html($currentBalance) . ' ' . \esc_html(\get_woocommerce_currency_symbol()) . '</p>';
             } else {

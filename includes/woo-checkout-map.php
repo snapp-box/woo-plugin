@@ -7,6 +7,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+require_once(SNAPPBOX_DIR . 'includes/api/cities-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/create-order-class.php');
 
 class SnappBoxCheckout

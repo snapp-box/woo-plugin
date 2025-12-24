@@ -11,7 +11,7 @@ class SnappBoxCreateOrder {
 
     public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
         global $snappb_api_base_url;
-        $this->api_url = $snappb_api_base_url . '/v1/orders';
+        $this->api_url = $snappb_api_base_url . '/v1/customer/create_order';
         $this->api_key = $api_key;
 
         \add_action('wp_ajax_snappbox_create_order',        [$this, 'snappb_handle_create_order']);
@@ -41,7 +41,6 @@ class SnappBoxCreateOrder {
         }
 
         $decoded_response = \json_decode(\wp_remote_retrieve_body($response), true);
-        
         $this->snappb_store_order_detail($order, $decoded_response);
 
         return [
@@ -78,37 +77,21 @@ class SnappBoxCreateOrder {
     
 
     private function snappb_store_order_detail($order, $response) {
-        if (isset($response['orderId'])) {
-            $snappbox_order_id = \sanitize_text_field($response['orderId']);
+        if (isset($response['data']['details']['id'])) {
+            $snappbox_order_id = \sanitize_text_field($response['data']['details']['id']);
             \update_post_meta($order->get_id(), '_snappbox_order_id', $snappbox_order_id);
         }
     }
 
     private function snappb_prepare_order_data($order, int $order_id, $voucherCode): array {
-        $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
-        $settings            = \maybe_unserialize($settings_serialized);
-        ($settings['ondelivery'] == 'yes') ? $deliveryPayemnt = 2 : $deliveryPayemnt = 1;
         return [
-            'city' => $order->get_meta('customer_city'),
-            'deliveryCategory' => 'bike-without-box',
-            "endTime"=> null,
-            "hasReturn"=> false,
-            "packages" =>[[
-                "dropoffReference"=> "2",
-                "pickupReference"=> "1",
-                "insuranceId"=> 10,
-                "items" =>
-                    $this->snappb_get_item_details($order),
-                ]],
-            "paymentType"=> "prepaid",
-            "refId"=> null,
-            "startTime"=> null,
-            'terminals' => [
-               $this->snappb_get_pickup_details(),
-               $this->snappb_get_dropoff_details($order),
+            'data' => [
+                'itemDetails'             => $this->snappb_get_item_details($order),
+                'orderDetails'            => $this->snappb_get_order_details($order, $order_id, $voucherCode),
+                'pickUpDetails'           => $this->snappb_get_pickup_details(),
+                'dropOffDetails'          => $this->snappb_get_dropoff_details($order),
+                'verificationCodeEnabled' => false,
             ],
-            "voucherCode"=> $voucherCode,
-            "waitingTime"=> 0
         ];
     }
 
@@ -116,12 +99,14 @@ class SnappBoxCreateOrder {
         $items = [];
         foreach ($order->get_items() as $item) {
             $items[] = [
+                'pickedUpSequenceNumber' => 1,
+                'dropOffSequenceNumber'  => 2,
                 'name'                   => $item->get_name(),
                 'quantity'               => $item->get_quantity(),
-                'packageValue'           => (int) $item->get_total(),
-                'quantityMeasuringUnit'  => 'عدد',
-                "volume"=> 20,
-                "weight"=> 10
+                'quantityMeasuringUnit'  => 'unit',
+                'packageValue'           => $item->get_total(),
+                'externalRefType'        => 'INSURANCE',
+                'externalRefId'          => 99,
             ];
         }
         return $items;
@@ -141,38 +126,78 @@ class SnappBoxCreateOrder {
         }
         return $phone;
     }
+    private function snappb_get_order_details($order, int $order_id, $voucherCode): array {
+        $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
+        $settings            = \maybe_unserialize($settings_serialized);
+        ($settings['ondelivery'] == 'yes') ? $deliveryPayemnt = 2 : $deliveryPayemnt = 1;
+        $phoneNumber = strval($this->snappb_normalize_phone_number($order->get_billing_phone()));
+        return [
+            'city'                             => $order->get_meta('customer_city'),
+            'customerWalletType'               => null,
+            'deliveryCategory'                 => 'bike-without-box',
+            'deliveryFarePaymentType'          => 'cod',
+            'isReturn'                         => false,
+            'loadAssistance'                   => false,
+            'pricingId'                        => '',
+            'sequenceNumberDeliveryCollection' => $deliveryPayemnt,
+            'customerEmail'                    => $order->get_billing_email(),
+            'customerName'                     => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+            'customerPhonenumber'              => $phoneNumber,
+            'voucherCode'                      => $voucherCode,
+            'waitingTime'                      => 0,
+        ];
+        
+    }
     
     
     private function snappb_get_pickup_details(): array {
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
         $contactPhoneNumber = $this->snappb_normalize_phone_number($settings['snappbox_store_phone']);
-        return [
+        return [[
+            'id'                  => null,
             'contactName'         => \get_option('snappbox_store_name', ''),
             'address'             => \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
-            'phoneNumber'         => (string) $contactPhoneNumber ?? '',
+            'contactPhoneNumber'  => $contactPhoneNumber ?? '',
+            'plate'               => '',
+            'sequenceNumber'      => 1,
+            'unit'                => '',
+            'editMerchandiseInfo' => null,
             'comment'             => '',
-            'latitude'            => (string) $settings['snappbox_latitude'] ?? '',
-            'longitude'           => (string) $settings['snappbox_longitude'] ?? '',
-            'reference'           => '1',
+            'latitude'            => $settings['snappbox_latitude'] ?? '',
+            'longitude'           => $settings['snappbox_longitude'] ?? '',
             'type'                => 'pickup',
-        ];
+            'paymentType'         => 'prepaid',
+            'vendorId'            => 0,
+            'services'            => [['itemServiceId' => 2, 'quantity' => 1]],
+        ]];
     }
 
     private function snappb_get_dropoff_details($order): array {
-        $latitude  = get_post_meta($order->get_id(), '_customer_latitude', true);
-        $longitude = get_post_meta($order->get_id(), '_customer_longitude', true);
-    
-        return [
-                'contactName' => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-                'address'     => $order->get_billing_address_1(),
-                'phoneNumber' => $this->snappb_normalize_phone_number($order->get_billing_phone()),
-                'comment'     => '',
-                'latitude'    => $latitude,
-                'longitude'   => $longitude,
-                'reference'   => '2',
-                'type'        => 'drop'
-        ];
+        $latitude  = \get_post_meta($order->get_id(), '_customer_latitude', true);
+        $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
+
+        return [[
+            'id'                               => null,
+            'contactName'                      => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+            'address'                          => $order->get_billing_address_1(),
+            'contactPhoneNumber'               => $this->snappb_normalize_phone_number($order->get_billing_phone()),
+            'editMerchandiseInfo'              => null,
+            'plate'                            => '',
+            'sequenceNumber'                   => 2,
+            'unit'                             => '',
+            'comment'                          => '',
+            'latitude'                         => $latitude,
+            'longitude'                        => $longitude,
+            'type'                             => 'drop',
+            'paymentType'                      => 'prepaid',
+            'vendorId'                         => 0,
+            'services'                         => [['itemServiceId' => 1, 'quantity' => 1]],
+            'verificationCodeGenerationStrategy' => 'AUTO',
+            'terminalDetails'                  => [
+                ['verificationCode' => ''],
+            ],
+        ]];
     }
 }
 

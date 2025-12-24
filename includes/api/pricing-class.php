@@ -10,7 +10,7 @@ class SnappBoxPriceHandler {
     public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
         global $snappb_api_base_url;
         $this->api_key = $api_key;
-        $this->apiUrl  = rtrim($snappb_api_base_url, '/') . '/v1/pricing';
+        $this->apiUrl  = rtrim($snappb_api_base_url, '/') . '/v1/customer/order/pricing';
 
         \add_action('wp_ajax_snappbox_get_pricing',  [$this, 'snappb_handle_create_order']);
         \add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'snappb_handle_create_order']);
@@ -34,36 +34,90 @@ class SnappBoxPriceHandler {
 
         $payload = [
             'city'                        => $city,
+            'customerWalletType'          => null,
             'deliveryCategory'            => 'bike-without-box',
-            'hasReturn'                    => false,
+            'deliveryFarePaymentType'     => null,
+            'isReturn'                    => false,
+            'loadAssistance'              => false,
             'voucherCode'                 => $voucherCode,
-            'paymentType'          => 'prepaid',
+            'orderLevelServices'          => [],
+            'sequenceNumberDeliveryCollection' => 1,
+            'waitingTime'                 => 0,
+            'cargoComment'                => '',
+            'id'                          => null,
+            'items'                       => [],
             'terminals'                   => [
                 [
-                    
+                    'canEdit'              => true,
+                    'cashOnDelivery'       => 0,
+                    'cashOnPickup'         => 0,
+                    'collectCash'          => 'no',
+                    'editMerchandiseInfo'  => null,
+                    'id'                   => null,
+                    'isEditing'            => false,
+                    'isHub'                => null,
+                    'isMerchandisingEnabled'=> false,
+                    'merchandise'          => null,
+                    'merchandiseInvoiceId' => null,
+                    'paymentType'          => 'prepaid',
+                    'state'                => 'Confirmed',
+                    'vendorId'             => null,
+                    'zoneType'             => 'DISABLED',
                     'address'              => \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
                     'comment'              => '',
                     'contactName'          => $settings['snappbox_store_name'] ?? '',
-                    'latitude'             => (string) $settings['snappbox_latitude'] ?? '',
-                    'longitude'            => (string) $settings['snappbox_longitude'] ?? '',
-                    'phoneNumber'   => $settings['snappbox_store_phone'] ?? '',
-                    'reference'       => "1",
+                    'contactPhoneNumber'   => $settings['snappbox_store_phone'] ?? '',
+                    'plate'                => '',
+                    'unit'                 => '',
+                    'latitude'             => $settings['snappbox_latitude'] ?? '',
+                    'longitude'            => $settings['snappbox_longitude'] ?? '',
+                    'location'             => [
+                        'latitude'  => $settings['snappbox_latitude'] ?? '',
+                        'longitude' => $settings['snappbox_longitude'] ?? '',
+                    ],
+                    'sequenceNumber'       => 1,
+                    'spriteKey'            => 'pickup',
                     'type'                 => 'pickup',
+                    'statusText'           => '',
+                    'itemDetail'           => null,
                 ],
                 [
+                    'canEdit'              => true,
+                    'cashOnDelivery'       => 0,
+                    'cashOnPickup'         => 0,
+                    'collectCash'          => 'no',
+                    'editMerchandiseInfo'  => null,
+                    'id'                   => null,
+                    'isEditing'            => false,
+                    'isHub'                => null,
+                    'isMerchandisingEnabled'=> false,
+                    'merchandise'          => null,
+                    'merchandiseInvoiceId' => null,
+                    'paymentType'          => 'prepaid',
+                    'state'                => 'Confirmed',
+                    'vendorId'             => null,
+                    'zoneType'             => 'DISABLED',
                     'address'              => $order ? $order->get_billing_address_1() : '',
                     'comment'              => '',
                     'contactName'          => $order ? ($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()) : '',
+                    'contactPhoneNumber'   => $order ? $this->snappb_phone_number($order->get_billing_phone()) : '',
+                    'plate'                => '',
+                    'unit'                 => '',
                     'latitude'             => $latitude,
                     'longitude'            => $longitude,
-                    'phoneNumber'   => $order ? $this->snappb_phone_number($order->get_billing_phone()) : '',
-                    'reference'       => "1",
-                    'type'                 => 'pickup',
+                    'location'             => [
+                        'latitude'  => $latitude,
+                        'longitude' => $longitude,
+                    ],
+                    'sequenceNumber'       => 2,
+                    'spriteKey'            => 'drop',
+                    'type'                 => 'drop',
+                    'statusText'           => '',
+                    'itemDetail'           => null,
                 ],
             ],
-            "waitingTime"=> 10
         ];
-
+        
         $response = \wp_remote_post($this->apiUrl, [
             'method'  => 'POST',
             'headers' => [
@@ -79,7 +133,7 @@ class SnappBoxPriceHandler {
         }
 
         $response_body = \json_decode(\wp_remote_retrieve_body($response), true);
-        
+
         if (!empty($response_body['finalCustomerFare'])) {
             return [
                 'success' => true,

@@ -98,6 +98,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
         'snappbox-quick-setup',
         'SNAPPB_QS',
         [
+          // Kept key name for compatibility; now true on step 2 (map step)
           'isStep3'      => ($step === 2),
           'mapStyle'     => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
           'rtlPluginUrl' => \trailingslashit($base_url) . 'assets/js/mapbox-gl-rtl-text.js',
