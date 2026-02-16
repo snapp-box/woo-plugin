@@ -3,7 +3,7 @@
  * Plugin Name:  snappbox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,8 +26,8 @@ if (! defined('ABSPATH')) {
 define('SNAPPBOX_DIR', plugin_dir_path(__FILE__));
 define('SNAPPBOX_URL', plugin_dir_url(__FILE__));
 define('SNAPPBOX_VERSION', '0.1.1');
-define('SNAPPBOX_API_BASE_URL_STAGING', 'https://customer-stg.snapp-box.com/');
-define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://customer.snapp-box.com/');
+define('SNAPPBOX_API_BASE_URL_STAGING', 'https://b2b-stg.snapp-box.com');
+define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://b2b.snapp-box.com');
 
 global $snappb_api_base_url;
 
@@ -51,7 +51,6 @@ define('SNAPPBOX_API_TOKEN', $snappb_api_key);
 
 
 require_once SNAPPBOX_DIR . 'includes/woo-checkout-map.php';
-require_once SNAPPBOX_DIR . 'includes/api/cities-class.php';
 require_once SNAPPBOX_DIR . 'includes/order-admin-class.php';
 require_once SNAPPBOX_DIR . 'includes/schedule-modal.php';
 require_once SNAPPBOX_DIR . 'includes/add-meta-orderlist-class.php';
@@ -74,9 +73,7 @@ function snappbox_init()
     if (class_exists('\Snappbox\SnappBoxOrderAdmin')) {
         new \Snappbox\SnappBoxOrderAdmin();
     }
-    if (class_exists('\SnappBoxCities')) {
-        new \Snappbox\Api\SnappBoxCities();
-    }
+
     if (class_exists('\Snappbox\SnappBoxCheckout')) {
         new \Snappbox\SnappBoxCheckout();
     }
@@ -104,6 +101,8 @@ add_action('plugins_loaded', __NAMESPACE__ . '\\snappbox_init');
 
 add_action('wp_ajax_snapp_nearby',  __NAMESPACE__ . '\snappb_ajax_nearby');
 add_action('wp_ajax_nopriv_snapp_nearby',  __NAMESPACE__ . '\\snappb_ajax_nearby');
+
+
 
 function snappb_ajax_nearby()
 {
@@ -157,23 +156,25 @@ function snappbox_store_city($lat, $lng)
 
 \register_deactivation_hook(SNAPPBOX_DIR, __NAMESPACE__ . '\\snappbox_deactivation_hook');
 
-function snappbox_deactivation_hook() {
+function snappbox_deactivation_hook()
+{
     update_option('snappbox_yandex_deactivation_goal', 1);
 }
 add_action('wp_footer', __NAMESPACE__ . '\\snappbox_yandex_deactivation_goal_script', 99);
 
-function snappbox_yandex_deactivation_goal_script() {
-    if ( ! get_option('snappbox_yandex_deactivation_goal') ) {
+function snappbox_yandex_deactivation_goal_script()
+{
+    if (! get_option('snappbox_yandex_deactivation_goal')) {
         return;
     }
     delete_option('snappbox_yandex_deactivation_goal');
-    ?>
+?>
     <script type="text/javascript">
         if (typeof ym === 'function') {
             ym(105087875, 'reachGoal', 'deactivation');
         }
     </script>
-    <?php
+<?php
 }
 
 add_action('before_woocommerce_init', function () {
@@ -286,12 +287,9 @@ function snappbox_remove_shipping_address_admin_order_page()
 add_action('admin_head',  __NAMESPACE__ . '\\snappbox_yandex_script');
 function snappbox_yandex_script()
 {
-    // if (! \function_exists('get_current_screen')) return;
-    // $screen = \get_current_screen();
-    // if (empty($screen) || $screen->id !== 'snappbox-quick-setup') return;
 ?>
     <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
+    <script defer type="text/javascript">
         (function(m, e, t, r, i, k, a) {
             m[i] = m[i] || function() {
                 (m[i].a = m[i].a || []).push(arguments)

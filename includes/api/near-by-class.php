@@ -8,7 +8,7 @@ class SnappBoxNearBy {
     private $auth_token;
 
     public function __construct() {
-        $this->api_url = 'https://app.snapp-box.com/api/v1/customer/nearby_biker_locations';
+        $this->api_url = 'https://app-stg.snapp-box.com/api/v1/customer/nearby_biker_locations';
         $this->auth_token = \SNAPPBOX_API_TOKEN;
     }
 
@@ -35,7 +35,7 @@ class SnappBoxNearBy {
         ];
 
         $response = \wp_remote_post($this->api_url, $args);
-
+        
         if (\is_wp_error($response)) {
             return [
                 'success' => false,
@@ -44,7 +44,6 @@ class SnappBoxNearBy {
         }
 
         $decoded = json_decode(wp_remote_retrieve_body($response), true);
-
         return [
             'success'  => true,
             'response' => $decoded,

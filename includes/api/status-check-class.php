@@ -10,7 +10,7 @@ class SnappOrderStatus
     public function __construct($accessToken = \SNAPPBOX_API_TOKEN)
     {
         global $snappb_api_base_url;
-        $this->apiUrl = $snappb_api_base_url . '/v2/orders/';
+        $this->apiUrl = $snappb_api_base_url . '/v1/orders/';
         $this->headers = [
             'Content-Type' => 'application/json',
         ];
