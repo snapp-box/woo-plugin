@@ -2,9 +2,9 @@
 Contributors: @samooel, @snappbox
 Tags: woocommerce, shipping, delivery, tracking, orders
 Requires at least: 5.6
-Tested up to: 6.8
+Tested up to: 6.9.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 

@@ -3,7 +3,7 @@
  * Plugin Name:  snappbox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,7 +73,7 @@ function snappbox_init()
     if (class_exists('\Snappbox\SnappBoxOrderAdmin')) {
         new \Snappbox\SnappBoxOrderAdmin();
     }
-   
+
     if (class_exists('\Snappbox\SnappBoxCheckout')) {
         new \Snappbox\SnappBoxCheckout();
     }
@@ -102,6 +102,8 @@ add_action('plugins_loaded', __NAMESPACE__ . '\\snappbox_init');
 add_action('wp_ajax_snapp_nearby',  __NAMESPACE__ . '\snappb_ajax_nearby');
 add_action('wp_ajax_nopriv_snapp_nearby',  __NAMESPACE__ . '\\snappb_ajax_nearby');
 
+
+
 function snappb_ajax_nearby()
 {
     $lat = isset($_POST['lat']) ? floatval(sanitize_text_field(wp_unslash($_POST['lat']))) : null;
@@ -121,7 +123,7 @@ function snappb_ajax_nearby()
 
     $items = $response['response'] ?? [];
     $found_valid = false;
-    
+
     foreach ($items as $res) {
         if (
             isset($res['apiValue'], $res['count']) &&
@@ -154,23 +156,25 @@ function snappbox_store_city($lat, $lng)
 
 \register_deactivation_hook(SNAPPBOX_DIR, __NAMESPACE__ . '\\snappbox_deactivation_hook');
 
-function snappbox_deactivation_hook() {
+function snappbox_deactivation_hook()
+{
     update_option('snappbox_yandex_deactivation_goal', 1);
 }
 add_action('wp_footer', __NAMESPACE__ . '\\snappbox_yandex_deactivation_goal_script', 99);
 
-function snappbox_yandex_deactivation_goal_script() {
-    if ( ! get_option('snappbox_yandex_deactivation_goal') ) {
+function snappbox_yandex_deactivation_goal_script()
+{
+    if (! get_option('snappbox_yandex_deactivation_goal')) {
         return;
     }
     delete_option('snappbox_yandex_deactivation_goal');
-    ?>
+?>
     <script type="text/javascript">
         if (typeof ym === 'function') {
             ym(105087875, 'reachGoal', 'deactivation');
         }
     </script>
-    <?php
+<?php
 }
 
 add_action('before_woocommerce_init', function () {
@@ -285,7 +289,7 @@ function snappbox_yandex_script()
 {
 ?>
     <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
+    <script defer type="text/javascript">
         (function(m, e, t, r, i, k, a) {
             m[i] = m[i] || function() {
                 (m[i].a = m[i].a || []).push(arguments)

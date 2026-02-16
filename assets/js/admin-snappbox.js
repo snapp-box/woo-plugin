@@ -1,8 +1,8 @@
 /* global SNAPPBOX_GLOBAL, jQuery, maplibregl */
-(function($){
+(function ($) {
   'use strict';
 
-  $(function(){
+  $(function () {
 
     // ---------- MAP ----------
     var $map = $('#admin-osm-map');
@@ -31,7 +31,7 @@
             .setHTML('<div style="direction:rtl;unicode-bidi:plaintext;">' + ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.popupCustomer) || 'موقعیت مشتری') + '</div>')
             .addTo(map);
         }
-      } catch(e) {
+      } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Map init error:', e);
       }
@@ -70,7 +70,7 @@
     var $orderLoading = $('.ct-order-loading');
     var $cancelLoading = $('.cancel-order-loading');
 
-    function rialToToman(v){ return parseInt(v, 10) / 10; }
+    function rialToToman(v) { return parseInt(v, 10) / 10; }
     function fmt(n) {
       try {
         return new Intl.NumberFormat('en-IR', { maximumSignificantDigits: 3 }).format(n);
@@ -78,22 +78,22 @@
         return n;
       }
     }
-    function show(el){ el.removeAttr('hidden'); }
-    function hide(el){ el.attr('hidden', true); }
+    function show(el) { el.removeAttr('hidden'); }
+    function hide(el) { el.attr('hidden', true); }
 
     // Open/close modal
-    $('.sb-modal__close').on('click', function(e){
+    $('.sb-modal__close').on('click', function (e) {
       e.preventDefault();
       $voucher.val('');
       hide($modal);
     });
 
-    function openModal(){
+    function openModal() {
       show($modal);
     }
 
     // Pricing + voucher handler (both buttons share logic)
-    $('#snappbox-pricing-order, #add-voucher-code').on('click', function(e){
+    $('#snappbox-pricing-order, #add-voucher-code').on('click', function (e) {
       e.preventDefault();
 
       var orderId = $(this).data('order-id');
@@ -111,11 +111,11 @@
           voucher_code: voucherCode,
           nonce: ctx.nonce
         },
-        beforeSend: function(){
+        beforeSend: function () {
           $pricingMsg.text((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.priceFetching) || 'در حال دریافت قیمت...');
           $createBtn.attr('disabled', 'disabled');
         },
-        success: function(response){
+        success: function (response) {
           openModal();
           $createBtn.removeAttr('disabled');
 
@@ -166,7 +166,7 @@
             $createBtn.attr('disabled', 'disabled');
           }
         },
-        error: function(jqXHR, textStatus, errorThrown){
+        error: function (jqXHR, textStatus, errorThrown) {
           // eslint-disable-next-line no-console
           console.error('AJAX error:', textStatus, errorThrown, jqXHR);
           $pricingMsg.text((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.requestError) || 'خطا در ارسال درخواست.');
@@ -176,7 +176,7 @@
     });
 
     // Create order
-    $createBtn.on('click', function(e){
+    $createBtn.on('click', function (e) {
       e.preventDefault();
 
       var orderId = $(this).data('order-id');
@@ -193,13 +193,13 @@
           voucher_code: voucherCode,
           nonce: ctx.nonce
         },
-        beforeSend: function(){ show($orderLoading); },
-        success: function(response){
+        beforeSend: function () { show($orderLoading); },
+        success: function (response) {
           if (response && response.success == true && response.response && response.response.orderId) {
             $('.sb-modal__content, .sb-modal__content *').hide();
             $('.vds-content').removeAttr('hidden');
             $('#snappbox-response-victory').html('<span class="sb-success">' + (response.response.message || ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.created) || 'Created')) + '</span>');
-            ym(105087875,'reachGoal','create-order');
+            ym(105087875, 'reachGoal', 'create-order');
             window.location.reload();
           } else {
             var errMsg = (response && response.response) ? response.response.message : ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.unknownError) || 'Unknown error');
@@ -207,7 +207,7 @@
           }
           hide($orderLoading);
         },
-        error: function(){
+        error: function () {
           $('#snappbox-response').text((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.orderSendErr) || 'Error sending order.');
           hide($orderLoading);
         }
@@ -215,7 +215,7 @@
     });
 
     // Cancel order
-    $('#snappbox-cancel-order').on('click', function(e){
+    $('#snappbox-cancel-order').on('click', function (e) {
       e.preventDefault();
 
       var orderId = $(this).data('order-id');
@@ -230,12 +230,12 @@
           woo_order_id: ctx.wooOrderId,
           nonce: ctx.nonce
         },
-        beforeSend: function(){ show($cancelLoading); },
-        success: function(response){
-          if (response && response.success) {
+        beforeSend: function () { show($cancelLoading); },
+        success: function (response) {
+          if (response && response.success == true) {
             $('#snappbox-cancel-response').html('<span class="sb-success">' + response.data + '</span>');
             hide($cancelLoading);
-            ym(105087875,'reachGoal','order-cancelation')
+            ym(105087875, 'reachGoal', 'order-cancelation')
             window.location.reload();
           } else {
             var msg = (response && response.data) ? response.data : 'خطا';
@@ -243,7 +243,7 @@
             hide($cancelLoading);
           }
         },
-        error: function(){
+        error: function () {
           $('#snappbox-cancel-response').text((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.cancelError) || 'Error cancelling order.');
           hide($cancelLoading);
         }

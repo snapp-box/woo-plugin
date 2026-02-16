@@ -55,7 +55,6 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             [],
             \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/css/style.css')
         );
-        
     }
 
     public function snappb_process_admin_options()
@@ -107,7 +106,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         }
         return $fields;
     }
-   
+
     private function snappb_point_in_polygon($point, $polygon)
     {
         $x = $point[0]; // lng
@@ -172,7 +171,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $customerLat = isset($_POST['customer_latitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_latitude'])) : '';
         $customerLong = isset($_POST['customer_longitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_longitude'])) : '';
 
-     
+
         $polygon_json = $this->get_option('polygon_coords');
         if ($chosen_shipping_method === 'snappbox_shipping_method') {
             $pricingHandler = new \Snappbox\Api\SnappBoxPriceHandler();
@@ -181,26 +180,24 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             $polygon_json = $this->get_option('polygon_coords');
             if (!empty($polygon_json) && !empty($result['data']['finalCustomerFare'])) {
                 $polygon = json_decode($polygon_json, true);
-    
+
                 if (isset($polygon[0][0]) && !is_array($polygon[0][0])) {
-                    $polygon = [ $polygon ];
+                    $polygon = [$polygon];
                 }
-    
+
                 $polygon = $polygon[0];
                 $is_inside = $this->snappb_point_in_polygon(
-                    [$customerLong, $customerLat], 
+                    [$customerLong, $customerLat],
                     $polygon
                 );
-    
+
                 if (!$is_inside) {
                     throw new \Exception(\esc_html__('Delivery is not available for this address. Please select a location within the serviceable area.', 'snappbox'));
-                }
-                else{
+                } else {
                     $order->add_order_note('Order registered with SnappBox in ' . $shipping_city);
                     $order->update_meta_data('_snappbox_city', $shipping_city);
                 }
-            }
-            else if (!empty($result['data']['finalCustomerFare'])) {
+            } else if (!empty($result['data']['finalCustomerFare'])) {
                 $order->add_order_note('Order registered with SnappBox in ' . $shipping_city);
                 $order->update_meta_data('_snappbox_city', $shipping_city);
             } else {
@@ -310,7 +307,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 'description' => 'Saved polygon area',
                 'class'       => 'snappbox-hidden-field'
             ],
-            
+
         ];
     }
 
@@ -425,10 +422,10 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     {
         $defaultLat = \wp_json_encode((float) $lat);
         $defaultLng = \wp_json_encode((float) $lng);
-    
+
         $rtl_plugin_url = \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js');
         $rtl_plugin_url_js = \wp_json_encode($rtl_plugin_url);
-    
+
         $inline_js  = 'document.addEventListener("DOMContentLoaded", function() {
     
             if (typeof maplibregl === "undefined") { console.error("MapLibre not loaded"); return; }
@@ -499,7 +496,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
                 Draw = new MapboxDraw({
                     displayControlsDefault: false,
-                    controls: { polygon: true, trash: true }
+                    controls: { polygon: false, trash: false }
                 });
     
                 map.addControl(Draw, "top-right");
@@ -606,16 +603,16 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             }
     
         });';
-    
+
         $inline_js .= '
             jQuery(document).on("click", ".snapp-close", function(){ jQuery("#snapp-modal").fadeOut(200); });
             jQuery(document).on("click", "#snapp-modal", function(e){ if(e.target.id==="snapp-modal"){ jQuery("#snapp-modal").fadeOut(200);} });
             jQuery("input.snappbox-hidden-field").closest("tr").hide();
         ';
-    
+
         \wp_add_inline_script('maplibre', $inline_js);
     }
-    
+
 
 
 
