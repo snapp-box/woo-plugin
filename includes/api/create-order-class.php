@@ -95,7 +95,13 @@ class SnappBoxCreateOrder
     {
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
-        ($settings['ondelivery'] == 'yes') ? $deliveryPayemnt = 2 : $deliveryPayemnt = 1;
+        if ($settings['ondelivery'] == 'yes') {
+            $deliveryPayemnt = 2;
+            $prePaid = 'cod';
+        } else {
+            $deliveryPayemnt = 1;
+            $prePaid = 'prepaid';
+        }
         return [
             'city' => $order->get_meta('customer_city'),
             'deliveryCategory' => 'bike-without-box',
@@ -108,7 +114,7 @@ class SnappBoxCreateOrder
                 "items" =>
                 $this->snappb_get_item_details($order),
             ]],
-            "paymentType" => "prepaid",
+            "paymentType" => $prePaid,
             "refId" => 'bp_' . $order_id,
             "startTime" => null,
             'terminals' => [
