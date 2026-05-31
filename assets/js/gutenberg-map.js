@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
             checkoutForm.appendChild(mapContainer);
 
             const map = L.map('snappbox-map').setView([35.6892, 51.3890], 12);
-            L.tileLayer('https://raster.snappmaps.ir/styles/snapp-style/{z}/{x}/{y}{r}.png', {
+            var tileUrl = (typeof SNAPPBOX_LEAFLET !== 'undefined' && SNAPPBOX_LEAFLET.rasterTileUrl) || '';
+            L.tileLayer(tileUrl, {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);

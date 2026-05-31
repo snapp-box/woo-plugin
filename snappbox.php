@@ -3,7 +3,7 @@
  * Plugin Name:  snappbox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
- * Version: 1.1.1
+ * Version: 1.1.3
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -12,7 +12,7 @@
  * Domain Path: /languages/
  * Requires Plugins: woocommerce
  * WC requires at least: 7.0.0
- * WC tested up to: 9.7.0
+ * WC tested up to: 10.7.0
  */
 
 namespace Snappbox;
@@ -26,8 +26,15 @@ if (! defined('ABSPATH')) {
 define('SNAPPBOX_DIR', plugin_dir_path(__FILE__));
 define('SNAPPBOX_URL', plugin_dir_url(__FILE__));
 define('SNAPPBOX_VERSION', '0.1.1');
-define('SNAPPBOX_API_BASE_URL_STAGING', 'https://b2b-stg.snapp-box.com');
-define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://b2b.snapp-box.com');
+
+require_once SNAPPBOX_DIR . 'includes/env-config.php';
+\Snappbox\EnvConfig::load(SNAPPBOX_DIR);
+
+define('SNAPPBOX_API_BASE_URL_STAGING', \Snappbox\EnvConfig::get('SNAPPBOX_API_BASE_URL_STAGING'));
+define('SNAPPBOX_API_BASE_URL_PRODUCTION', \Snappbox\EnvConfig::get('SNAPPBOX_API_BASE_URL_PRODUCTION'));
+
+
+
 
 global $snappb_api_base_url;
 
@@ -50,6 +57,7 @@ $snappb_api_key = $settings['snappbox_api'] ?? '';
 define('SNAPPBOX_API_TOKEN', $snappb_api_key);
 
 
+
 require_once SNAPPBOX_DIR . 'includes/woo-checkout-map.php';
 require_once SNAPPBOX_DIR . 'includes/order-admin-class.php';
 require_once SNAPPBOX_DIR . 'includes/schedule-modal.php';
@@ -58,7 +66,22 @@ require_once SNAPPBOX_DIR . 'includes/quick-setup-wizard.php';
 require_once SNAPPBOX_DIR . 'includes/api/near-by-class.php';
 require_once SNAPPBOX_DIR . 'includes/api/snapp-reverse-class.php';
 require_once SNAPPBOX_DIR . 'includes/plugin-activation.php';
+require_once SNAPPBOX_DIR . 'includes/api/config-class.php';
 
+$configSettings = new \Snappbox\Api\SnappBoxConfig();
+$config = $configSettings->snappb_get_config();
+($config && !empty($config->tileAddress)) ? $mapTile = $config->tileAddress : $mapTile = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_STYLE_URL');
+($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_REVERSE_URL');
+define('SNAPPBOX_MAP_URL', $mapTile);
+define('SNAPPBOX_REVERSE_URL', $reverseUrl);
+define('SNAPPBOX_NOMINATIM_URL', \Snappbox\EnvConfig::get('SNAPPBOX_MAP_NOMINATIM_URL'));
+($config && !empty($config->nearByApiStage)) ? $nearByStgURL = $config->nearByApiStage : $nearByStgURL = \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_STAGING');
+($config && !empty($config->nearByApiProd)) ? $nearByProdURL = $config->nearByApiProd : $nearByProdURL = \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_PRODUCTION');
+$snappb_nearby_url = (isset($settings['sandbox']))
+    ? $nearByStgURL
+    : $nearByProdURL;
+
+define('SNAPPBOX_NEARBY_URL', $snappb_nearby_url);
 register_activation_hook(SNAPPBOX_DIR, [SnappboxActivator::class, 'snappbox_activate']);
 register_deactivation_hook(SNAPPBOX_DIR, [SnappboxActivator::class, 'snappbox_deactivate']);
 
@@ -171,7 +194,7 @@ function snappbox_yandex_deactivation_goal_script()
 ?>
     <script type="text/javascript">
         if (typeof ym === 'function') {
-            ym(105087875, 'reachGoal', 'deactivation');
+            ym(<?php echo (int) \Snappbox\EnvConfig::get('SNAPPBOX_YANDEX_METRIKA_ID'); ?>, 'reachGoal', 'deactivation');
         }
     </script>
 <?php
@@ -213,6 +236,10 @@ function snappbox_enqueue_leaflet_map_js()
         '1.0',
         true
     );
+
+    wp_localize_script('snappbox-map-checkout', 'SNAPPBOX_LEAFLET', [
+        'rasterTileUrl' => \Snappbox\EnvConfig::get('SNAPPBOX_MAP_RASTER_TILE_URL'),
+    ]);
 }
 
 
@@ -301,9 +328,9 @@ function snappbox_yandex_script()
                 }
             }
             k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=105087875', 'ym');
+        })(window, document, 'script', <?php echo wp_json_encode(\Snappbox\EnvConfig::yandex_script_url()); ?>, 'ym');
 
-        ym(105087875, 'init', {
+        ym(<?php echo (int) \Snappbox\EnvConfig::get('SNAPPBOX_YANDEX_METRIKA_ID'); ?>, 'init', {
             ssr: true,
             webvisor: true,
             clickmap: true,
@@ -313,7 +340,7 @@ function snappbox_yandex_script()
         });
     </script>
     <noscript>
-        <div><img src="https://mc.yandex.ru/watch/105087875" style="position:absolute; left:-9999px;" alt="" /></div>
+        <div><img src="<?php echo esc_url(\Snappbox\EnvConfig::yandex_watch_url()); ?>" style="position:absolute; left:-9999px;" alt="" /></div>
     </noscript>
     <!-- /Yandex.Metrika counter -->
 <?php
