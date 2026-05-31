@@ -99,7 +99,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
         'SNAPPB_QS',
         [
           'isStep3'      => ($step === 2),
-          'mapStyle'     => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+          'mapStyle'     => \SNAPPBOX_MAP_URL,
           'rtlPluginUrl' => \trailingslashit($base_url) . 'assets/js/mapbox-gl-rtl-text.js',
           'i18n'         => [
             'centerPinAria' => \_x('Set location to map center', 'Center pin button ARIA', 'snappbox'),
@@ -225,11 +225,11 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
           <button
             type="submit"
             class="button button-primary sbqs-btn"
-            <?php if ($step  == 2){?> disabled="disabled" <?php }?>
-            <?php if($step  == 1)  {?>onclick="ym(105087875,'reachGoal',' step-1'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>
-            <?php if($step  == 2)  {?>onclick="ym(105087875,'reachGoal','step-2'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>
-            <?php if($step  == 3)  {?>onclick="ym(105087875,'reachGoal','step-3'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>
-            <?php if($is_last)  {?>onclick="ym(105087875,'reachGoal',' step-4'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php }?>>
+            <?php if ($step  == 2) { ?> disabled="disabled" <?php } ?>
+            <?php if ($step  == 1) { ?>onclick="ym(105087875,'reachGoal',' step-1'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php } ?>
+            <?php if ($step  == 2) { ?>onclick="ym(105087875,'reachGoal','step-2'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php } ?>
+            <?php if ($step  == 3) { ?>onclick="ym(105087875,'reachGoal','step-3'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php } ?>
+            <?php if ($is_last) { ?>onclick="ym(105087875,'reachGoal',' step-4'); setTimeout(() => { this.form.submit(); }, 150); return false;" <?php } ?>>
             <?php echo esc_html($is_last ? _x('Finish', 'Button', 'snappbox') : _x('Save & Continue', 'Button', 'snappbox')); ?>
           </button>
         </div>
@@ -240,7 +240,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
 
     private function snappb_render_step_1(): void
     {
-      
+
       $settings = \maybe_unserialize(\get_option($this->wc_option_key));
       $api      = \is_array($settings) ? ($settings['snappbox_api'] ?? '') : '';
 
@@ -253,7 +253,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
           <input type="text" id="sb_api" name="api" value="<?php echo \esc_attr($api); ?>"
             placeholder="<?php echo \esc_attr_x('Paste your API key…', 'Placeholder', 'snappbox'); ?>" />
           <a class="button button-primary sbqs-btn" target="_blank" rel="noopener"
-            href="<?php echo \esc_url('https://snapp-box.com/connect'); ?>">
+            href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_CONNECT_URL')); ?>">
             <?php echo \esc_html_x('Get API Key', 'Button', 'snappbox'); ?>
           </a>
         </div>

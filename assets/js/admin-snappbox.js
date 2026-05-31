@@ -18,7 +18,7 @@
         if (!isNaN(lat) && !isNaN(lng)) {
           var map = new maplibregl.Map({
             container: 'admin-osm-map',
-            style: (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.mapStyleUrl) || 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+            style: (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.mapStyleUrl) || '',
             center: [lng, lat],
             zoom: 15,
             attributionControl: true
@@ -232,6 +232,7 @@
         },
         beforeSend: function () { show($cancelLoading); },
         success: function (response) {
+          console.log(response)
           if (response && response.success == true) {
             $('#snappbox-cancel-response').html('<span class="sb-success">' + response.data + '</span>');
             hide($cancelLoading);

@@ -37,19 +37,16 @@
   }
 
   function nominatim(lat, lng) {
-    var url = "https://api.teh-1.snappmaps.ir/reverse/v1"
+    var url = SNAPPBOX_MAP.reverseUrl
       + "?lat=" + encodeURIComponent(lat)
       + "&lon=" + encodeURIComponent(lng)
       + "&language=en";
-  
-    return fetch(url, {
-      headers: {
-        "Accept": "application/json",
-        "Authorization": "pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw",
-        "X-Smapp-Key": "aa22e8eef7d348d32f492d8a0c755f4d",
-        "User-Agent": "SnappBoxWoo/1.0"
-      }
-    })
+
+    var headers = Object.assign({}, SNAPPBOX_MAP.reverseHeaders || {}, {
+      "User-Agent": "SnappBoxWoo/1.0"
+    });
+
+    return fetch(url, { headers: headers })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();

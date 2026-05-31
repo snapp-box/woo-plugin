@@ -66,7 +66,7 @@ class SnappBoxOrderAdmin
             'ajaxUrl'      => \admin_url('admin-ajax.php'),
             'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
             'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            'mapStyleUrl'  => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+            'mapStyleUrl'  => \SNAPPBOX_MAP_URL,
             'i18n'         => [
                 'priceFetching' => \__('Reciving price...', 'snappbox'),
                 'priceError'    => \__('Error in receiving price', 'snappbox'),

@@ -10,7 +10,7 @@ if (! \class_exists('WooCommerce')) {
     return;
 }
 
-require_once(SNAPPBOX_DIR . 'includes/api/cities-class.php');
+require_once(SNAPPBOX_DIR . 'includes/api/config-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/wallet-balance-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/pricing-class.php');
 require_once(SNAPPBOX_DIR . 'includes/convert-woo-cities-to-snappbox.php');
@@ -425,7 +425,6 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
 
         $rtl_plugin_url = \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js');
         $rtl_plugin_url_js = \wp_json_encode($rtl_plugin_url);
-
         $inline_js  = 'document.addEventListener("DOMContentLoaded", function() {
     
             if (typeof maplibregl === "undefined") { console.error("MapLibre not loaded"); return; }
@@ -435,7 +434,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     
             const map = new maplibregl.Map({
                 container:"map",
-                style:"https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json",
+                style:"' . \SNAPPBOX_MAP_URL . '",
                 center:[defaultLng, defaultLat],
                 zoom:16,
                 attributionControl:true
@@ -634,7 +633,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             ? (float) $walletObjResult['response']['balance']
             : 0.0;
 
-        $balanceDefaultResponse = \wp_remote_get('https://assets.snapp-box.com/static/plugin/woo-config.json');
+        $balanceDefaultResponse = \wp_remote_get(\Snappbox\EnvConfig::get('SNAPPBOX_WOO_CONFIG_URL'));
         if (\is_wp_error($balanceDefaultResponse)) return;
 
         $balanceDefault = \wp_remote_retrieve_body($balanceDefaultResponse);
@@ -652,7 +651,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             <div class="notice notice-error is-dismissible snappbox-low-balance">
                 <p>
                     <?php \esc_html_e('Your wallet balance is too low. Please contact Snappbox', 'snappbox'); ?>
-                    <a href="https://app.snapp-box.com/top-up" target="_blank" rel="noopener noreferrer">
+                    <a href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_TOP_UP_URL')); ?>" target="_blank" rel="noopener noreferrer">
                         <?php \esc_html_e('Learn more.', 'snappbox'); ?>
                     </a>
                 </p>
@@ -713,7 +712,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                         ?>
                     </td>
                     <td>
-                        <a href="https://snapp-box.com/connect" class="snappbox-token" target="_blank" rel="noopener noreferrer">درخواست توکن</a>
+                        <a href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_CONNECT_URL')); ?>" class="snappbox-token" target="_blank" rel="noopener noreferrer">درخواست توکن</a>
                     </td>
                 </tr>
             </table>
