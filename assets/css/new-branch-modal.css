@@ -1,0 +1,240 @@
+.branch-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.branch-modal.active {
+    display: flex;
+}
+
+.branch-modal-content {
+    width: 95%;
+    max-width: 1200px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    direction: rtl;
+}
+
+.branch-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid #eee;
+}
+
+.branch-modal-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-family: IRANSansX;
+}
+
+.branch-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.branch-modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 24px;
+}
+
+.branch-form-group {
+    margin-bottom: 16px;
+}
+
+.branch-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-family: IRANSansX;
+}
+
+.branch-form-group input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 0 12px;
+    font-family: IRANSansX;
+}
+
+.branch-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.branch-search-map input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 0 12px;
+    margin-bottom: 16px;
+    font-family: IRANSansX;
+}
+
+.branch-map-placeholder {
+    height: 400px;
+    background: #eef3f6;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #5c6770;
+}
+
+.branch-map-pin {
+    font-size: 42px;
+    margin-bottom: 12px;
+}
+
+.branch-help-box {
+    background: #f6f7f7;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.branch-help-box ul {
+    margin: 10px 0 0;
+    padding-right: 18px;
+}
+
+.branch-help-box li {
+    margin-bottom: 8px;
+}
+
+.branch-modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: left;
+    font-family: IRANSansX;
+}
+
+.switch-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.branch-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+.branch-switch input {
+    display: none;
+}
+
+.branch-slider {
+    position: absolute;
+    inset: 0;
+    background: #ccd0d4;
+    border-radius: 50px;
+    transition: .2s;
+}
+
+.branch-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    right: 4px;
+    transition: .2s;
+}
+
+.branch-switch input:checked + .branch-slider {
+    background: #2271b1;
+}
+
+.branch-switch input:checked + .branch-slider::before {
+    transform: translateX(-22px);
+}
+
+
+.snappbox-message {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    min-width: 320px;
+    max-width: 420px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 999999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-20px);
+    transition: all .35s ease;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, .15);
+    direction: rtl;
+    font-family: IRANSansX;
+    
+}
+
+.snappbox-message.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.snappbox-message.success {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+.snappbox-message.error {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+.snappbox-message-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.snappbox-message.success .snappbox-message-icon::before {
+    content: "✓";
+}
+
+.snappbox-message.error .snappbox-message-icon::before {
+    content: "✕";
+}
+
+.snappbox-message-text {
+    line-height: 1.8;
+    font-family: IRANSansX;
+}
+.none-visible{
+    display: none;
+}

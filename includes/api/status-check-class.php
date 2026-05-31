@@ -1,8 +1,6 @@
 <?php
-
 namespace Snappbox\Api;
-
-if (! defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) exit; 
 
 class SnappOrderStatus
 {
@@ -29,7 +27,7 @@ class SnappOrderStatus
         $response = \wp_remote_get($url, [
             'headers' => $this->headers,
         ]);
-        // print_r($response);
+
         if (\is_wp_error($response)) {
             throw new \Exception('Request error: ' . \esc_html($response->get_error_message()));
         }
@@ -44,3 +42,5 @@ class SnappOrderStatus
         return $this->snappb_get_order_status($orderID);
     }
 }
+
+?>

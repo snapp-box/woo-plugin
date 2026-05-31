@@ -4,6 +4,8 @@ namespace Snappbox;
 
 defined('ABSPATH') || exit;
 
+use \Snappbox\Api\SnappBoxWalletBalance;
+
 if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
   class SnappBox_Quick_Setup
   {
@@ -98,6 +100,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
         'snappbox-quick-setup',
         'SNAPPB_QS',
         [
+          // Kept key name for compatibility; now true on step 2 (map step)
           'isStep3'      => ($step === 2),
           'mapStyle'     => \SNAPPBOX_MAP_URL,
           'rtlPluginUrl' => \trailingslashit($base_url) . 'assets/js/mapbox-gl-rtl-text.js',
@@ -234,7 +237,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
           </button>
         </div>
       </form>
-    <?php
+      <?php
     }
 
 
@@ -245,15 +248,26 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
       $api      = \is_array($settings) ? ($settings['snappbox_api'] ?? '') : '';
 
       $this->snappb_render_form_open(1);
+      $tokenFailed = \get_option('token_failed');
+      if ($tokenFailed == 1) {
+      ?>
+        <div id="snapp-modal" style="margin-bottom:10px;">
+          <div class="snapp-modal-content">
+            <span class="snapp-close">&times;</span>
+            <p id="snapp-modal-message"> کلید ای پی آی شما فعال نیست</p>
+          </div>
+        </div>
+      <?php
+      }
       echo '<p class="sbqs-lead">' . \esc_html_x('Enter your SnappBox API token', 'Lead text', 'snappbox') . '</p>';
-    ?>
+      ?>
       <div class="sbqs-field sbqs-row">
         <label for="sb_api"><?php echo \esc_html_x('API Key', 'Label', 'snappbox'); ?></label>
         <div class="sbqs-input-row">
           <input type="text" id="sb_api" name="api" value="<?php echo \esc_attr($api); ?>"
             placeholder="<?php echo \esc_attr_x('Paste your API key…', 'Placeholder', 'snappbox'); ?>" />
           <a class="button button-primary sbqs-btn" target="_blank" rel="noopener"
-            href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_CONNECT_URL')); ?>">
+            href="<?php echo \esc_url('https://snapp-box.com/connect'); ?>">
             <?php echo \esc_html_x('Get API Key', 'Button', 'snappbox'); ?>
           </a>
         </div>
@@ -413,8 +427,17 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
         case 1: {
             $api = isset($_POST['api']) ? \sanitize_text_field(\wp_unslash($_POST['api'])) : '';
             $settings['snappbox_api'] = $api;
-            \update_option($this->wc_option_key, $settings);
-            $this->snappb_redirect_step(2);
+            $walletBalance = new SnappBoxWalletBalance();
+            $checkApi = $walletBalance->snappb_check_balance($api);
+
+            if ($checkApi['response']['apiStatus'] != 'FAILURE') {
+              \update_option('token_failed', '0');
+              \update_option($this->wc_option_key, $settings);
+              $this->snappb_redirect_step(2);
+            } else {
+              \update_option('token_failed', '1');
+              $this->snappb_redirect_step(1);
+            }
             break;
           }
 

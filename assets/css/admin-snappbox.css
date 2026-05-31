@@ -16,6 +16,7 @@
   font-weight: 600;
   text-decoration: none;
   border-bottom: 0 !important;
+  font-family: 'IRANSansX';
 }
 
 .sb-modal__box,
@@ -136,11 +137,77 @@
 }
 html .mapbox-gl-draw_ctrl-draw-btn{
   border-color: rgba(0, 0, 0, 0.3);
-  color: rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
+  color: #000;
+  border-radius: 25px;
   background-color: #fff;
   cursor: pointer;
+  width: 148px;
+  background-position: 85% center;
+  border: 0;
+  height: 40px;
+  box-shadow: 0px 4px 23px 0px #00000026;
+}
+html .mapbox-gl-draw_polygon{
+  background-image: url("../img/location.svg");
+}
+html .mapbox-gl-draw_trash{
+  background-image: url("../img/delete.svg");
 }
 html .mapbox-gl-draw_ctrl-draw-btn.active, html .mapbox-gl-draw_ctrl-draw-btn.active:hover{
   background-color: rgba(235, 235, 235, 0.8);
+}
+
+.loader {
+  display: inline-flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 9px; /* controls how high dots can bounce */
+}
+
+.loader span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translateY(0);
+  animation: bounce 0.6s infinite ease-in-out;
+}
+
+.loader span:nth-child(2) { animation-delay: 0.12s; }
+.loader span:nth-child(3) { animation-delay: 0.24s; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%      { transform: translateY(-10px); opacity: 1; }
+}
+
+.mapboxgl-ctrl-group {
+  display: block;
+  width: 100%;
+  text-align: center;
+  align-items: center;
+  position: static;
+}
+.maplibregl-ctrl-bottom-left{
+  width: 100%;
+  bottom: 10px !important;
+}
+.guidence-map{
+  background: rgba(0, 0, 0, 0.7);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 10000000;
+  padding:40px;
+  text-align: center;
+  padding-top: 60px;
+}
+.guidence-map a, .guidence-map p{
+  color:#fff;
+}
+.guidence-map p{
+  max-width: 50%;
+  margin: 18px auto;
 }

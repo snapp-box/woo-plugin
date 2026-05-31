@@ -7,6 +7,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+require_once(SNAPPBOX_DIR . 'includes/api/config-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/create-order-class.php');
 
 class SnappBoxCheckout
@@ -225,7 +226,7 @@ class SnappBoxCheckout
                 foreach ($times as $t) {
                     if (!empty($t)) {
                         $has_valid_time = true;
-                        break 2; 
+                        break 2;
                     }
                 }
             }
@@ -268,15 +269,15 @@ class SnappBoxCheckout
             'defaultLat' => $defaultLat,
             'defaultLng' => $defaultLng,
             'autoFill'   => $autoFill,
-            'styleUrl'   => \SNAPPBOX_MAP_URL,
+            'styleUrl'   => SNAPPBOX_MAP_URL,
             'rtlPlugin'  => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            'reverseUrl' => \SNAPPBOX_REVERSE_URL,
+            'reverseUrl' => SNAPPBOX_REVERSE_URL,
             'reverseHeaders' => [
                 'Accept'        => 'application/json',
-                'X-Smapp-Key'   => \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_KEY'),
-                'Authorization' => \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_AUTHORIZATION'),
+                'X-Smapp-Key'   => 'aa22e8eef7d348d32f492d8a0c755f4d',
+                'Authorization' => 'pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw',
             ],
-            'nominatimUrl' => \SNAPPBOX_NOMINATIM_URL,
+            'nominatimUrl' => 'https://nominatim.openstreetmap.org/reverse',
         ]);
 
         $raw_schedule = \get_option('snappbox_schedule', []);

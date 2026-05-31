@@ -62,13 +62,14 @@ class SnappBoxOrderAdmin
             true
         );
 
+
         \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
             'ajaxUrl'      => \admin_url('admin-ajax.php'),
             'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
             'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
             'mapStyleUrl'  => \SNAPPBOX_MAP_URL,
             'i18n'         => [
-                'priceFetching' => \__('Reciving price...', 'snappbox'),
+                'priceFetching' => \__('Receiving price...', 'snappbox'),
                 'priceError'    => \__('Error in receiving price', 'snappbox'),
                 'requestError'  => \__('Error in sending request', 'snappbox'),
                 'unknownError'  => \__('Unknown error', 'snappbox'),
@@ -106,14 +107,8 @@ class SnappBoxOrderAdmin
                 if ($free_delivery) {
                     echo '<div><b>' . \esc_html($free_delivery) . '</b></div>';
                 }
-
-                $this->snappb_check_order_status($order);
-
-                echo '<div id="snappbox-admin-context"
-                     data-nonce="' . \esc_attr($nonce) . '"
-                     data-currency="' . \esc_attr(\get_woocommerce_currency()) . '"
-                     data-woo-order-id="' . (int) $order->get_id() . '"
-                   ></div>';
+                $echoText = "yes";
+                $this->snappb_check_order_status($order, $echoText);
 
                 $this->snappb_display_snappbox_order_button($order, $nonce);
                 ?>
@@ -153,6 +148,7 @@ class SnappBoxOrderAdmin
 
     public function snappb_display_snappbox_order_button($order, $nonce)
     {
+
         $snappboxOrder = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
         $day           = $order->get_meta('_snappbox_day');
         $time          = $order->get_meta('_snappbox_time');
@@ -169,14 +165,31 @@ class SnappBoxOrderAdmin
                 </div>
             <?php
         }
-        // print_r($getResponse);
         if ($onDeliver['ondelivery'] == 'yes') { ?>
                 <div class="snappbox-order-container clearfix">
                     <p><b><?php \esc_html_e('SnappBox Payment after delivery', 'snappbox'); ?></b></p>
                 </div>
             <?php
         }
-        if (! $snappboxOrder || $getResponse->status == 'CANCELLED') :
+        echo ($this->snappb_pricing_modal($snappboxOrder, $getResponse, $order, $nonce));
+    }
+
+
+    public function snappb_pricing_modal($snappBoxOrder, $getResponse, $order, $nonce)
+    {
+        echo '<div id="snappbox-admin-context"
+                     data-nonce="' . \esc_attr($nonce) . '"
+                     data-currency="' . \esc_attr(\get_woocommerce_currency()) . '"
+                     data-woo-order-id="' . (int) $order->get_id() . '"
+                   ></div>';
+        if (
+            ! $snappBoxOrder ||
+            (
+                is_object($getResponse) &&
+                isset($getResponse->status) &&
+                $getResponse->status === 'CANCELLED'
+            )
+        ) :
             ?>
                 <div class="sb-modal" id="sb-pricing-modal" hidden>
                     <div class="sb-modal__box">
@@ -198,9 +211,9 @@ class SnappBoxOrderAdmin
                                     class="snappbox-btn button button-primary"
                                     hidden>
                                     <?php \esc_html_e('Send to SnappBox', 'snappbox'); ?>
+
                                 </button>
                             </div>
-
                             <img class="ct-order-loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
                             <span id="snappbox-response"></span>
                         </div>
@@ -215,30 +228,37 @@ class SnappBoxOrderAdmin
                 </div>
 
                 <div class="snappbox-order-container clearfix sb-actions-row">
-                    <button id="snappbox-pricing-order"
+                    <button
                         data-order-id="<?php echo \esc_attr($order->get_id()); ?>"
-                        class="snappbox-btn button button-primary">
-                        <?php \esc_html_e('Get SnappBox Price', 'snappbox'); ?>
+                        class="snappbox-pricing-order snappbox-btn button button-primary">
+                        <span class="button-text"><?php \esc_html_e('Get SnappBox Price', 'snappbox'); ?></span>
+                        <div class="loader loading" aria-label="Loading" role="status" hidden>
+                            <span></span><span></span><span></span>
+                        </div>
                     </button>
-                    <img class="loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
+
+                    <!-- <img class="loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden /> -->
                 </div>
                 <?php
             else :
                 if ($getResponse && isset($getResponse->canCancel) && (int) $getResponse->canCancel === 1) : ?>
+
                     <div class="snappbox-cancel-container sb-actions-row">
                         <button id="snappbox-cancel-order"
-                            data-order-id="<?php echo \esc_attr($snappboxOrder); ?>"
+                            data-order-id="<?php echo \esc_attr($snappBoxOrder); ?>"
                             class="cancel-order button button-secondary">
-                            <?php \esc_html_e('Cancel Order', 'snappbox'); ?>
+                            <span class="button-text"><?php \esc_html_e('Cancel Order', 'snappbox'); ?></span>
+                            <div class="loader loading cancel-order-loading" aria-label="Loading" role="status" hidden>
+                                <span></span><span></span><span></span>
+                            </div>
                         </button>
-                        <img class="cancel-order-loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
+
                         <span id="snappbox-cancel-response"></span>
                     </div>
     <?php
                 endif;
             endif;
         }
-
         public function snappb_handle_create_snappbox_order()
         {
             \check_ajax_referer('snappbox_admin_actions', 'nonce');
@@ -355,11 +375,12 @@ class SnappBoxOrderAdmin
             }
         }
 
-        public function snappb_check_order_status($order)
+        public function snappb_check_order_status($order, $echoText)
         {
             $meta_order_id = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
             $getResponse   = $meta_order_id ? \get_post_meta($meta_order_id, '_snappbox_last_api_response', true) : null;
-            if ($getResponse && isset($getResponse->status)) {
+
+            if ($getResponse && isset($getResponse->status) && $echoText) {
                 echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->status) . '</p>';
             }
 

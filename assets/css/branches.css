@@ -1,0 +1,155 @@
+.branch-admin-wrap {
+    direction: rtl;
+    padding: 20px;
+    font-family: Tahoma, sans-serif;
+}
+
+.branch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.branch-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-family: IRANSansX;
+}
+
+.branch-add-btn {
+    background: #2271b1;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border:0;
+    font-family: IRANSansX;
+}
+
+.branch-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-family: IRANSansX;
+}
+
+.branch-search input {
+    width: 260px;
+    padding: 7px 10px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    font-family: IRANSansX;
+}
+
+.branch-table-wrapper {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+.branch-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.branch-table thead {
+    background: #f6f7f7;
+}
+
+.branch-table th,
+.branch-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f0f0f1;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-family: IRANSansX;
+}
+
+.branch-table th {
+    font-weight: 600;
+    color: #50575e;
+}
+
+.branch-name {
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.branch-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    font-family: IRANSansX;
+}
+
+.branch-status.active {
+    background: #00a32a;
+}
+
+.branch-status.inactive {
+    background: #d63638;
+}
+
+.branch-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.branch-btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: IRANSansX;
+}
+
+.branch-btn.edit {
+    background: #2271b1;
+    font-family: IRANSansX;
+}
+
+.branch-btn.delete {
+    background: #d63638;
+    font-family: IRANSansX;
+}
+
+.branch-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.branch-pagination .pages {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-family: IRANSansX;
+}
+
+.branch-pagination button {
+    min-width: 32px;
+    height: 32px;
+    border: 1px solid #ccd0d4;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: IRANSansX;
+}
+
+.branch-pagination .active-page {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}

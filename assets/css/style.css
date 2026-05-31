@@ -103,7 +103,30 @@
     border-bottom: 1px solid #ccc;
     padding-bottom: 5px;
 }
-
+.store-header h4{
+	border:0;
+	margin:0;
+	padding:0;
+	display: inline-block;
+	width: 86%;
+}
+.store-header{
+	margin-top: 30px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+}
+.store-header > a{
+	background: #2271b1;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+	float: left;
+}
 #map {
     height: 400px;
     margin-top: 15px;
@@ -215,10 +238,11 @@ p.submit{
 }
 button.snappbox-btn {
 	background-color: #22a958 !important;
-    padding: 10px 40px !important;
+    padding: 10px 1rem !important;
     font-family: "IRANSansX";
     border: 0 !important;
     border-radius: 10px !important;
+	width:160px;
 }
 #admin-osm-map{
 	margin-bottom: 20px;
@@ -238,7 +262,6 @@ button.snappbox-btn {
     margin: 5px auto;
 }
 .loading, .cancel-order-loading{
-	margin-top: 9px;
     margin-right: 10px;
 }
 .cancel-order{
@@ -248,6 +271,7 @@ button.snappbox-btn {
     border: 0 !important;
     border-radius: 10px !important;
 	color:#fff !important;
+	width:160px;
 }
 #snappbox-response-victory{
 	display: block;

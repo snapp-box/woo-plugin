@@ -1,17 +1,21 @@
 <?php
-namespace Snappbox\Api;
-if ( ! defined( 'ABSPATH' ) ) exit; 
-class SnappBoxWalletBalance {
-    private $api_url;
-    private $api_key;
 
-    public function __construct($api_key = \SNAPPBOX_API_TOKEN) {
+namespace Snappbox\Api;
+
+if (! defined('ABSPATH')) exit;
+class SnappBoxWalletBalance
+{
+    private $api_url;
+
+
+    public function __construct()
+    {
         global $snappb_api_base_url;
-        $this->api_key = $api_key;
         $this->api_url = $snappb_api_base_url . '/v1/wallets';
     }
 
-    public function snappb_check_balance($order_data = '') {
+    public function snappb_check_balance($apiKey)
+    {
         $args = [
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -20,12 +24,12 @@ class SnappBoxWalletBalance {
             'timeout' => 45,
         ];
 
-        if ($this->api_key) {
-            $args['headers']['Authorization'] = $this->api_key;
+        if ($apiKey) {
+            $args['headers']['Authorization'] = $apiKey;
         }
 
         $response = \wp_remote_get($this->api_url, $args);
-        
+
         if (\is_wp_error($response)) {
             return [
                 'success' => false,
@@ -40,8 +44,4 @@ class SnappBoxWalletBalance {
             'response' => $decoded_response,
         ];
     }
-
-   
 }
-
-?>
