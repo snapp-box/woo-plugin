@@ -7,7 +7,7 @@ class SnappBoxConfig
     private $apiUrl;
     public function __construct()
     {
-        $this->apiUrl = 'https://assets.snapp-box.com/static/plugin/woo-config.json';
+        $this->apiUrl = \Snappbox\EnvConfig::get('SNAPPBOX_WOO_CONFIG_URL');;
     }
 
     public function snappb_get_config()

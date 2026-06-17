@@ -127,6 +127,15 @@
     border-radius: 4px;
 	float: left;
 }
+.branch-wrapper{
+	display: flex;
+}
+.default-branch{
+	width:48%;
+}
+.map-holder{
+	width:50%;
+}
 #map {
     height: 400px;
     margin-top: 15px;
@@ -243,6 +252,7 @@ button.snappbox-btn {
     border: 0 !important;
     border-radius: 10px !important;
 	width:160px;
+	height: 50px;
 }
 #admin-osm-map{
 	margin-bottom: 20px;
@@ -409,3 +419,6 @@ a.snappbox-token{
 #center-pin::before { content: ""; position: absolute; inset: 0; background-repeat: no-repeat; background-position: center; background-size: contain; background-image: url('data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="%23e53935" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="3" fill="white"/></svg>'); }
 #center-pin::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px); width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .12); background: rgba(0, 0, 0, .06); }
 .maplibregl-marker { z-index: 9999 !important; }
+.sb-cancel-btn{
+	margin-bottom:24px;
+}

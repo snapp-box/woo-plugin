@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 use \Snappbox\EnvConfig;
 
-class SnappboxBranchesUpdate
+class SnappboxBranchesDelete
 {
     private string $token;
     private string $base_url;
@@ -19,29 +19,16 @@ class SnappboxBranchesUpdate
         $this->base_url = EnvConfig::get('SNAPPBPX_BUSINESS_BASE_URL') . '/v1/customers/addresses/store';
     }
 
-    public function update_address(string $id, array $data)
+    public function delete_address(string $id, array $data)
     {
         $url = "{$this->base_url}/{$id}";
-        $body = [
-            'id'                 => (string) $id,
-            'name'               => (string) ($data['name'] ?? ''),
-            'contactName'        => (string) ($data['contactName'] ?? ''),
-            'contactPhoneNumber' => (string) ($data['contactPhoneNumber'] ?? ''),
-            'latitude'           => (string) ($data['latitude'] ?? ''),
-            'longitude'          => (string) ($data['longitude'] ?? ''),
-            'address'            => (string) ($data['address'] ?? ''),
-            'plate'              => (string) ($data['plate'] ?? ''),
-            'unit'               => (string) ($data['unit'] ?? ''),
-            'comment'            => (string) ($data['comment'] ?? ''),
-            'defaultAddress'     => (bool) ($data['defaultAddress'] ?? true),
-        ];
         $response = wp_remote_request($url, [
-            'method'  => 'PUT',
+            'method'  => 'DELETE',
             'headers' => [
                 'Authorization'    =>  $this->token,
                 'Content-Type'  => 'application/json',
             ],
-            'body' => wp_json_encode($body),
+            'body' => '',
             'timeout' => 20,
         ]);
 

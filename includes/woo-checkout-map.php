@@ -269,15 +269,15 @@ class SnappBoxCheckout
             'defaultLat' => $defaultLat,
             'defaultLng' => $defaultLng,
             'autoFill'   => $autoFill,
-            'styleUrl'   => SNAPPBOX_MAP_URL,
+            'styleUrl'   => \SNAPPBOX_MAP_URL,
             'rtlPlugin'  => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            'reverseUrl' => SNAPPBOX_REVERSE_URL,
+            'reverseUrl' => \SNAPPBOX_REVERSE_URL,
             'reverseHeaders' => [
                 'Accept'        => 'application/json',
-                'X-Smapp-Key'   => 'aa22e8eef7d348d32f492d8a0c755f4d',
-                'Authorization' => 'pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw',
+                'X-Smapp-Key'   => \SNAPPBOX_SMAPP_KEY,
+                'Authorization' => \SNAPPBOX_SMAPP_TOKEN,
             ],
-            'nominatimUrl' => 'https://nominatim.openstreetmap.org/reverse',
+            'nominatimUrl' => \SNAPPBOX_NOMINATIM_URL,
         ]);
 
         $raw_schedule = \get_option('snappbox_schedule', []);

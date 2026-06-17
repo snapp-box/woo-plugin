@@ -1,15 +1,19 @@
 <?php
+
 namespace Snappbox\Api;
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if (! defined('ABSPATH')) exit;
 
-class SnappMapsReverseGeocoder {
 
-    private $base_url  = 'https://api.teh-1.snappmaps.ir/reverse/v1';
-    private $auth_token = 'pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw';
-    private $smapp_key = 'aa22e8eef7d348d32f492d8a0c755f4d';
+class SnappMapsReverseGeocoder
+{
 
-    public function get_address( $lat, $lng, $language ) {
+    private $base_url  = \SNAPPBOX_REVERSE_URL;
+    private $auth_token = \SNAPPBOX_SMAPP_TOKEN;
+    private $smapp_key = \SNAPPBOX_SMAPP_KEY;
+
+    public function get_address($lat, $lng, $language)
+    {
 
         $url = \add_query_arg([
             'lat'      => $lat,
@@ -26,11 +30,11 @@ class SnappMapsReverseGeocoder {
             ]
         ]);
 
-        if ( \is_wp_error( $response ) ) {
-            return new \WP_Error( 'snappmaps_error', 'Failed to communicate with SnappMaps API.' );
+        if (\is_wp_error($response)) {
+            return new \WP_Error('snappmaps_error', 'Failed to communicate with SnappMaps API.');
         }
 
-        $body = \wp_remote_retrieve_body( $response );
-        return \json_decode( $body, true );
+        $body = \wp_remote_retrieve_body($response);
+        return \json_decode($body, true);
     }
 }

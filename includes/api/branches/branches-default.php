@@ -8,18 +8,18 @@ if (!defined('ABSPATH')) {
 
 use \Snappbox\EnvConfig;
 
-class SnappBoxBranchesList
+class SnappBoxBranchesDefault
 {
     private string $api_url;
     private string $auth_token;
 
     public function __construct()
     {
-        $this->api_url = EnvConfig::get('SNAPPBPX_BUSINESS_BASE_URL') . '/v1/customers/addresses/store';
+        $this->api_url = EnvConfig::get('SNAPPBPX_BUSINESS_BASE_URL') . '/v1/customers/addresses/store/default';
         $this->auth_token = \SNAPPBOX_BUSINESS_TOKEN;
     }
 
-    public function snappb_branches_list(): array
+    public function snappb_branches_default(): array
     {
         $args = [
             'timeout' => 45,

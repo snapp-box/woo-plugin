@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) {
 require_once SNAPPBOX_DIR . 'includes/branches/new-branch-modal.php';
 require_once SNAPPBOX_DIR . 'includes/api/branches/branches-list.php';
 require_once SNAPPBOX_DIR . 'includes/api/branches/branches-edit.php';
+require_once SNAPPBOX_DIR . 'includes/api/branches/branches-delete.php';
 
 use Snappbox\Api\Branches\SnappBoxBranchesList;
 
@@ -19,6 +20,7 @@ class BranchListPage
         add_action('admin_menu', [$this, 'snappb_branches_register_menu']);
         add_action('admin_enqueue_scripts', [$this, 'snappb_branches_enqueue_assets']);
         add_action('wp_ajax_snappbox_save_branch', [$this, 'save_branch']);
+        add_action('wp_ajax_snappbox_delete_branch', [$this, 'delete_branch']);
         add_action('wp_ajax_nopriv_snappbox_save_branch', [$this, 'save_branch']);
     }
 
@@ -59,11 +61,11 @@ class BranchListPage
     }
 
 
-    private function snappb_branches_get_items()
+    public function snappb_branches_get_items()
     {
         $branches = new SnappBoxBranchesList();
         $list = $branches->snappb_branches_list();
-        return ($list['response']['data'] ?? []);
+        return ($list['response'] ?? []);
     }
 
 
@@ -83,6 +85,11 @@ class BranchListPage
             new \Snappbox\Branches\BranchModal();
             \Snappbox\Branches\BranchModal::render();
         }
+        $statusCode = $items['statusCode'] ?? "";
+        if ($statusCode && $statusCode == "404") {
+            $items = [];
+        };
+
 ?>
         <div class="wrap branch-admin-wrap">
             <div class="branch-header">
@@ -169,12 +176,17 @@ class BranchListPage
                                     <td>
                                         <div class="branch-actions">
                                             <button
+                                                <?php echo (($item['status'] == 'INACTIVE') ? "disabled" : ""); ?>
                                                 type="button"
                                                 class="branch-btn edit js-edit-branch"
                                                 data-branch='<?php echo esc_attr(json_encode($item)); ?>'>
                                                 <?php \esc_html_e('Edit Branch', 'snappbox'); ?>
                                             </button>
-                                            <button class="branch-btn delete">
+                                            <button
+                                                <?php echo (($item['status'] == 'INACTIVE') ? "disabled" : ""); ?>
+                                                type="button"
+                                                class="branch-btn delete js-delete-branch"
+                                                data-id="<?php echo esc_attr($item['id']); ?>">
                                                 <?php \esc_html_e('Remove Branch', 'snappbox'); ?>
                                             </button>
                                         </div>
@@ -209,6 +221,56 @@ class BranchListPage
                 </div>
             </div>
         </div>
+        <div id="snappbox-message" class="snappbox-message">
+            <div class="snappbox-message-text"></div>
+        </div>
+        <script>
+            jQuery(document).ready(function($) {
+                function showMessage(type, text) {
+                    const box = $('#snappbox-message');
+                    box.removeClass('success error');
+                    box.addClass(type);
+                    box.find('.snappbox-message-text').text(text);
+                    box.addClass('show');
+                    setTimeout(() => box.removeClass('show'), 3000);
+                }
+
+                jQuery('.js-delete-branch').on('click', function() {
+                    const $btn = $(this);
+                    const branchId = $(this).attr('data-id');
+                    $.ajax({
+                        url: SNAPPBOX_AJAX.ajax_url,
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            action: 'snappbox_delete_branch',
+                            nonce: SNAPPBOX_AJAX.nonce,
+                            id: branchId,
+                        },
+                        success: function(response) {
+                            $btn.prop('disabled', false);
+                            if (response.success) {
+                                if (response.data.message) {
+                                    showMessage('error', response.data.message);
+                                } else {
+                                    showMessage('success', '<?php \esc_html_e('Your branch has successfully deleted', 'snappbox'); ?>');
+                                }
+
+                                location.reload(); // simple refresh
+                            } else {
+                                showMessage('error', response.data?.message || 'خطا');
+                            }
+                        },
+
+                        error: function() {
+                            $btn.prop('disabled', false);
+                            showMessage('error', '<?php \esc_html_e('Error with stablishing the connection with server', 'snappbox'); ?>');
+                        }
+                    });
+                });
+
+            });
+        </script>
 
 <?php
     }
@@ -261,6 +323,44 @@ class BranchListPage
 
             wp_send_json_success($result);
         } catch (\Throwable $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function delete_branch()
+    {
+        check_ajax_referer('snappbox_branch_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error([
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        try {
+
+            $id = sanitize_text_field($_POST['id'] ?? '');
+
+            if (empty($id)) {
+                wp_send_json_error([
+                    'message' => 'Branch ID is required'
+                ], 400);
+            }
+
+            $token = SNAPPBOX_BUSINESS_TOKEN;
+
+            $api = new \Snappbox\Api\Branches\SnappboxBranchesDelete($token);
+
+            $result = $api->delete_address($id, []);
+
+            if (!empty($result['success'])) {
+                wp_send_json_success($result);
+            }
+
+            wp_send_json_error($result);
+        } catch (\Throwable $e) {
+
             wp_send_json_error([
                 'message' => $e->getMessage()
             ], 500);

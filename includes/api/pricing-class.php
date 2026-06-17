@@ -22,6 +22,12 @@ class SnappBoxPriceHandler
 
     public function snappb_get_pricing($orderId, $cityName, $state_code, $customerLat, $customerLong, $voucherCode)
     {
+
+        $branchLat = \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) ?? "";
+        $branchLong = \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) ?? "";
+        $branchPhoneNumber = \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) ?? "";
+        $branchContactName = \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) ?? "";
+        $branchAddress = \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) ?? "";
         if ($orderId) {
             $latitude  = \get_post_meta($orderId, '_customer_latitude', true);
             $longitude = \get_post_meta($orderId, '_customer_longitude', true);
@@ -45,12 +51,12 @@ class SnappBoxPriceHandler
             'terminals'                   => [
                 [
 
-                    'address'              => \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
+                    'address'              => ($branchAddress) ? $branchAddress : \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
                     'comment'              => '',
-                    'contactName'          => $settings['snappbox_store_name'] ?? '',
-                    'latitude'             => (string) $settings['snappbox_latitude'] ?? '',
-                    'longitude'            => (string) $settings['snappbox_longitude'] ?? '',
-                    'phoneNumber'   => $settings['snappbox_store_phone'] ?? '',
+                    'contactName'          => ($branchContactName) ? $branchContactName : $settings['snappbox_store_name'] ?? '',
+                    'latitude'             => ($branchLat) ? (string) $branchLat : (string) $settings['snappbox_latitude'] ?? '',
+                    'longitude'            => ($branchLong) ? (string) $branchLong : (string) $settings['snappbox_longitude'] ?? '',
+                    'phoneNumber'   => ($branchPhoneNumber) ? $branchPhoneNumber : $settings['snappbox_store_phone'] ?? '',
                     'reference'       => "1",
                     'type'                 => 'pickup',
                 ],

@@ -113,7 +113,10 @@
     font-size: 12px;
     font-family: IRANSansX;
 }
-
+.branch-btn:disabled, .branch-btn.edit:disabled, .branch-btn.delete:disabled{
+    cursor:not-allowed;
+    background-color: gray;
+}
 .branch-btn.edit {
     background: #2271b1;
     font-family: IRANSansX;

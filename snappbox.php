@@ -3,7 +3,7 @@
  * Plugin Name:  snappbox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
- * Version: 1.1.2
+ * Version: 1.1.3
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -12,7 +12,7 @@
  * Domain Path: /languages/
  * Requires Plugins: woocommerce
  * WC requires at least: 7.0.0
- * WC tested up to: 9.7.0
+ * WC tested up to: 10.7.0
  */
 
 namespace Snappbox;
@@ -25,10 +25,13 @@ if (! defined('ABSPATH')) {
 
 define('SNAPPBOX_DIR', plugin_dir_path(__FILE__));
 define('SNAPPBOX_URL', plugin_dir_url(__FILE__));
-define('SNAPPBOX_VERSION', '0.1.1');
-define('SNAPPBOX_API_BASE_URL_STAGING', 'https://b2b-stg.snapp-box.com');
-define('SNAPPBOX_API_BASE_URL_PRODUCTION', 'https://b2b.snapp-box.com');
+require_once SNAPPBOX_DIR . 'includes/env-config.php';
+\Snappbox\EnvConfig::load(SNAPPBOX_DIR);
 
+define('SNAPPBOX_API_BASE_URL_STAGING', \Snappbox\EnvConfig::get('SNAPPBOX_API_BASE_URL_STAGING'));
+define('SNAPPBOX_API_BASE_URL_PRODUCTION', \Snappbox\EnvConfig::get('SNAPPBOX_API_BASE_URL_PRODUCTION'));
+define('SNAPPBOX_SMAPP_TOKEN', \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_AUTHORIZATION'));
+define('SNAPPBOX_SMAPP_KEY', \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_KEY'));
 
 global $snappb_api_base_url;
 
@@ -65,16 +68,17 @@ require_once SNAPPBOX_DIR . 'includes/api/config-class.php';
 
 $configSettings = new \Snappbox\Api\SnappBoxConfig();
 $config = $configSettings->snappb_get_config();
-($config && !empty($config->tileAddress)) ? $mapTile = $config->tileAddress : $mapTile = "https://tile.snappmaps.ir/styles/snapp-style/style.json";
-($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = "https://api.teh-1.snappmaps.ir/reverse/v1";
+($config && !empty($config->tileAddress)) ? $mapTile = $config->tileAddress : $mapTile = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_STYLE_URL');
+($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_REVERSE_URL');
 define('SNAPPBOX_MAP_URL', $mapTile);
 define('SNAPPBOX_REVERSE_URL', $reverseUrl);
-define('SNAPPBOX_BUSINESS_TOKEN', 'eyJraWQiOiJrZXktMjAyNS1ub3YtMiIsInR5cCI6IkpXVCIsImFsZyI6IkVkRFNBIn0.eyJzdWIiOiIxODMyODQyMyIsImNyaWQiOiIzNTI1NTI0MyIsImUiOiJtYXNvdWQuaXQyMDEyQGdtYWlsLmNvbSIsInJvbGVzIjpbIlJPTEVfQlVTSU5FU1MiXSwiaXNzIjoiaHR0cHM6Ly9pZHAuaW50ZXJuYWwiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJ3ZSI6ZmFsc2UsImF1ZCI6InRhaWxvci1jbGllbnQiLCJuYmYiOjE3ODAxNDA2NTYsImlzX2IyYiI6ZmFsc2UsImV4cCI6MTc4MDE0MTI1NiwiYmlkIjo5LCJpYXQiOjE3ODAxNDA2NTYsImp0aSI6IjI5Yjk2OGU1LTdiZmEtNDFhMy1hZDZiLWEzOGRlNWQ5OTdiNiIsInBuIjoiMDkxMzAyMzgyNzciLCJjaWQiOjE4MzI4NDIzfQ.jQRcQCA0N-NK_-u0hLOqh1ZzIE7SiuIe93lqOOcXj1qpFUdZuKXmoD6a3AfupG4Q5D0cxCZtoh8CPDd79C93AA');
+define('SNAPPBOX_NOMINATIM_URL', \Snappbox\EnvConfig::get('SNAPPBOX_MAP_NOMINATIM_URL'));
+define('SNAPPBOX_BUSINESS_TOKEN', 'eyJhbGciOiJIUzUxMiJ9.eyJjaWQiOjE4MzI4OTA5LCJjcmlkIjoiMjA0NTUxMDgyMSIsImUiOiIiLCJ3ZSI6ZmFsc2UsInN1YiI6IjA5MTI1Nzg0NTA3IiwiaXNfYjJiIjpmYWxzZSwiYXV0aCI6IlJPTEVfQ1VTVE9NRVIiLCJ0eXBlIjoiY3VzdG9tZXIifQ.zwAFAIqN-fGxmVrtDdRaVywUco6s8sA5Qub76VHwmnOfFI42AFC51jQN40f-z9UWcksRbGcAYyDUhSs6KpPlpA');
 ($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = "https://app-stg.snapp-box.com/api/v1/customer/nearby_biker_locations";
 
 
-($config && !empty($config->nearByApiStage)) ? $nearByStgURL = $config->nearByApiStage : $nearByStgURL = "https://app-stg.snapp-box.com/api/v1/customer/nearby_biker_locations";
-($config && !empty($config->nearByApiProd)) ? $nearByProdURL = $config->nearByApiProd : $nearByProdURL = "https://app.snapp-box.com/api/v1/customer/nearby_biker_locations";
+($config && !empty($config->nearByApiStage)) ? $nearByStgURL = $config->nearByApiStage : $nearByStgURL = \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_STAGING');
+($config && !empty($config->nearByApiProd)) ? $nearByProdURL = $config->nearByApiProd : $nearByProdURL = \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_PRODUCTION');
 $snappb_nearby_url = (isset($settings['sandbox']))
     ? $nearByStgURL
     : $nearByProdURL;
@@ -237,6 +241,9 @@ function snappbox_enqueue_leaflet_map_js()
         '1.0',
         true
     );
+    wp_localize_script('snappbox-map-checkout', 'SNAPPBOX_LEAFLET', [
+        'rasterTileUrl' => \Snappbox\EnvConfig::get('SNAPPBOX_MAP_RASTER_TILE_URL'),
+    ]);
 }
 
 
@@ -310,7 +317,8 @@ function snappbox_remove_shipping_address_admin_order_page()
 
 add_action('admin_head',  __NAMESPACE__ . '\\snappbox_yandex_script');
 function snappbox_yandex_script()
-{ ?>
+{
+?>
     <!-- Yandex.Metrika counter -->
     <script defer type="text/javascript">
         (function(m, e, t, r, i, k, a) {
@@ -324,9 +332,9 @@ function snappbox_yandex_script()
                 }
             }
             k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=105087875', 'ym');
+        })(window, document, 'script', <?php echo wp_json_encode(\Snappbox\EnvConfig::yandex_script_url()); ?>, 'ym');
 
-        ym(105087875, 'init', {
+        ym(<?php echo (int) \Snappbox\EnvConfig::get('SNAPPBOX_YANDEX_METRIKA_ID'); ?>, 'init', {
             ssr: true,
             webvisor: true,
             clickmap: true,
@@ -336,7 +344,7 @@ function snappbox_yandex_script()
         });
     </script>
     <noscript>
-        <div><img src="https://mc.yandex.ru/watch/105087875" style="position:absolute; left:-9999px;" alt="" /></div>
+        <div><img src="<?php echo esc_url(\Snappbox\EnvConfig::yandex_watch_url()); ?>" style="position:absolute; left:-9999px;" alt="" /></div>
     </noscript>
     <!-- /Yandex.Metrika counter -->
 <?php

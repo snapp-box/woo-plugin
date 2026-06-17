@@ -17,6 +17,7 @@ require_once(SNAPPBOX_DIR . 'includes/api/wallet-balance-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/pricing-class.php');
 require_once(SNAPPBOX_DIR . 'includes/convert-woo-cities-to-snappbox.php');
 require_once(SNAPPBOX_DIR . 'includes/map/snappbox-map-class.php');
+require_once(SNAPPBOX_DIR . 'includes/api/branches/branches-default.php');
 
 class SnappBoxShippingMethod extends \WC_Shipping_Method
 {
@@ -330,8 +331,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         parent::admin_options();
         echo '</div>';
 
-        $lat = (float) $this->get_option('snappbox_latitude', '35.8037761');
-        $lng = (float) $this->get_option('snappbox_longitude', '51.4152466');
+
 ?>
         <div style="margin-bottom: 5px; float:left;">
             <a href="#" id="snappbox-launch-modal" class="button colorful-button button-secondary">
@@ -347,12 +347,68 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         <div class="snappbox-panel">
             <header class="store-header clearfix">
                 <h4><?php \esc_html_e('Set Store Location', 'snappbox'); ?></h4>
-                <a href="<?php echo esc_url(\admin_url('admin.php?page=branch-management')); ?>">مدیریت شعب</a>
+                <a href="<?php echo esc_url(\admin_url('admin.php?page=branch-management')); ?>" style=" width:80px;">مدیریت شعب</a>
             </header>
-            <?php $map = new SnappBoxMap();
-            $latInputName = "woocommerce_snappbox_shipping_method_snappbox_latitude";
-            $longInputName = "woocommerce_snappbox_shipping_method_snappbox_longitude";
-            $map->snappbox_map($lat, $lng, 'map', $latInputName, $longInputName); ?>
+            <?php
+            $defaultBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
+            $defaultBranch = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
+            if ($defaultBranch['statusCode'] == 404) {
+                $branch = [];
+            }
+            $branch = (empty($defaultBranch) || $defaultBranch['statusCode'] == 404)
+                ? [
+                    'name' => '',
+                    'contactName' => $this->get_option('snappbox_store_name'),
+                    'contactPhoneNumber' => $this->get_option('snappbox_store_phone'),
+                    'address' => trim(
+                        \WC()->countries->get_base_address() . ' ' .
+                            \WC()->countries->get_base_address_2()
+                    ),
+                    'plate' => '',
+                    'unit' => '',
+                    'latitude' => (float) $this->get_option('snappbox_latitude', '35.8037761'),
+                    'longitude' => (float) $this->get_option('snappbox_longitude', '51.4152466'),
+                ]
+                : $defaultBranch;
+
+            $name = $branch['name'];
+            $contactName = $branch['contactName'];
+            $phoneNumber = $branch['contactPhoneNumber'];
+            $address = $branch['address'];
+            $plate = $branch['plate'];
+            $unit = $branch['unit'];
+            $lat = (float) $branch['latitude'];
+            $lng = (float) $branch['longitude'];
+            ?>
+            <div class="branch-wrapper">
+                <div class="default-branch">
+                    <p><strong><?php _e('Name', 'snappbox'); ?>: </strong><?php echo ($name); ?></p>
+                    <p><strong><?php _e('Contact Name', 'snappbox'); ?>: </strong><?php echo ($contactName); ?></p>
+                    <p><strong><?php _e('Phone Number', 'snappbox'); ?>: </strong><?php echo ($phoneNumber); ?></p>
+                    <p><strong><?php _e('Address', 'snappbox'); ?>: </strong><?php echo ($address); ?></p>
+                    <p><strong><?php _e('Plate', 'snappbox'); ?>: </strong><?php echo ($plate); ?></p>
+                    <p><strong><?php _e('Unit', 'snappbox'); ?>: </strong><?php echo ($unit); ?></p>
+                </div>
+                <div class="map-holder clearfix">
+                    <?php $map = new SnappBoxMap();
+                    $latInputName = "woocommerce_snappbox_shipping_method_snappbox_latitude";
+                    $longInputName = "woocommerce_snappbox_shipping_method_snappbox_longitude";
+                    $map->snappbox_map([
+                        'latitude' => $lat,
+                        'longitude' => $lng,
+                        'mapName' => 'map',
+                        'latInputName'  => $latInputName,
+                        'longInputName' => $longInputName,
+                        'width'         => '100%',
+                        'height'  => '400px',
+                        'guidenceMap' => false,
+                        'movable' => false,
+                        'showPolygon' => false,
+                    ]); ?>
+                </div>
+            </div>
+
+
         </div>
 
         <?php $this->snappb_add_modal_box(); ?>
@@ -376,7 +432,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             ? (float) $walletObjResult['response']['currentBalance']
             : 0.0;
 
-        $balanceDefaultResponse = \wp_remote_get('https://assets.snapp-box.com/static/plugin/woo-config.json');
+        $balanceDefaultResponse = \wp_remote_get(\Snappbox\EnvConfig::get('SNAPPBOX_WOO_CONFIG_URL'));
         if (\is_wp_error($balanceDefaultResponse)) return;
 
         $balanceDefault = \wp_remote_retrieve_body($balanceDefaultResponse);
@@ -394,7 +450,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             <div class="notice notice-error is-dismissible snappbox-low-balance">
                 <p>
                     <?php \esc_html_e('Your wallet balance is too low. Please contact Snappbox', 'snappbox'); ?>
-                    <a href="https://app.snapp-box.com/top-up" target="_blank" rel="noopener noreferrer">
+                    <a href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_TOP_UP_URL')); ?>" target="_blank" rel="noopener noreferrer">
                         <?php \esc_html_e('Learn more.', 'snappbox'); ?>
                     </a>
                 </p>
@@ -455,7 +511,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                         ?>
                     </td>
                     <td>
-                        <a href="https://snapp-box.com/connect" class="snappbox-token" target="_blank" rel="noopener noreferrer">درخواست توکن</a>
+                        <a href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_CONNECT_URL')); ?>" class="snappbox-token" target="_blank" rel="noopener noreferrer">درخواست توکن</a>
                     </td>
                 </tr>
             </table>

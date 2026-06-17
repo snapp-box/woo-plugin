@@ -96,7 +96,15 @@ class BranchModal
                         $map = new \Snappbox\Map\SnappBoxMap();
                         $lat = "35.6656021";
                         $lng = "51.3173993";
-                        $map->snappbox_map($lat, $lng, 'newMap', 'latitude', 'longitude');
+                        $map->snappbox_map([
+                            'latitude'      => $lat,
+                            'longitude'     => $lng,
+                            'mapName'       => 'newMap',
+                            'latInputName'  => 'latitude',
+                            'longInputName' => 'longitude',
+                            'width'         => '100%',
+                            'height'        => '400px'
+                        ]);
                         ?>
                     </div>
 
@@ -126,9 +134,6 @@ class BranchModal
                 ajax_url: "<?php echo esc_url($ajax_url); ?>",
                 nonce: "<?php echo esc_attr($nonce); ?>"
             };
-        </script>
-
-        <script>
             jQuery(document).ready(function($) {
 
                 const modal = $('#branch-modal');

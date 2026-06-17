@@ -47,5 +47,3 @@ class SnappBoxCities
         return json_decode($response, false);
     }
 }
-
-

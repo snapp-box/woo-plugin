@@ -37,41 +37,40 @@
       $(".guidence-map").css('display', 'none');
     });
 
-
     /* =========================================================
      * MAP
      * ========================================================= */
-    var $map = $('#admin-osm-map');
-    if ($map.length && typeof maplibregl !== 'undefined') {
-      try {
-        if (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.rtlPluginUrl) {
-          maplibregl.setRTLTextPlugin(SNAPPBOX_GLOBAL.rtlPluginUrl, null, true);
-        }
+    // var $map = $('#admin-osm-map');
+    // if ($map.length && typeof maplibregl !== 'undefined') {
+    //   try {
+    //     if (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.rtlPluginUrl) {
+    //       maplibregl.setRTLTextPlugin(SNAPPBOX_GLOBAL.rtlPluginUrl, null, true);
+    //     }
 
-        var lat = parseFloat($map.data('lat'));
-        var lng = parseFloat($map.data('lng'));
+    //     var lat = parseFloat($map.data('lat'));
+    //     var lng = parseFloat($map.data('lng'));
 
-        if (!isNaN(lat) && !isNaN(lng)) {
-          var map = new maplibregl.Map({
-            container: 'admin-osm-map',
-            style: (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.mapStyleUrl) || 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
-            center: [lng, lat],
-            zoom: 15,
-            attributionControl: true
-          });
+    //     if (!isNaN(lat) && !isNaN(lng)) {
+    //       var map = new maplibregl.Map({
+    //         container: 'admin-osm-map',
+    //         style: (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.mapStyleUrl) || 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
+    //         center: [lng, lat],
+    //         zoom: 15,
+    //         attributionControl: true
+    //       });
 
-          map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    //       map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
-          new maplibregl.Popup({ closeOnClick: false })
-            .setLngLat([lng, lat])
-            .setHTML('<div style="direction:rtl;unicode-bidi:plaintext;">' + ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.popupCustomer) || 'موقعیت مشتری') + '</div>')
-            .addTo(map);
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('Map init error:', e);
-      }
-    }
+    //       new maplibregl.Popup({ closeOnClick: false })
+    //         .setLngLat([lng, lat])
+    //         .setHTML('<div style="direction:rtl;unicode-bidi:plaintext;">' + ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.popupCustomer) || 'موقعیت مشتری') + '</div>')
+    //         .addTo(map);
+    //     }
+    //   } catch (e) {
+    //     // eslint-disable-next-line no-console
+    //     console.error('Map init error:', e);
+    //   }
+    // }
 
     /* =========================================================
      * ORDER UI
@@ -171,7 +170,7 @@
       }
 
       // Close modal
-      $(document).on('click', '.sb-modal__close', function (e) {
+      $(document).on('click', '.sb-modal__close, .sb-close-btn', function (e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -180,20 +179,21 @@
         hide($modal);
       });
 
-      $(document).on('click', '.snappbox-pricing-order, #add-voucher-code', function (e) {
-        e.preventDefault();
-        var $btn = $(this);
+
+
+
+      function getSnappboxPricing(extraData = {}, $btn) {
         var $clickedModal = $btn.closest('.sb-modal, #sb-pricing-modal');
         var $scope = $clickedModal.length ? $clickedModal : getRowOrPage($btn);
 
         var $modal = $clickedModal.length ? $clickedModal : getModal($scope);
-
         var $pricingMsg = getPricingMsg($scope, $modal);
         var $voucher = getVoucher($scope, $modal);
         var $createBtn = getCreateBtn($scope, $modal);
         var $loading = getLoading($scope);
 
         var $row = $btn.closest('.column-snappbox_action');
+
         var orderId =
           $btn.data('order-id') ||
           $modal.find('[data-order-id]').first().data('order-id') ||
@@ -204,26 +204,37 @@
         var voucherCode = $voucher.length ? $voucher.val() : '';
 
         show($loading);
-        jQuery(this).find('.button-text').hide();
+        $btn.find('.button-text').hide();
+
         $.ajax({
           url: ctx.ajaxUrl,
           type: 'POST',
           dataType: 'json',
-          data: {
-            action: 'snappb_get_pricing',
-            order_id: orderId,
-            voucher_code: voucherCode,
-            nonce: ctx.nonce
-          },
+          data: $.extend(
+            {
+              action: 'snappb_get_pricing',
+              order_id: orderId,
+              voucher_code: voucherCode,
+              nonce: ctx.nonce
+            },
+            extraData
+          ),
+
           beforeSend: function () {
             if ($pricingMsg.length) {
               $pricingMsg.text(
-                (window.SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.priceFetching) ||
+                (window.SNAPPBOX_GLOBAL &&
+                  SNAPPBOX_GLOBAL.i18n &&
+                  SNAPPBOX_GLOBAL.i18n.priceFetching) ||
                 'در حال دریافت قیمت...'
               );
             }
-            if ($createBtn.length) $createBtn.attr('disabled', 'disabled');
+
+            if ($createBtn.length) {
+              $createBtn.attr('disabled', 'disabled');
+            }
           },
+
           success: function (response) {
             if (!$clickedModal.length) {
               $modal = openModal($btn);
@@ -233,17 +244,28 @@
 
             $pricingMsg = getPricingMsg($scope, $modal);
             $createBtn = getCreateBtn($scope, $modal);
+
             $btn.find('.button-text').show();
-            if ($createBtn.length) $createBtn.removeAttr('disabled');
+
+            if ($createBtn.length) {
+              $createBtn.removeAttr('disabled');
+            }
 
             if (response && response.success) {
+
               var fare = Number(response.data && response.data.finalCustomerFare);
               var totalFare = Number(response.data && response.data.totalFare);
 
-              if ($createBtn.length) show($createBtn);
+              if ($createBtn.length) {
+                show($createBtn);
+              }
 
               var finalFare, totalFareDisplay, simbol;
-              var hasTotal = response.data && response.data.totalFare != null && !isNaN(totalFare);
+
+              var hasTotal =
+                response.data &&
+                response.data.totalFare != null &&
+                !isNaN(totalFare);
 
               if (ctx.currency === 'IRT') {
                 finalFare = rialToToman(fare);
@@ -258,44 +280,117 @@
               hide($loading);
 
               var htmlMsg;
-              if (hasTotal && !isNaN(totalFareDisplay) && totalFareDisplay > 0 && totalFareDisplay !== finalFare) {
+
+              if (
+                hasTotal &&
+                !isNaN(totalFareDisplay) &&
+                totalFareDisplay > 0 &&
+                totalFareDisplay !== finalFare
+              ) {
                 htmlMsg =
-                  'قیمت کل: <span class="sb-strike">' + fmt(totalFareDisplay) + ' ' + simbol + '</span>' +
-                  '<br>' +
-                  'قیمت با تخفیف: ' + fmt(finalFare) + ' ' + simbol;
+                  'قیمت کل: <span class="sb-strike">' +
+                  fmt(totalFareDisplay) +
+                  ' ' +
+                  simbol +
+                  '</span><br>' +
+                  'قیمت با تخفیف: ' +
+                  fmt(finalFare) +
+                  ' ' +
+                  simbol;
               } else {
-                htmlMsg = 'قیمت تخمینی: ' + fmt(finalFare) + ' ' + simbol;
+                htmlMsg =
+                  'قیمت تخمینی: ' +
+                  fmt(finalFare) +
+                  ' ' +
+                  simbol;
               }
 
-              if ($pricingMsg.length) $pricingMsg.html(htmlMsg);
+              if ($pricingMsg.length) {
+                $pricingMsg.html(htmlMsg);
+              }
+
             } else {
+
               hide($loading);
 
               var msg;
-              if (response && response.data && response.data.voucherMessage) {
+
+              if (response?.data?.voucherMessage) {
                 msg = response.data.voucherMessage;
               } else {
-                msg = (response && response.data && response.data.message)
-                  ? response.data.message
-                  : ((window.SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.priceError) || 'خطا در دریافت قیمت.');
-                if ($createBtn.length) hide($createBtn);
+                msg =
+                  response?.data?.message ||
+                  (SNAPPBOX_GLOBAL?.i18n?.priceError ||
+                    'خطا در دریافت قیمت.');
+
+                if ($createBtn.length) {
+                  hide($createBtn);
+                }
               }
 
-              if ($pricingMsg.length) $pricingMsg.text(msg);
-              if ($createBtn.length) $createBtn.attr('disabled', 'disabled');
+              if ($pricingMsg.length) {
+                $pricingMsg.text(msg);
+              }
+
+              if ($createBtn.length) {
+                $createBtn.attr('disabled', 'disabled');
+              }
             }
           },
+
           error: function (jqXHR, textStatus, errorThrown) {
             console.error('AJAX error:', textStatus, errorThrown, jqXHR);
+
             if ($pricingMsg.length) {
               $pricingMsg.text(
-                (window.SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.requestError) ||
+                SNAPPBOX_GLOBAL?.i18n?.requestError ||
                 'خطا در ارسال درخواست.'
               );
             }
+
             hide($loading);
           }
         });
+      }
+
+      jQuery(".address-selector").on('change', function () {
+        var thisOption = jQuery("option:selected", this);
+        var latitude = thisOption.attr('data-lat');
+        var longitude = thisOption.attr('data-long');
+        var address = thisOption.attr('data-address');
+        var name = thisOption.attr('data-name');
+        var phone = thisOption.attr('data-phone');
+        var contactName = thisOption.attr('data-contact-name');
+        jQuery('.sb-address-text').html(address);
+        jQuery('.selected-latitude').val(latitude);
+        jQuery('.selected-longitude').val(longitude);
+        jQuery('.selected-name').val(name);
+        jQuery('.selected-contact-name').val(contactName);
+        jQuery('.selected-contact-phonenumber').val(phone);
+        getSnappboxPricing(
+          {
+            branchAddress: address,
+            branchName: name,
+            branchContactName: contactName,
+            branchLatitude: latitude,
+            branchLongitude: longitude,
+            phoneNumber: phone,
+          },
+          jQuery(this)
+        );
+      });
+
+
+
+
+
+      $(document).on('click', '.snappbox-pricing-order, #add-voucher-code', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        getSnappboxPricing(
+          {},
+          $btn
+        );
       });
 
 
@@ -308,10 +403,11 @@
         var $modal = getModal($scope);
 
         var orderId = $btn.data('order-id') || ctx.wooOrderId;
+
         var $voucher = getVoucher($scope, $modal);
         var voucherCode = $voucher.length ? $voucher.val() : '';
 
-        var $orderLoading = getOrderLoading($scope);
+        var $orderLoading = getLoading($btn);
 
         var $vdsContent = $modal.find('.vds-content').first();
         var $modalContent = $modal.find('.sb-modal__content').first();
@@ -319,10 +415,13 @@
         var $victory = $modal.find('#snappbox-response-victory, .snappbox-response-victory').first();
         if (!$victory.length) $victory = $('#snappbox-response-victory').first();
 
+        var $footer = $modal.find(".sb-footer").first();
+
         var $resp = $modal.find('#snappbox-response, .snappbox-response').first();
         if (!$resp.length) $resp = $('#snappbox-response').first();
 
         if ($vdsContent.length) $vdsContent.attr('hidden', 'hidden');
+        show($orderLoading);
 
         $.ajax({
           url: ctx.ajaxUrl,
@@ -334,7 +433,7 @@
             voucher_code: voucherCode,
             nonce: ctx.nonce
           },
-          beforeSend: function () { show($orderLoading); },
+
           success: function (response) {
             var ok = !!(
               response &&
@@ -346,6 +445,7 @@
               if ($modalContent.length) {
                 $modalContent.find('*').hide();
                 $modalContent.hide();
+                $footer.hide();
               } else {
                 $modal.find('.sb-modal__content, .sb-modal__content *').hide();
               }
@@ -375,11 +475,13 @@
             }
 
             hide($orderLoading);
+
           },
           error: function () {
             var msg = (window.SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.orderSendErr) || 'Error sending order.';
             if ($resp.length) $resp.text(msg);
             hide($orderLoading);
+
           }
         });
       });
@@ -405,7 +507,7 @@
           },
           beforeSend: function () { show($cancelLoading); },
           success: function (response) {
-            console.log(response)
+
             if (response && response.success == true) {
               $('#snappbox-cancel-response').html('<span class="sb-success">' + response.data + '</span>');
               hide($cancelLoading);
@@ -416,10 +518,12 @@
               $('#snappbox-cancel-response').html('<span class="sb-error">Error: ' + msg + '</span>');
               hide($cancelLoading);
             }
+            $btn.find('.button-text').show();
           },
           error: function () {
             $('#snappbox-cancel-response').text((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.cancelError) || 'Error cancelling order.');
             hide($cancelLoading);
+            $btn.find('.button-text').show();
           }
         });
       });

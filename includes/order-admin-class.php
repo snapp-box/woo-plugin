@@ -2,6 +2,9 @@
 
 namespace Snappbox;
 
+
+use Snappbox\Branches\BranchListPage;
+
 if (!\defined('ABSPATH')) {
     exit;
 }
@@ -11,6 +14,7 @@ require_once(\trailingslashit(SNAPPBOX_DIR) . 'includes/api/cancel-order-class.p
 require_once(\trailingslashit(SNAPPBOX_DIR) . 'includes/api/status-check-class.php');
 require_once(\trailingslashit(SNAPPBOX_DIR) . 'includes/api/pricing-class.php');
 require_once(\trailingslashit(SNAPPBOX_DIR) . 'includes/convert-woo-cities-to-snappbox.php');
+require_once(\trailingslashit(SNAPPBOX_DIR) . 'includes/map/snappbox-map-class.php');
 
 class SnappBoxOrderAdmin
 {
@@ -26,19 +30,19 @@ class SnappBoxOrderAdmin
 
     public function snappb_enqueue_assets()
     {
-        \wp_enqueue_style(
-            'maplibre-gl',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
-            [],
-            '1.9.4'
-        );
-        \wp_enqueue_script(
-            'maplibre-gl',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
-            [],
-            '1.9.4',
-            true
-        );
+        // \wp_enqueue_style(
+        //     'maplibre-gl',
+        //     \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
+        //     [],
+        //     '1.9.4'
+        // );
+        // \wp_enqueue_script(
+        //     'maplibre-gl',
+        //     \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
+        //     [],
+        //     '1.9.4',
+        //     true
+        // );
 
         \wp_enqueue_style(
             'snappbox-style',
@@ -57,7 +61,7 @@ class SnappBoxOrderAdmin
         \wp_enqueue_script(
             'snappbox-admin',
             \trailingslashit(SNAPPBOX_URL) . 'assets/js/admin-snappbox.js',
-            ['jquery', 'maplibre-gl'],
+            ['jquery'],
             \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/js/admin-snappbox.js'),
             true
         );
@@ -66,8 +70,8 @@ class SnappBoxOrderAdmin
         \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
             'ajaxUrl'      => \admin_url('admin-ajax.php'),
             'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
-            'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            'mapStyleUrl'  => \SNAPPBOX_MAP_URL,
+            // 'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
+            // 'mapStyleUrl'  => \SNAPPBOX_MAP_URL,
             'i18n'         => [
                 'priceFetching' => \__('Receiving price...', 'snappbox'),
                 'priceError'    => \__('Error in receiving price', 'snappbox'),
@@ -98,7 +102,20 @@ class SnappBoxOrderAdmin
                 <h3><?php \esc_html_e('SnappBox', 'snappbox'); ?></h3>
 
                 <?php
-                $this->snappb_display_map_in_admin_order($order);
+                $map = new \Snappbox\Map\SnappBoxMap();
+                $map->snappbox_map([
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                    'mapName' => 'admin-osm-map',
+                    'latInputName'  => '',
+                    'longInputName' => '',
+                    'width'         => '100%',
+                    'height'  => '400px',
+                    'guidenceMap' => false,
+                    'movable' => false,
+                    'showPolygon' => false,
+                ]);
+                // $this->snappb_display_map_in_admin_order($order);
                 $this->snappb_display_location_in_order_admin($order);
 
                 echo '<b>' . \esc_html__('Address', 'snappbox') . '</b> : ' . \esc_html($order->get_shipping_address_1());
@@ -128,22 +145,22 @@ class SnappBoxOrderAdmin
     }
 
 
-    public function snappb_display_map_in_admin_order($order)
-    {
-        $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
-        $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
+    // public function snappb_display_map_in_admin_order($order)
+    // {
+    //     $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
+    //     $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
 
-        if ($latitude && $longitude) {
-            $lat = (float) $latitude;
-            $lng = (float) $longitude;
+    //     if ($latitude && $longitude) {
+    //         $lat = (float) $latitude;
+    //         $lng = (float) $longitude;
 
-            echo '<div id="admin-osm-map"
-                     class="sb-admin-map"
-                     data-lat="' . \esc_attr($lat) . '"
-                     data-lng="' . \esc_attr($lng) . '"
-                  ></div>';
-        }
-    }
+    //         echo '<div id="admin-osm-map"
+    //                  class="sb-admin-map"
+    //                  data-lat="' . \esc_attr($lat) . '"
+    //                  data-lng="' . \esc_attr($lng) . '"
+    //               ></div>';
+    //     }
+    // }
 
 
     public function snappb_display_snappbox_order_button($order, $nonce)
@@ -182,6 +199,9 @@ class SnappBoxOrderAdmin
                      data-currency="' . \esc_attr(\get_woocommerce_currency()) . '"
                      data-woo-order-id="' . (int) $order->get_id() . '"
                    ></div>';
+        $branchesObject = new BranchListPage();
+        $branches = $branchesObject->snappb_branches_get_items();
+
         if (
             ! $snappBoxOrder ||
             (
@@ -191,41 +211,6 @@ class SnappBoxOrderAdmin
             )
         ) :
             ?>
-                <div class="sb-modal" id="sb-pricing-modal" hidden>
-                    <div class="sb-modal__box">
-                        <div class="sb-modal__header">
-                            <h3><?php \esc_html_e('SnappBox Price', 'snappbox'); ?></h3>
-                        </div>
-
-                        <div class="sb-modal__content">
-                            <p id="pricing-message"><?php \esc_html_e('Calculating Price', 'snappbox'); ?>...</p>
-
-                            <div class="voucher-code-wrapper">
-                                <input type="text" id="sb-voucher-code" name="voucher_code" placeholder="<?php \esc_html_e('Enter Your Voucher Code', 'snappbox'); ?>" />
-                                <button data-order-id="<?php echo \esc_attr($order->get_id()); ?>" id="add-voucher-code"><?php \esc_html_e('Operate', 'snappbox'); ?></button>
-                            </div>
-
-                            <div class="snappbox-order-container">
-                                <button id="snappbox-create-order"
-                                    data-order-id="<?php echo \esc_attr($order->get_id()); ?>"
-                                    class="snappbox-btn button button-primary"
-                                    hidden>
-                                    <?php \esc_html_e('Send to SnappBox', 'snappbox'); ?>
-
-                                </button>
-                            </div>
-                            <img class="ct-order-loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden />
-                            <span id="snappbox-response"></span>
-                        </div>
-
-                        <div class="vds-content" hidden>
-                            <img class="vds-image" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/success.png'); ?>" alt="" />
-                            <span id="snappbox-response-victory"></span>
-                        </div>
-
-                        <a href="#" class="sb-modal__close"><?php \esc_html_e('Close', 'snappbox'); ?></a>
-                    </div>
-                </div>
 
                 <div class="snappbox-order-container clearfix sb-actions-row">
                     <button
@@ -239,6 +224,133 @@ class SnappBoxOrderAdmin
 
                     <!-- <img class="loading" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/ld.svg'); ?>" alt="" hidden /> -->
                 </div>
+
+                <div class="sb-modal" hidden>
+
+                    <div class="sb-modal-content">
+
+
+
+                        <div class="sb-header">
+                            <button class="sb-close-btn">
+                                ✕
+                            </button>
+                            <h2>ثبت سفارش اسنپ باکس</h2>
+                        </div>
+                        <div class="vds-content" hidden>
+                            <img class="vds-image" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/success.png'); ?>" alt="" />
+                            <span id="snappbox-response-victory"></span>
+                        </div>
+                        <div class="sb-body sb-modal__content">
+                            <div class="address-section">
+                                <div class="sb-form-group">
+                                    <div class="destination-icon">
+                                        <img class="vds-image" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/origin-bullet.svg'); ?>" alt="" />
+                                    </div>
+                                    <?php
+                                    $defaultBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
+                                    $defaultBranch = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
+
+
+                                    ?>
+                                    <select class="address-selector">
+                                        <?php foreach ($branches as $branch) {
+                                            ($branch['defaultAddress'] == 1) ? $selected = "selected" : $selected = "";
+                                            if ($branch['status'] == 'ACTIVE') {
+                                        ?>
+                                                <option value="<?php echo ($branch['id']); ?>" <?php echo ($selected); ?>
+                                                    data-lat="<?php echo ($branch['latitude']); ?>"
+                                                    data-long="<?php echo ($branch['longitude']); ?>"
+                                                    data-address="<?php echo ($branch['address']); ?>"
+                                                    data-contact-name="<?php echo ($branch['contactName']); ?>"
+                                                    data-name="<?php echo ($branch['name']); ?>"
+                                                    data-phone="<?php echo ($branch['contactPhoneNumber']); ?>">
+                                                    <?php echo ($branch['name']); ?>
+                                                </option>
+                                        <?php }
+                                        } ?>
+                                        <input type="hidden" class="selected-address" value="<?php echo ($defaultBranch['address']); ?>" />
+                                        <input type="hidden" class="selected-latitude" value="<?php echo ($defaultBranch['latitude']); ?>" />
+                                        <input type="hidden" class="selected-longitude" value="<?php echo ($defaultBranch['longitude']); ?>" />
+                                        <input type="hidden" class="selected-contact-name" value="<?php echo ($defaultBranch['contactName']); ?>" />
+                                        <input type="hidden" class="selected-name" value="<?php echo ($defaultBranch['name']); ?>" />
+                                        <input type="hidden" class="selected-contact-phonenumber" value="<?php echo ($defaultBranch['contactPhoneNumber']); ?>" />
+                                    </select>
+                                </div>
+
+                                <div class="sb-address">
+                                    <div class="destination-icon no-after">
+                                        <img class="vds-image" src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/destination-square.svg'); ?>" alt="" />
+                                    </div>
+                                    <div class="sb-wrap">
+                                        <div class="sb-address-title">
+                                            <?php echo ($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?>
+                                        </div>
+
+                                        <div class="sb-address-text">
+                                            <?php echo ($order->get_billing_address_1()); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sb-discount">
+
+                                <div class="sb-discount-header">
+                                    <img src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/tag.svg'); ?>" alt="" />
+                                    <span class="discount-text">کد تخفیف</span>
+                                    <span>❯</span>
+                                </div>
+
+                                <div class="sb-discount-body">
+                                    <div class="voucher-code-wrapper">
+                                        <input type="text" id="sb-voucher-code" name="voucher_code" placeholder="<?php \esc_html_e('Enter Your Voucher Code', 'snappbox'); ?>" />
+                                        <button data-order-id="<?php echo \esc_attr($order->get_id()); ?>" id="add-voucher-code"><?php \esc_html_e('Operate', 'snappbox'); ?></button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="sb-footer">
+
+                            <div class="sb-price-row">
+                                <span class="price-to-pay">مبلغ قابل پرداخت</span>
+                                <strong>
+                                    <span id="pricing-message"><?php \esc_html_e('Calculating Price', 'snappbox'); ?>...</span>
+                                </strong>
+                            </div>
+
+                            <div class="sb-actions">
+
+
+                                <div class="snappbox-order-container">
+                                    <button class="sb-cancel-btn sb-modal__close">
+                                        انصراف
+                                    </button>
+                                </div>
+
+                                <div class="snappbox-order-container">
+                                    <button id="snappbox-create-order"
+                                        data-order-id="<?php echo \esc_attr($order->get_id()); ?>"
+                                        class="snappbox-btn button button-primary">
+                                        <?php \esc_html_e('Send to SnappBox', 'snappbox'); ?>
+                                        <div class="loader loading" aria-label="Loading" role="status" hidden="hidden">
+                                            <span></span><span></span><span></span>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <span id="snappbox-response"></span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
                 <?php
             else :
                 if ($getResponse && isset($getResponse->canCancel) && (int) $getResponse->canCancel === 1) : ?>

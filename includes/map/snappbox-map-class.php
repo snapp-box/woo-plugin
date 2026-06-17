@@ -4,31 +4,60 @@ namespace Snappbox\Map;
 
 class SnappBoxMap
 {
-    public function snappbox_map($latitude, $longitude, $mapName, $latInputName = "woocommerce_snappbox_shipping_method_snappbox_latitude", $longInputName = "woocommerce_snappbox_shipping_method_snappbox_longitude")
+    public function snappbox_map(array $args = [])
     {
-        $polygon_coords = \get_option('polygon_coords', '');
-        ($latitude) ? $lat = $latitude : $lat = "";
-        ($longitude) ? $lng = $longitude : $lng = "";
+
+        $args = wp_parse_args($args, [
+            'latitude'      => '',
+            'longitude'     => '',
+            'mapName'       => 'snappbox-map',
+            'latInputName'  => 'woocommerce_snappbox_shipping_method_snappbox_latitude',
+            'longInputName' => 'woocommerce_snappbox_shipping_method_snappbox_longitude',
+            'width'         => '100%',
+            'height'        => '400px',
+            'guidenceMap'  => true,
+            'movable'       => true,
+            'showPolygon'   => true,
+        ]);
+
+        $polygon_coords = get_option('polygon_coords', '');
+
+        $lat = !empty($args['latitude']) ? $args['latitude'] : '';
+        $lng = !empty($args['longitude']) ? $args['longitude'] : '';
+
         $this->snappb_enqueue_maplibre_assets();
 
 ?>
-        <div id="<?php echo ($mapName); ?>" style="height:400px; position:relative;width: 100%;">
-            <button id="center-pin" type="button" aria-label="<?php \esc_attr_e('Set this location', 'snappbox'); ?>"></button>
+        <div id="<?php echo esc_attr($args['mapName']); ?>"
+            style="
+            height: <?php echo esc_attr($args['height']); ?>;
+            width: <?php echo esc_attr($args['width']); ?>;
+            position: relative;
+        ">
+            <?php if ($args['movable'] == true) { ?>
+                <button id="center-pin" type="button" aria-label="<?php \esc_attr_e('Set this location', 'snappbox'); ?>"></button>
+            <?php } ?>
             <input type="hidden"
                 name="woocommerce_snappbox_shipping_method[polygon_coords]"
                 id="woocommerce_snappbox_shipping_method_polygon_coords"
                 value="<?php echo esc_attr($polygon_coords); ?>">
-            <div class="guidence-map">
-                <img src="<?php echo (SNAPPBOX_URL . '/assets/img/Vector.svg'); ?>" />
-                <div class="guidence-text clearfix">
-                    <p>با گذاشتن نقطه های مختلف روی نقشه و ترسیم ناحیه مورد نظر ، محدوده سرویس دهی خود را روی نقشه مشخص کنید.</p>
-                    <a href="">متوجه شدم</a>
+            <?php if ($args['guidenceMap'] === true) { ?>
+                <div class="guidence-map">
+                    <img src="<?php echo (SNAPPBOX_URL . '/assets/img/Vector.svg'); ?>" />
+                    <div class="guidence-text clearfix">
+                        <p>با گذاشتن نقطه های مختلف روی نقشه و ترسیم ناحیه مورد نظر ، محدوده سرویس دهی خود را روی نقشه مشخص کنید.</p>
+                        <a href="">متوجه شدم</a>
+                    </div>
                 </div>
-            </div>
+            <?php } ?>
         </div>
     <?php
 
-        $this->snappb_enqueue_maplibre_inline_script($lat, $lng, $mapName, $latInputName, $longInputName);
+        $this->snappb_enqueue_maplibre_inline_script(
+            $lat,
+            $lng,
+            $args
+        );
     }
     public function snappb_zone_alert_modal()
     {
@@ -41,21 +70,28 @@ class SnappBoxMap
         </div>
 <?php
     }
-    public function snappb_enqueue_maplibre_inline_script($lat, $lng, $container, $latInputName, $longInputName)
+    public function snappb_enqueue_maplibre_inline_script($lat, $lng, $args)
     {
         $defaultLat = \wp_json_encode((float) $lat);
         $defaultLng = \wp_json_encode((float) $lng);
-
         $rtl_plugin_url = \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js');
         $rtl_plugin_url_js = \wp_json_encode($rtl_plugin_url);
+
+        $container = $args['mapName'];
+        $latInputName = $args['latInputName'];
+        $longInputName = $args['longInputName'];
+        $movable = $args['movable'];
+        $showPolygon = $args['showPolygon'];
+
         $autoFill   = ! empty($settings['autofill']) ? (string) $settings['autofill'] : '';
+        $movable_js = $movable ? 'true' : 'false';
         $inline_js  = 'document.addEventListener("DOMContentLoaded", function() {
     
             if (typeof maplibregl === "undefined") { console.error("MapLibre not loaded"); return; }
     
             const defaultLat = ' . $defaultLat . ';
             const defaultLng = ' . $defaultLng . ';
-            
+            const movablePin = ' . $movable_js . ';
             
             // MAP INIT
             const map = new maplibregl.Map({
@@ -63,7 +99,14 @@ class SnappBoxMap
                 style:"' . SNAPPBOX_MAP_URL . '",
                 center:[defaultLng, defaultLat],
                 zoom:16,
-                attributionControl:true
+                attributionControl:true,
+                dragPan: ' . $movable_js . ',
+                scrollZoom: ' . $movable_js . ',
+                boxZoom: ' . $movable_js . ',
+                dragRotate: ' . $movable_js . ',
+                keyboard: ' . $movable_js . ',
+                doubleClickZoom: ' . $movable_js . ',
+                touchZoomRotate: ' . $movable_js . '
             });
             
 
@@ -115,14 +158,16 @@ class SnappBoxMap
                     }
                 });
             }
-    
-            map.on("moveend", function(){
-                clearTimeout(moveTimeout);
-                moveTimeout = setTimeout(() => {
-                    var c = map.getCenter();
-                    runNearbyAjax(c);
-                }, 150);
-            });
+                
+            if(movablePin === true) {
+                map.on("moveend", function(){
+                    clearTimeout(moveTimeout);
+                    moveTimeout = setTimeout(() => {
+                        var c = map.getCenter();
+                       runNearbyAjax(c);
+                    }, 150);
+                });
+            }
     
             // DRAW + POLYGON VALIDATION
             let Draw = null;
@@ -134,7 +179,7 @@ class SnappBoxMap
     
                 Draw = new MapboxDraw({
                     displayControlsDefault: false,
-                    controls: { polygon: true, trash: true }
+                    controls: { polygon: "' . $showPolygon . '", trash: "' . $showPolygon . '" }
                 });
     
                 map.addControl(Draw, "bottom-left");
@@ -274,7 +319,7 @@ class SnappBoxMap
                         Authorization:
                         "pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw",
                     },
-                    nominatimUrl: "https://nominatim.openstreetmap.org/reverse",
+                    nominatimUrl: "' . \Snappbox\EnvConfig::get('SNAPPBOX_MAP_NOMINATIM_URL') . '",
                     };
                 var url = "' . SNAPPBOX_REVERSE_URL . '"
                 + "?display=true&lat=" + encodeURIComponent(lat)

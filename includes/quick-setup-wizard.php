@@ -267,7 +267,7 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
           <input type="text" id="sb_api" name="api" value="<?php echo \esc_attr($api); ?>"
             placeholder="<?php echo \esc_attr_x('Paste your API key…', 'Placeholder', 'snappbox'); ?>" />
           <a class="button button-primary sbqs-btn" target="_blank" rel="noopener"
-            href="<?php echo \esc_url('https://snapp-box.com/connect'); ?>">
+            href="<?php echo \esc_url(\Snappbox\EnvConfig::get('SNAPPBOX_CONNECT_URL')); ?>">
             <?php echo \esc_html_x('Get API Key', 'Button', 'snappbox'); ?>
           </a>
         </div>
