@@ -38,41 +38,6 @@
     });
 
     /* =========================================================
-     * MAP
-     * ========================================================= */
-    // var $map = $('#admin-osm-map');
-    // if ($map.length && typeof maplibregl !== 'undefined') {
-    //   try {
-    //     if (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.rtlPluginUrl) {
-    //       maplibregl.setRTLTextPlugin(SNAPPBOX_GLOBAL.rtlPluginUrl, null, true);
-    //     }
-
-    //     var lat = parseFloat($map.data('lat'));
-    //     var lng = parseFloat($map.data('lng'));
-
-    //     if (!isNaN(lat) && !isNaN(lng)) {
-    //       var map = new maplibregl.Map({
-    //         container: 'admin-osm-map',
-    //         style: (SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.mapStyleUrl) || 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
-    //         center: [lng, lat],
-    //         zoom: 15,
-    //         attributionControl: true
-    //       });
-
-    //       map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-
-    //       new maplibregl.Popup({ closeOnClick: false })
-    //         .setLngLat([lng, lat])
-    //         .setHTML('<div style="direction:rtl;unicode-bidi:plaintext;">' + ((SNAPPBOX_GLOBAL && SNAPPBOX_GLOBAL.i18n && SNAPPBOX_GLOBAL.i18n.popupCustomer) || 'موقعیت مشتری') + '</div>')
-    //         .addTo(map);
-    //     }
-    //   } catch (e) {
-    //     // eslint-disable-next-line no-console
-    //     console.error('Map init error:', e);
-    //   }
-    // }
-
-    /* =========================================================
      * ORDER UI
      * ========================================================= */
     (function () {
@@ -416,6 +381,14 @@
         if (!$victory.length) $victory = $('#snappbox-response-victory').first();
 
         var $footer = $modal.find(".sb-footer").first();
+        var extraData = {
+          branchAddress: jQuery('.selected-address').val(),
+          branchName: jQuery('.selected-name').val(),
+          branchContactName: jQuery('.selected-contact-name').val(),
+          branchLatitude: jQuery('.selected-latitude').val(),
+          branchLongitude: jQuery('.selected-longitude').val(),
+          phoneNumber: jQuery('.selected-contact-phonenumber').val(),
+        };
 
         var $resp = $modal.find('#snappbox-response, .snappbox-response').first();
         if (!$resp.length) $resp = $('#snappbox-response').first();
@@ -427,13 +400,14 @@
           url: ctx.ajaxUrl,
           type: 'POST',
           dataType: 'json',
-          data: {
+          data: $.extend({
             action: 'snappb_create_order',
             order_id: orderId,
             voucher_code: voucherCode,
             nonce: ctx.nonce
           },
-
+            extraData,
+          ),
           success: function (response) {
             var ok = !!(
               response &&

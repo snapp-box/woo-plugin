@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snappbox\n"
-"POT-Creation-Date: 2026-06-13 13:00+0330\n"
-"PO-Revision-Date: 2026-06-13 13:02+0330\n"
+"POT-Creation-Date: 2026-06-21 16:29+0330\n"
+"PO-Revision-Date: 2026-06-21 16:31+0330\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fa_IR\n"
@@ -21,44 +21,41 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 
-#: includes/add-meta-orderlist-class.php:62 includes/order-admin-class.php:72
+#: includes/add-meta-orderlist-class.php:62 includes/order-admin-class.php:61
 msgid "Receiving price..."
 msgstr "دریافت قیمت ..."
 
-#: includes/add-meta-orderlist-class.php:63 includes/order-admin-class.php:73
+#: includes/add-meta-orderlist-class.php:63 includes/order-admin-class.php:62
 msgid "Error in receiving price"
 msgstr "خطا در دریافت قیمت"
 
-#: includes/add-meta-orderlist-class.php:64 includes/order-admin-class.php:74
+#: includes/add-meta-orderlist-class.php:64 includes/order-admin-class.php:63
 msgid "Error in sending request"
 msgstr "خطا در ارسال درخواست"
 
-#: includes/add-meta-orderlist-class.php:65 includes/order-admin-class.php:75
+#: includes/add-meta-orderlist-class.php:65 includes/order-admin-class.php:64
 msgid "Unknown error"
 msgstr "خطای ناشناخته"
 
-#: includes/add-meta-orderlist-class.php:66 includes/order-admin-class.php:76
+#: includes/add-meta-orderlist-class.php:66 includes/order-admin-class.php:65
 msgid "Error cancelling order."
 msgstr "خطای لغو سفارش"
 
-#: includes/add-meta-orderlist-class.php:67 includes/order-admin-class.php:77
+#: includes/add-meta-orderlist-class.php:67 includes/order-admin-class.php:66
 msgid "Error sending order."
 msgstr "خطا در ارسال سفارش"
 
-#: includes/add-meta-orderlist-class.php:68 includes/order-admin-class.php:78
+#: includes/add-meta-orderlist-class.php:68 includes/order-admin-class.php:67
 msgid "Customers location"
 msgstr "لوکیشن مشتریان"
 
-#: includes/add-meta-orderlist-class.php:69 includes/order-admin-class.php:79
-#: includes/order-admin-class.php:226
+#: includes/add-meta-orderlist-class.php:69 includes/order-admin-class.php:68
 msgid "Close"
 msgstr "بستن"
 
-#: includes/add-meta-orderlist-class.php:70 includes/order-admin-class.php:80
-#, fuzzy
-#| msgid "Schedule saved successfully!"
+#: includes/add-meta-orderlist-class.php:70 includes/order-admin-class.php:69
 msgid "Order created successfully"
-msgstr "زمانبندی با موفقیت ذخیره شد!"
+msgstr "سفارش با موفقیت ایجاد شد"
 
 #: includes/admin.php:25
 msgid "SnappBox Admin Page"
@@ -80,78 +77,96 @@ msgstr "خطا در حذف"
 msgid "Order deleted successfully"
 msgstr "سفارش با موفقیت لغو شد"
 
-#: includes/branches/branch-list-class.php:92
+#: includes/branches/branch-list-class.php:97
 msgid "Branch Management"
 msgstr "مدیریت شعبه"
 
-#: includes/branches/branch-list-class.php:97
-#: includes/branches/new-branch-modal.php:111
+#: includes/branches/branch-list-class.php:102
+#: includes/branches/new-branch-modal.php:124
 msgid "Add branch"
 msgstr "اضافه کردن شعبه"
 
-#: includes/branches/branch-list-class.php:110
+#: includes/branches/branch-list-class.php:115
 #: includes/branches/new-branch-modal.php:44
 msgid "Branch name"
 msgstr "نام شعبه"
 
-#: includes/branches/branch-list-class.php:112
-#: includes/branches/new-branch-modal.php:55 includes/order-admin-class.php:104
-#: includes/shipping-method-class.php:377
+#: includes/branches/branch-list-class.php:117
+#: includes/branches/new-branch-modal.php:55 includes/order-admin-class.php:106
 msgid "Address"
 msgstr "آدرس"
 
-#: includes/branches/branch-list-class.php:113
+#: includes/branches/branch-list-class.php:118
 msgid "Block"
 msgstr "پلاک"
 
-#: includes/branches/branch-list-class.php:114
-#: includes/shipping-method-class.php:379
+#: includes/branches/branch-list-class.php:119
+#: includes/shipping-method-class.php:395
 msgid "Unit"
 msgstr "واحد"
 
-#: includes/branches/branch-list-class.php:115
+#: includes/branches/branch-list-class.php:120
 #: includes/branches/new-branch-modal.php:80
 msgid "Contact phone number"
 msgstr "شماره همراه تماس گیرنده"
 
-#: includes/branches/branch-list-class.php:116
-#: includes/order-admin-class.php:384
+#: includes/branches/branch-list-class.php:121
+#: includes/order-admin-class.php:485
 msgid "Status"
 msgstr "وضعیت"
 
-#: includes/branches/branch-list-class.php:117
+#: includes/branches/branch-list-class.php:122
 msgid "Default branch"
 msgstr "شعبه اصلی"
 
-#: includes/branches/branch-list-class.php:118
+#: includes/branches/branch-list-class.php:123
 msgid "Operation"
 msgstr "عملیات"
 
-#: includes/branches/branch-list-class.php:179
-#: includes/branches/new-branch-modal.php:139
+#: includes/branches/branch-list-class.php:184
 #: includes/branches/new-branch-modal.php:152
+#: includes/branches/new-branch-modal.php:165
 msgid "Edit Branch"
 msgstr "ویرایش شعبه"
 
-#: includes/branches/branch-list-class.php:186
+#: includes/branches/branch-list-class.php:191
 msgid "Remove Branch"
 msgstr "حذف شعبه"
 
-#: includes/branches/branch-list-class.php:195
+#: includes/branches/branch-list-class.php:203
 msgid "Nothing found"
 msgstr "هیچ شعبه ای یافت نشد"
 
-#: includes/branches/branch-list-class.php:252
+#: includes/branches/branch-list-class.php:221
+#: includes/branches/branch-list-class.php:236
+msgid "Confirm deleting"
+msgstr "تایید حذف"
+
+#: includes/branches/branch-list-class.php:224
+msgid "Are you sure about deleting this branch"
+msgstr "آیا از حذف این شعبه مطمئن هستید؟"
+
+#: includes/branches/branch-list-class.php:228
+msgid "This operation is Irreturnable"
+msgstr "این عملیات غیر قابل بازگشت است."
+
+#: includes/branches/branch-list-class.php:232
+#: includes/branches/new-branch-modal.php:121
+msgid "Cancel"
+msgstr "لغو"
+
+#: includes/branches/branch-list-class.php:307
 msgid "Your branch has successfully deleted"
 msgstr "شعبه با موفقیت حذف شد"
 
-#: includes/branches/branch-list-class.php:263
-#: includes/branches/new-branch-modal.php:260
-msgid "Error with stablishing the connection with server"
+#: includes/branches/branch-list-class.php:324
+#, fuzzy
+#| msgid "Error with stablishing the connection with server"
+msgid "Error with establishing connection with server"
 msgstr "خطا در برقراری ارتباط با سرور"
 
 #: includes/branches/new-branch-modal.php:30
-#: includes/branches/new-branch-modal.php:171
+#: includes/branches/new-branch-modal.php:184
 msgid "Add New Branch"
 msgstr "اضافه کردن شعبه جدید"
 
@@ -167,113 +182,109 @@ msgstr "شماره پلاک"
 msgid "Unit No"
 msgstr "شماره واحد"
 
-#: includes/branches/new-branch-modal.php:85
+#: includes/branches/new-branch-modal.php:90
 msgid "Default"
 msgstr "شعبه اصلی"
 
-#: includes/branches/new-branch-modal.php:108
-msgid "Cancel"
-msgstr "لغو"
-
-#: includes/branches/new-branch-modal.php:183
+#: includes/branches/new-branch-modal.php:196
 msgid "Add Branch"
 msgstr "اضافه کردن شعبه"
 
-#: includes/branches/new-branch-modal.php:218
+#: includes/branches/new-branch-modal.php:231
 msgid "Adding..."
 msgstr "در حال اضافه کردن"
 
-#: includes/branches/new-branch-modal.php:249
+#: includes/branches/new-branch-modal.php:262
 msgid "Your branch has successfully saved"
 msgstr "شعبه با موفقیت اضافه شد"
 
-#: includes/map/snappbox-map-class.php:16 includes/woo-checkout-map.php:90
+#: includes/branches/new-branch-modal.php:273
+msgid "Error with stablishing the connection with server"
+msgstr "خطا در برقراری ارتباط با سرور"
+
+#: includes/map/snappbox-map-class.php:39 includes/woo-checkout-map.php:92
 msgid "Set this location"
 msgstr "لوکیشن را تنظیم کنید"
 
-#: includes/order-admin-class.php:98
+#: includes/order-admin-class.php:87
 msgid "SnappBox"
 msgstr "اسنپ باکس"
 
-#: includes/order-admin-class.php:126
+#: includes/order-admin-class.php:128
 msgid "Order ID"
 msgstr "شماره سفارش"
 
-#: includes/order-admin-class.php:162
+#: includes/order-admin-class.php:146
 msgid "Delivery Date and Time"
 msgstr "تاریخ و زمان ارسال"
 
-#: includes/order-admin-class.php:170
+#: includes/order-admin-class.php:154
 msgid "SnappBox Payment after delivery"
 msgstr "پرداخت هزینه اسنپ باکس در محل"
 
-#: includes/order-admin-class.php:197
-msgid "SnappBox Price"
-msgstr "قیمت اسنپ باکس"
-
-#: includes/order-admin-class.php:201
-msgid "Calculating Price"
-msgstr "محاسبه قیمت"
-
-#: includes/order-admin-class.php:204
-msgid "Enter Your Voucher Code"
-msgstr "کد تخفیف خود را وارد کنید"
-
-#: includes/order-admin-class.php:205
-msgid "Operate"
-msgstr "انجام"
-
-#: includes/order-admin-class.php:213
-msgid "Send to SnappBox"
-msgstr "ارسال به اسنپ باکس"
-
-#: includes/order-admin-class.php:234
+#: includes/order-admin-class.php:198
 msgid "Get SnappBox Price"
 msgstr "گرفتن قیمت اسنپ باکس"
 
-#: includes/order-admin-class.php:250
+#: includes/order-admin-class.php:296
+msgid "Enter Your Voucher Code"
+msgstr "کد تخفیف خود را وارد کنید"
+
+#: includes/order-admin-class.php:297
+msgid "Operate"
+msgstr "انجام"
+
+#: includes/order-admin-class.php:310
+msgid "Calculating Price"
+msgstr "محاسبه قیمت"
+
+#: includes/order-admin-class.php:327
+msgid "Send to SnappBox"
+msgstr "ارسال به اسنپ باکس"
+
+#: includes/order-admin-class.php:351
 msgid "Cancel Order"
 msgstr "لغو کردن سفارش"
 
-#: includes/order-admin-class.php:267 includes/order-admin-class.php:301
-#: includes/order-admin-class.php:347
+#: includes/order-admin-class.php:368 includes/order-admin-class.php:402
+#: includes/order-admin-class.php:448
 msgid "Order ID missing"
 msgstr "شماره سفارش وجود ندارد"
 
-#: includes/order-admin-class.php:272 includes/order-admin-class.php:306
+#: includes/order-admin-class.php:373 includes/order-admin-class.php:407
 msgid "Invalid Order ID"
 msgstr "شماره سفارش غیر معتبر"
 
-#: includes/order-admin-class.php:276 includes/order-admin-class.php:310
-#: includes/order-admin-class.php:360 includes/schedule-modal.php:109
+#: includes/order-admin-class.php:377 includes/order-admin-class.php:411
+#: includes/order-admin-class.php:461 includes/schedule-modal.php:109
 msgid "Permission denied."
 msgstr "خطای دسترسی"
 
-#: includes/order-admin-class.php:284
+#: includes/order-admin-class.php:385
 msgid "Unexpected response"
 msgstr "پاسخ غیر منتظره"
 
-#: includes/order-admin-class.php:290
+#: includes/order-admin-class.php:391
 msgid "Create order failed"
 msgstr "خطا  در ایجاد سفارش"
 
-#: includes/order-admin-class.php:315
+#: includes/order-admin-class.php:416
 msgid "Order not found"
 msgstr "سفارش پیدا نشد"
 
-#: includes/order-admin-class.php:350
+#: includes/order-admin-class.php:451
 msgid "Woo order ID missing"
 msgstr "نبود شماره سفارش ووکامرس"
 
-#: includes/order-admin-class.php:356
+#: includes/order-admin-class.php:457
 msgid "Invalid Woo order ID"
 msgstr "شماره سفارش غیر معتبر"
 
-#: includes/order-admin-class.php:370
+#: includes/order-admin-class.php:471
 msgid "Cancelled"
 msgstr "لغو شده"
 
-#: includes/order-admin-class.php:373
+#: includes/order-admin-class.php:474
 msgid "Cancel failed"
 msgstr "لغو با خطا مواجه شد"
 
@@ -573,7 +584,7 @@ msgstr "تلفن همراه"
 msgid "SnappBox cost is free"
 msgstr "هزینه اسنپ باکس رایگان است"
 
-#: includes/shipping-method-class.php:175 includes/woo-checkout-map.php:206
+#: includes/shipping-method-class.php:175 includes/woo-checkout-map.php:208
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 "چک امنیتی با خطا مواجه شد. لطفا صفحه را مجددا بارگزاری و دوباره تلاش کنید."
@@ -652,7 +663,7 @@ msgid "Longitude"
 msgstr "عرض جغرافیایی"
 
 #: includes/shipping-method-class.php:289
-#: includes/shipping-method-class.php:376
+#: includes/shipping-method-class.php:398
 msgid "Phone Number"
 msgstr "شماره همراه"
 
@@ -682,83 +693,87 @@ msgstr ""
 msgid "Polygon Coordinates"
 msgstr ""
 
-#: includes/shipping-method-class.php:339
+#: includes/shipping-method-class.php:338
 msgid "Show Setup Guide"
 msgstr "نمایش راهنمای تنظیمات"
 
-#: includes/shipping-method-class.php:342
+#: includes/shipping-method-class.php:341
 msgid "Show Dates"
 msgstr "نمایش روز ها"
 
-#: includes/shipping-method-class.php:350
+#: includes/shipping-method-class.php:349
 msgid "Set Store Location"
 msgstr "تنظیم لوکیشن فروشگاه"
 
-#: includes/shipping-method-class.php:374
-msgid "Name"
-msgstr "نام"
+#: includes/shipping-method-class.php:352
+msgid "This branch will be set as your default branch"
+msgstr "این شعبه به عنوان شعبه پیش فرض شما در نظر گرفته خواهد شد"
 
-#: includes/shipping-method-class.php:375
-msgid "Contact Name"
-msgstr "نام و نام خانوادگی تماس گیرنده"
+#: includes/shipping-method-class.php:353
+msgid ""
+"For changing, adding, or deleting default branch, you must go to branch "
+"management page"
+msgstr ""
+"برای تغییر شعبه پیش‌فرض، ویرایش، افزودن یا حذف شعبه به بخش مدیریت شعب مراجعه "
+"کنید"
 
-#: includes/shipping-method-class.php:378
+#: includes/shipping-method-class.php:392
 msgid "Plate"
 msgstr "پلاک"
 
-#: includes/shipping-method-class.php:430
+#: includes/shipping-method-class.php:460
 msgid "Your wallet balance is too low. Please contact Snappbox"
 msgstr "مقدار کیف پول شما بسیار کم است. لطفا با اسنپ باکس تماس بگیرید"
 
-#: includes/shipping-method-class.php:432
+#: includes/shipping-method-class.php:462
 msgid "Learn more."
 msgstr "بیشتر بدانید"
 
-#: includes/shipping-method-class.php:449
+#: includes/shipping-method-class.php:479
 msgid "wallet Information"
 msgstr "اطلاعات کیف پول"
 
-#: includes/shipping-method-class.php:460
+#: includes/shipping-method-class.php:490
 msgid "Your current balance is: "
 msgstr "مقدار کیف پول شما:"
 
-#: includes/shipping-method-class.php:462
+#: includes/shipping-method-class.php:492
 msgid "Unable to fetch wallet balance."
 msgstr "دریافت اطلاعات کیف پول با خطا مواجه شد."
 
-#: includes/shipping-method-class.php:474
+#: includes/shipping-method-class.php:504
 msgid "API Key"
 msgstr "کلید ای پی آی"
 
-#: includes/shipping-method-class.php:478
+#: includes/shipping-method-class.php:508
 msgid "Enter your SnappBox API token"
 msgstr "کلید ای پی آی اسنپ باکس را وارد کنید"
 
-#: includes/shipping-method-class.php:486
+#: includes/shipping-method-class.php:516
 msgid "Paste your API key…"
 msgstr "کلید ای پی آی خود بچسبانید"
 
-#: includes/shipping-method-class.php:584
+#: includes/shipping-method-class.php:614
 msgid "Enable and Disable!"
 msgstr "فعال و غیرفعال سازی!"
 
-#: includes/shipping-method-class.php:585
+#: includes/shipping-method-class.php:615
 msgid "You can enable and disable the method here"
 msgstr "شما میتوانید متد را اینجا فعال و غیرفعال کنید"
 
-#: includes/shipping-method-class.php:587
-#: includes/shipping-method-class.php:593
-#: includes/shipping-method-class.php:599
-#: includes/shipping-method-class.php:605
-#: includes/shipping-method-class.php:611
+#: includes/shipping-method-class.php:617
+#: includes/shipping-method-class.php:623
+#: includes/shipping-method-class.php:629
+#: includes/shipping-method-class.php:635
+#: includes/shipping-method-class.php:641
 msgid "Next"
 msgstr "بعدی"
 
-#: includes/shipping-method-class.php:590
+#: includes/shipping-method-class.php:620
 msgid "Step 1: Enter Your API Key"
 msgstr "قدم اول: کلید ای پی آی را وارد کنید"
 
-#: includes/shipping-method-class.php:591
+#: includes/shipping-method-class.php:621
 msgid ""
 "Put your API key in this field. you can aquire this API key by contacting "
 "SnappBox team"
@@ -766,42 +781,42 @@ msgstr ""
 "کلید ای پی آی را در این فیلد وارد کنید. شما میتوانید کلید ای پی آی را با "
 "تماس با اسنپ باکس بدست آورید"
 
-#: includes/shipping-method-class.php:596
+#: includes/shipping-method-class.php:626
 msgid "Step 2: Set Your Location"
 msgstr "قدم دوم: تنظیم لوکیشن"
 
-#: includes/shipping-method-class.php:597
+#: includes/shipping-method-class.php:627
 msgid "Drag the map marker to your store’s location."
 msgstr "با درگ کرد پین روی نقشه لوکیشن فروشگاه را تنظیم کنید."
 
-#: includes/shipping-method-class.php:602
+#: includes/shipping-method-class.php:632
 msgid "Step 3: Set Stores data"
 msgstr "قدم سوم: تنظیم اطلاعات فروشگاه"
 
-#: includes/shipping-method-class.php:603
+#: includes/shipping-method-class.php:633
 msgid "Set your stores name and your Mobile Number."
 msgstr "تنظیم نام و شماره موبایل فروشگاه"
 
-#: includes/shipping-method-class.php:608
+#: includes/shipping-method-class.php:638
 msgid "Step 4: Set Stores city"
 msgstr "قدم چهارم: تنظیم شهر فروشگاه"
 
-#: includes/shipping-method-class.php:609
+#: includes/shipping-method-class.php:639
 msgid "Set the city that your store can send products by SnappBox."
 msgstr ""
 "شهری که در آن فروشگاه شما فعالیت میکند و میتوانید با اسنپ باکس بفرستید را "
 "انتخاب کنید."
 
-#: includes/shipping-method-class.php:614
+#: includes/shipping-method-class.php:644
 msgid "Final Step: Save Settings"
 msgstr "قدم آخر: ذخیره تنظیمات"
 
-#: includes/shipping-method-class.php:616
+#: includes/shipping-method-class.php:646
 msgid "Scroll down and click \"Save changes\" to activate SnappBox."
 msgstr ""
 "به پایین اسکرول کنید و دکمه ذخیره تغییرات را برای فعال سازی اسنپ باکس بزنید."
 
-#: includes/shipping-method-class.php:619
+#: includes/shipping-method-class.php:649
 msgid "Got it!"
 msgstr "گرفتم!"
 
@@ -809,15 +824,15 @@ msgstr "گرفتم!"
 msgid "Select your location"
 msgstr "لوکیشن خود را انتخاب کنید"
 
-#: includes/woo-checkout-map.php:211
+#: includes/woo-checkout-map.php:213
 msgid "Please select your location on the map."
 msgstr "لطفا لوکیشن خود را روی نقشه انتخاب کنید."
 
-#: includes/woo-checkout-map.php:242
+#: includes/woo-checkout-map.php:244
 msgid "Select delivery day & time:"
 msgstr "انتخاب تاریخ و زمان ارسال"
 
-#: includes/woo-checkout-map.php:383
+#: includes/woo-checkout-map.php:385
 msgid "SnappBox Delivery:"
 msgstr "ارسال اسنپ باکس:"
 
@@ -848,6 +863,15 @@ msgstr "تیم اسنپ باکس"
 #. Author URI of the plugin/theme
 msgid "https://snapp-box.com/wordpress-plugin"
 msgstr ""
+
+#~ msgid "Name"
+#~ msgstr "نام"
+
+#~ msgid "Contact Name"
+#~ msgstr "نام و نام خانوادگی تماس گیرنده"
+
+#~ msgid "SnappBox Price"
+#~ msgstr "قیمت اسنپ باکس"
 
 #, fuzzy
 #~| msgid "Address"

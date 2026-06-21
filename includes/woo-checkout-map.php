@@ -86,6 +86,8 @@ class SnappBoxCheckout
             <?php if (!empty($mapTitle)) { ?>
                 <h3><?php esc_html($mapTitle); ?></h3>
             <?php } ?>
+
+
             <div id="osm-map" style="height:400px; margin-bottom:12px; z-index:1; position:relative;">
                 <button id="center-pin" type="button" aria-label="<?php \esc_attr_e('Set this location', 'snappbox'); ?>"></button>
             </div>

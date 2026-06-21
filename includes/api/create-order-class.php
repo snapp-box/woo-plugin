@@ -36,6 +36,7 @@ class SnappBoxCreateOrder
             'timeout' => 45,
         ];
 
+
         $response = \wp_remote_post($this->api_url, $args);
 
         if (\is_wp_error($response)) {
@@ -95,6 +96,7 @@ class SnappBoxCreateOrder
     {
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
+
         if ($settings['ondelivery'] == 'yes') {
             $deliveryPayemnt = 2;
             $prePaid = 'cod';
@@ -163,13 +165,19 @@ class SnappBoxCreateOrder
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
         $contactPhoneNumber = $this->snappb_normalize_phone_number($settings['snappbox_store_phone']);
+        $branchLat = \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) ?? "";
+        $branchLong = \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) ?? "";
+        $branchPhoneNumber = \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) ?? "";
+        $branchContactName = \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) ?? "";
+        $branchAddress = \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) ?? "";
+
         return [
-            'contactName'         => \get_option('snappbox_store_name', ''),
-            'address'             => \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
-            'phoneNumber'         => (string) $contactPhoneNumber ?? '',
+            'contactName'         => ($branchContactName) ? $branchContactName : \get_option('snappbox_store_name', ''),
+            'address'             => ($branchAddress) ? $branchAddress : \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
+            'phoneNumber'         => ($branchPhoneNumber) ? $branchPhoneNumber : (string) $contactPhoneNumber ?? '',
             'comment'             => '',
-            'latitude'            => (string) $settings['snappbox_latitude'] ?? '',
-            'longitude'           => (string) $settings['snappbox_longitude'] ?? '',
+            'latitude'            => ($branchLat) ? (string) $branchLat : (string) $settings['snappbox_latitude'] ?? '',
+            'longitude'           => ($branchLong) ? (string) $branchLong : (string) $settings['snappbox_longitude'] ?? '',
             'reference'           => '1',
             'type'                => 'pickup',
         ];

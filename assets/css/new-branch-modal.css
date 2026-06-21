@@ -130,13 +130,15 @@
 .switch-group {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .branch-switch {
     position: relative;
     width: 50px;
     height: 26px;
+    margin-bottom: 0 !important;
+    margin-top: 10px;
 }
 
 .branch-switch input {
@@ -150,7 +152,10 @@
     border-radius: 50px;
     transition: .2s;
 }
-
+.branch-form-group label.default-branch-set{
+    width:88%;
+    margin-bottom: 0;
+}
 .branch-slider::before {
     content: '';
     position: absolute;
@@ -237,4 +242,16 @@
 }
 .none-visible{
     display: none;
+}
+.gray-section{
+    background-color: #F6F7F7;
+    padding:10px;
+    border-radius: 5px;
+}
+.default-branch-set p:last-child{
+    font-size:12px;
+    font-weight: normal;
+}
+.default-branch-set p{
+    margin:3px;
 }

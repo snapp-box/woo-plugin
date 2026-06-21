@@ -148,7 +148,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     public function snappb_order_register($order, $data)
     {
         global $woocommerce;
-
+        $defaultBranch = true;
         $chosen_shipping_methods = \WC()->session->get('chosen_shipping_methods');
         $chosen_shipping_method  = \is_array($chosen_shipping_methods) ? ($chosen_shipping_methods[0] ?? '') : '';
 
@@ -186,7 +186,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $polygon_json = $this->get_option('polygon_coords');
         if ($chosen_shipping_method === 'snappbox_shipping_method') {
             $pricingHandler = new \Snappbox\Api\SnappBoxPriceHandler();
-            $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '');
+            $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '', $defaultBranch);
             $polygon_json = $this->get_option('polygon_coords');
             if (!empty($polygon_json) && !empty($result['data']['finalCustomerFare'])) {
                 $polygon = json_decode($polygon_json, true);
@@ -349,13 +349,16 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 <h4><?php \esc_html_e('Set Store Location', 'snappbox'); ?></h4>
                 <a href="<?php echo esc_url(\admin_url('admin.php?page=branch-management')); ?>" style=" width:80px;">مدیریت شعب</a>
             </header>
+            <p><?php _e('This branch will be set as your default branch', 'snappbox'); ?></p>
+            <p><?php _e('For changing, adding, or deleting default branch, you must go to branch management page', 'snappbox'); ?></p>
             <?php
             $defaultBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
             $defaultBranch = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
-            if ($defaultBranch['statusCode'] == 404) {
+
+            if (!empty($defaultBranch['statusCode']) && $defaultBranch['statusCode'] > 400) {
                 $branch = [];
             }
-            $branch = (empty($defaultBranch) || $defaultBranch['statusCode'] == 404)
+            $branch = (empty($defaultBranch) || (!empty($defaultBranch['statusCode']) && $defaultBranch['statusCode'] > 400))
                 ? [
                     'name' => '',
                     'contactName' => $this->get_option('snappbox_store_name'),
@@ -382,12 +385,17 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             ?>
             <div class="branch-wrapper">
                 <div class="default-branch">
-                    <p><strong><?php _e('Name', 'snappbox'); ?>: </strong><?php echo ($name); ?></p>
-                    <p><strong><?php _e('Contact Name', 'snappbox'); ?>: </strong><?php echo ($contactName); ?></p>
+                    <p><strong><?php echo ($name); ?></strong></p>
+                    <p><?php echo ($address); ?></p>
+                    <ul>
+                        <li>
+                            <p><strong><?php _e('Plate', 'snappbox'); ?>: </strong><?php echo ($plate); ?></p>
+                        </li>
+                        <li>
+                            <p><strong><?php _e('Unit', 'snappbox'); ?>: </strong><?php echo ($unit); ?></p>
+                        </li>
+                    </ul>
                     <p><strong><?php _e('Phone Number', 'snappbox'); ?>: </strong><?php echo ($phoneNumber); ?></p>
-                    <p><strong><?php _e('Address', 'snappbox'); ?>: </strong><?php echo ($address); ?></p>
-                    <p><strong><?php _e('Plate', 'snappbox'); ?>: </strong><?php echo ($plate); ?></p>
-                    <p><strong><?php _e('Unit', 'snappbox'); ?>: </strong><?php echo ($unit); ?></p>
                 </div>
                 <div class="map-holder clearfix">
                     <?php $map = new SnappBoxMap();

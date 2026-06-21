@@ -4,6 +4,8 @@ namespace Snappbox\Api;
 
 if (! defined('ABSPATH')) exit;
 
+use \Snappbox\Api\Branches\SnappBoxBranchesDefault;
+
 class SnappBoxPriceHandler
 {
 
@@ -20,7 +22,7 @@ class SnappBoxPriceHandler
         \add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'snappb_handle_create_order']);
     }
 
-    public function snappb_get_pricing($orderId, $cityName, $state_code, $customerLat, $customerLong, $voucherCode)
+    public function snappb_get_pricing($orderId, $cityName, $state_code, $customerLat, $customerLong, $voucherCode, $defaultBranch = "")
     {
 
         $branchLat = \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) ?? "";
@@ -28,6 +30,26 @@ class SnappBoxPriceHandler
         $branchPhoneNumber = \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) ?? "";
         $branchContactName = \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) ?? "";
         $branchAddress = \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) ?? "";
+        if ($defaultBranch == true) {
+            $defaultBranchObj = new SnappBoxBranchesDefault();
+            $defaultBranchItem = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
+
+            if ($defaultBranchItem['statusCode'] > 400) {
+                $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
+                $settings            = \maybe_unserialize($settings_serialized);
+                $branchLat = (string) $settings['snappbox_latitude'];
+                $branchLong = (string) $settings['snappbox_longitude'];
+                $branchAddress = \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2();
+                $branchPhoneNumber = $settings['snappbox_store_phone'];
+                $city      = $cityName;
+            } else {
+                $branchLat = $defaultBranchItem['latitude'] ?? $customerLat;
+                $branchLong = $defaultBranchItem['longitude'] ?? $customerLong;
+                $branchAddress = $defaultBranchItem['address'] ?? "";
+                $branchPhoneNumber = $defaultBranchItem['contactPhoneNumber'] ?? "";
+                $city      = $cityName;
+            }
+        }
         if ($orderId) {
             $latitude  = \get_post_meta($orderId, '_customer_latitude', true);
             $longitude = \get_post_meta($orderId, '_customer_longitude', true);

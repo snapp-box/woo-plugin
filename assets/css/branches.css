@@ -156,3 +156,57 @@
     color: #fff;
     border-color: #2271b1;
 }
+.branch-delete-modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:99999;
+    align-items:center;
+    justify-content:center;
+}
+
+.branch-delete-modal.show {
+    display:flex;
+}
+
+.branch-delete-modal-content {
+    background:#fff;
+    width:500px;
+    padding:25px;
+    position:relative;
+    direction:rtl;
+}
+
+.modal-close {
+    position:absolute;
+    left:20px;
+    top:15px;
+    border:0;
+    background:none;
+    font-size:30px;
+    cursor: pointer;
+}
+
+.modal-actions {
+    margin-top:30px;
+    display:flex;
+    gap:12px;
+    justify-content: end;
+}
+
+.confirm-delete {
+    background:#d63638;
+    color:white;
+    border:0;
+    padding:10px 25px;
+    cursor: pointer;
+}
+
+.cancel-delete {
+    background:white;
+    border:1px solid #2271b1;
+    color:#2271b1;
+    padding:10px 25px;
+    cursor: pointer;
+}

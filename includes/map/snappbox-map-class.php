@@ -18,6 +18,7 @@ class SnappBoxMap
             'guidenceMap'  => true,
             'movable'       => true,
             'showPolygon'   => true,
+            'addressInputId' => "branch-address"
         ]);
 
         $polygon_coords = get_option('polygon_coords', '');
@@ -82,6 +83,7 @@ class SnappBoxMap
         $longInputName = $args['longInputName'];
         $movable = $args['movable'];
         $showPolygon = $args['showPolygon'];
+        $addressInput = $args['addressInputId'];
 
         $autoFill   = ! empty($settings['autofill']) ? (string) $settings['autofill'] : '';
         $movable_js = $movable ? 'true' : 'false';
@@ -315,9 +317,9 @@ class SnappBoxMap
                     autoFill: "' . $autoFill . '",
                     reverseHeaders: {
                         Accept: "application/json",
-                        "X-Smapp-Key": "aa22e8eef7d348d32f492d8a0c755f4d",
+                        "X-Smapp-Key": "' . \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_KEY') . '",
                         Authorization:
-                        "pk.eyJ1IjoibWVpaCIsImEiOiJjamY2aTJxenIxank3MzNsbmY0anhwaG9mIn0.egsUz_uibSftB0sjSWb9qw",
+                        "' . \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_AUTHORIZATION') . '",
                     },
                     nominatimUrl: "' . \Snappbox\EnvConfig::get('SNAPPBOX_MAP_NOMINATIM_URL') . '",
                     };
@@ -330,8 +332,8 @@ class SnappBoxMap
                 return fetch(url, { headers: headers })
                 .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
                 .then(function (data) {
-                    jQuery("#branch-address").val(data.result.displayName);
-                    var sa = document.querySelector("#branch-address");
+                    jQuery("#' . $addressInput . '").val(data.result.displayName);
+                    var sa = document.querySelector("#' . $addressInput . '");
                     if (sa && (SNAPPBOX_MAP.autoFill === "yes")) {
                     sa.value = data.result.displayName;
                     }

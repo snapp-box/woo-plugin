@@ -63,6 +63,7 @@ class BranchListPage
 
     public function snappb_branches_get_items()
     {
+
         $branches = new SnappBoxBranchesList();
         $list = $branches->snappb_branches_list();
         return ($list['response'] ?? []);
@@ -187,7 +188,10 @@ class BranchListPage
                                                 type="button"
                                                 class="branch-btn delete js-delete-branch"
                                                 data-id="<?php echo esc_attr($item['id']); ?>">
-                                                <?php \esc_html_e('Remove Branch', 'snappbox'); ?>
+                                                <span class="delete-text"><?php \esc_html_e('Remove Branch', 'snappbox'); ?></span>
+                                                <div class="loader loading" aria-label="Loading" role="status" hidden>
+                                                    <span></span><span></span><span></span>
+                                                </div>
                                             </button>
                                         </div>
                                     </td>
@@ -204,25 +208,35 @@ class BranchListPage
                     </tbody>
                 </table>
             </div>
-            <div class="branch-pagination">
-                <span>
-                    نمایش 1 تا 4 از 34 مورد
-                </span>
-                <div class="pages">
-                    <button>«</button>
-                    <button>‹</button>
-                    <button class="active-page">
-                        1
-                    </button>
-                    <button>2</button>
-                    <button>3</button>
-                    <button>›</button>
-                    <button>»</button>
-                </div>
-            </div>
+
         </div>
         <div id="snappbox-message" class="snappbox-message">
             <div class="snappbox-message-text"></div>
+
+        </div>
+        <div id="delete-branch-modal" class="branch-delete-modal">
+            <div class="branch-delete-modal-content">
+                <button type="button" class="modal-close">×</button>
+
+                <h2><?php esc_html_e('Confirm deleting', 'snappbox'); ?></h2>
+
+                <p>
+                    <?php esc_html_e('Are you sure about deleting this branch', 'snappbox'); ?>
+                    <strong id="delete-branch-name"></strong>
+                </p>
+
+                <span><?php esc_html_e('This operation is Irreturnable', 'snappbox'); ?>.</span>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-delete">
+                        <?php esc_html_e('Cancel', 'snappbox'); ?>
+                    </button>
+
+                    <button type="button" class="confirm-delete">
+                        <?php esc_html_e('Confirm deleting', 'snappbox'); ?>
+                    </button>
+                </div>
+            </div>
         </div>
         <script>
             jQuery(document).ready(function($) {
@@ -232,12 +246,49 @@ class BranchListPage
                     box.addClass(type);
                     box.find('.snappbox-message-text').text(text);
                     box.addClass('show');
-                    setTimeout(() => box.removeClass('show'), 3000);
+                    setTimeout(() => {
+                        box.removeClass('show');
+                    }, 3000);
                 }
+                let selectedBranchId = null;
+                let selectedButton = null;
+                /*
+                 * Open confirmation modal
+                 */
+                jQuery(document).on('click', '.js-delete-branch', function(e) {
+                    e.preventDefault();
+                    selectedBranchId = jQuery(this).data('id');
+                    selectedButton = jQuery(this);
+                    jQuery('#delete-branch-modal').addClass('show');
 
-                jQuery('.js-delete-branch').on('click', function() {
-                    const $btn = $(this);
-                    const branchId = $(this).attr('data-id');
+                });
+
+
+
+                /*
+                 * Close modal
+                 */
+                jQuery(document).on(
+                    'click',
+                    '.modal-close, .cancel-delete',
+                    function() {
+                        jQuery('#delete-branch-modal').removeClass('show');
+                        selectedBranchId = null;
+                        selectedButton = null;
+
+                    }
+                );
+
+                jQuery(document).on('click', '.confirm-delete', function() {
+                    if (!selectedBranchId || !selectedButton) {
+                        return;
+                    }
+                    const $btn = selectedButton;
+                    const loader = $btn.find(".loader");
+                    const deleteText = $btn.find(".delete-text");
+                    loader.removeAttr("hidden");
+                    deleteText.hide();
+                    $btn.prop('disabled', true);
                     $.ajax({
                         url: SNAPPBOX_AJAX.ajax_url,
                         type: 'POST',
@@ -245,30 +296,41 @@ class BranchListPage
                         data: {
                             action: 'snappbox_delete_branch',
                             nonce: SNAPPBOX_AJAX.nonce,
-                            id: branchId,
+                            id: selectedBranchId
                         },
                         success: function(response) {
-                            $btn.prop('disabled', false);
+                            jQuery('#delete-branch-modal')
+                                .removeClass('show');
                             if (response.success) {
-                                if (response.data.message) {
-                                    showMessage('error', response.data.message);
-                                } else {
-                                    showMessage('success', '<?php \esc_html_e('Your branch has successfully deleted', 'snappbox'); ?>');
-                                }
+                                showMessage(
+                                    'success',
+                                    '<?php esc_html_e('Your branch has successfully deleted', 'snappbox'); ?>'
+                                );
+                                setTimeout(function() {
 
-                                location.reload(); // simple refresh
+                                    location.reload();
+
+                                }, 1000);
                             } else {
-                                showMessage('error', response.data?.message || 'خطا');
+                                showMessage(
+                                    'error',
+                                    response.data?.message || 'Error'
+                                );
                             }
                         },
-
                         error: function() {
+                            showMessage(
+                                'error',
+                                '<?php esc_html_e('Error with establishing connection with server', 'snappbox'); ?>'
+                            );
+                        },
+                        complete: function() {
                             $btn.prop('disabled', false);
-                            showMessage('error', '<?php \esc_html_e('Error with stablishing the connection with server', 'snappbox'); ?>');
+                            loader.attr('hidden', true);
+                            deleteText.show();
                         }
                     });
                 });
-
             });
         </script>
 

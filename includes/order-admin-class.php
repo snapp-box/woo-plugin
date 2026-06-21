@@ -30,19 +30,6 @@ class SnappBoxOrderAdmin
 
     public function snappb_enqueue_assets()
     {
-        // \wp_enqueue_style(
-        //     'maplibre-gl',
-        //     \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
-        //     [],
-        //     '1.9.4'
-        // );
-        // \wp_enqueue_script(
-        //     'maplibre-gl',
-        //     \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
-        //     [],
-        //     '1.9.4',
-        //     true
-        // );
 
         \wp_enqueue_style(
             'snappbox-style',
@@ -70,8 +57,6 @@ class SnappBoxOrderAdmin
         \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
             'ajaxUrl'      => \admin_url('admin-ajax.php'),
             'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
-            // 'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            // 'mapStyleUrl'  => \SNAPPBOX_MAP_URL,
             'i18n'         => [
                 'priceFetching' => \__('Receiving price...', 'snappbox'),
                 'priceError'    => \__('Error in receiving price', 'snappbox'),
@@ -145,24 +130,6 @@ class SnappBoxOrderAdmin
     }
 
 
-    // public function snappb_display_map_in_admin_order($order)
-    // {
-    //     $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
-    //     $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
-
-    //     if ($latitude && $longitude) {
-    //         $lat = (float) $latitude;
-    //         $lng = (float) $longitude;
-
-    //         echo '<div id="admin-osm-map"
-    //                  class="sb-admin-map"
-    //                  data-lat="' . \esc_attr($lat) . '"
-    //                  data-lng="' . \esc_attr($lng) . '"
-    //               ></div>';
-    //     }
-    // }
-
-
     public function snappb_display_snappbox_order_button($order, $nonce)
     {
 
@@ -201,7 +168,19 @@ class SnappBoxOrderAdmin
                    ></div>';
         $branchesObject = new BranchListPage();
         $branches = $branchesObject->snappb_branches_get_items();
-
+        $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
+        $settings            = \maybe_unserialize($settings_serialized);
+        $branches[] = [
+            'latitude'      => (string) $settings['snappbox_latitude'],
+            'longitude'     => (string) $settings['snappbox_longitude'],
+            'address'       =>  \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
+            'name'  => \get_option('snappbox_store_name', ''),
+            'contactPhoneNumber'         => $settings['snappbox_store_phone'],
+            'status' => 'ACTIVE',
+            'id' => 1,
+            'contactName' => \get_option('snappbox_store_name', ''),
+            'defaultAddress' => "",
+        ];
         if (
             ! $snappBoxOrder ||
             (
@@ -250,8 +229,18 @@ class SnappBoxOrderAdmin
                                     <?php
                                     $defaultBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
                                     $defaultBranch = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
-
-
+                                    if (!empty($defaultBranch['statusCode']) && $defaultBranch['statusCode'] > 400) {
+                                        $defaultBranch[] = [
+                                            'latitude'      => (string) $settings['snappbox_latitude'],
+                                            'longitude'     => (string) $settings['snappbox_longitude'],
+                                            'address'       =>  \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
+                                            'name'  => \get_option('snappbox_store_name', ''),
+                                            'contactPhoneNumber'         => $settings['snappbox_store_phone'],
+                                            'status' => 'ACTIVE',
+                                            'id' => 1,
+                                            'contactName' => \get_option('snappbox_store_name', ''),
+                                        ];
+                                    }
                                     ?>
                                     <select class="address-selector">
                                         <?php foreach ($branches as $branch) {
@@ -269,12 +258,12 @@ class SnappBoxOrderAdmin
                                                 </option>
                                         <?php }
                                         } ?>
-                                        <input type="hidden" class="selected-address" value="<?php echo ($defaultBranch['address']); ?>" />
-                                        <input type="hidden" class="selected-latitude" value="<?php echo ($defaultBranch['latitude']); ?>" />
-                                        <input type="hidden" class="selected-longitude" value="<?php echo ($defaultBranch['longitude']); ?>" />
-                                        <input type="hidden" class="selected-contact-name" value="<?php echo ($defaultBranch['contactName']); ?>" />
-                                        <input type="hidden" class="selected-name" value="<?php echo ($defaultBranch['name']); ?>" />
-                                        <input type="hidden" class="selected-contact-phonenumber" value="<?php echo ($defaultBranch['contactPhoneNumber']); ?>" />
+                                        <input type="hidden" class="selected-address" value="<?php echo ($defaultBranch['address'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-latitude" value="<?php echo ($defaultBranch['latitude'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-longitude" value="<?php echo ($defaultBranch['longitude'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-contact-name" value="<?php echo ($defaultBranch['contactName'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-name" value="<?php echo ($defaultBranch['name'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-contact-phonenumber" value="<?php echo ($defaultBranch['contactPhoneNumber'] ?? ""); ?>" />
                                     </select>
                                 </div>
 

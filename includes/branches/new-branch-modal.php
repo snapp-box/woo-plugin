@@ -81,12 +81,16 @@ class BranchModal
                             <input id="branch-phone" type="text">
                         </div>
 
-                        <div class="branch-form-group switch-group">
-                            <label><?php \esc_html_e('Default', 'snappbox'); ?></label>
+                        <div class="branch-form-group switch-group gray-section">
                             <label class="branch-switch">
                                 <input id="branch-default" type="checkbox">
                                 <span class="branch-slider"></span>
                             </label>
+                            <label class="default-branch-set">
+                                <p><?php \esc_html_e('Default', 'snappbox'); ?></p>
+                                <p>این شعبه به عنوان شعبه اصلی در سایت و تماس‌ها نمایش داده می‌شود</p>
+                            </label>
+
                         </div>
 
                     </div>
@@ -103,7 +107,8 @@ class BranchModal
                             'latInputName'  => 'latitude',
                             'longInputName' => 'longitude',
                             'width'         => '100%',
-                            'height'        => '400px'
+                            'height'        => '400px',
+
                         ]);
                         ?>
                     </div>
@@ -141,7 +146,7 @@ class BranchModal
                 function openModal(branch = null) {
 
                     modal.addClass('active');
-
+                    const centerPin = jQuery("#center-pin");
                     if (branch) {
                         $('#form-mode').val('edit');
                         $('#modal-title').text('<?php \esc_html_e('Edit Branch', 'snappbox'); ?>');
@@ -156,7 +161,7 @@ class BranchModal
                         $('#latitude').val(branch.latitude || '');
                         $('#longitude').val(branch.longitude || '');
                         $('#branch-default').prop('checked', branch.defaultAddress === true);
-
+                        $('#center-pin').hide();
                         $('#save-branch-btn').text('<?php \esc_html_e('Edit Branch', 'snappbox'); ?>');
                         const lat = parseFloat(branch.latitude);
                         const lng = parseFloat(branch.longitude);
@@ -177,7 +182,7 @@ class BranchModal
                     } else {
                         $('#form-mode').val('create');
                         $('#modal-title').text('<?php \esc_html_e('Add New Branch', 'snappbox'); ?>');
-
+                        $('#center-pin').show();
                         $('#branch-id').val('');
                         $('#branch-name').val('');
                         $('#contact-name').val('');
