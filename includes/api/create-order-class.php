@@ -47,7 +47,6 @@ class SnappBoxCreateOrder
         }
 
         $decoded_response = \json_decode(\wp_remote_retrieve_body($response), true);
-
         $this->snappb_store_order_detail($order, $decoded_response);
 
         return [
@@ -170,10 +169,12 @@ class SnappBoxCreateOrder
         $branchPhoneNumber = \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) ?? "";
         $branchContactName = \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) ?? "";
         $branchAddress = \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) ?? "";
+        $branchPlate = \sanitize_text_field(\wp_unslash($_POST['branchPlate'])) ?? "";
+        $branchUnit = \sanitize_text_field(\wp_unslash($_POST['branchUnit'])) ?? "";
 
         return [
             'contactName'         => ($branchContactName) ? $branchContactName : \get_option('snappbox_store_name', ''),
-            'address'             => ($branchAddress) ? $branchAddress : \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
+            'address'             => ($branchAddress) ? $branchAddress . ' ' . $branchPlate . ' ' . $branchUnit : \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
             'phoneNumber'         => ($branchPhoneNumber) ? $branchPhoneNumber : (string) $contactPhoneNumber ?? '',
             'comment'             => '',
             'latitude'            => ($branchLat) ? (string) $branchLat : (string) $settings['snappbox_latitude'] ?? '',

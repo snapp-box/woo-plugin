@@ -140,7 +140,8 @@ class SnappBoxMap
 
             window.snappboxMaps["' . $container . '"] = {
                 map: map,
-                marker: savedMarker
+                marker: savedMarker,
+                setPolygon: setPolygon,
             };
             updateInputs(defaultLat, defaultLng);
     
@@ -178,12 +179,12 @@ class SnappBoxMap
             map.on("load", function () {
     
                 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
-    
+                
                 Draw = new MapboxDraw({
                     displayControlsDefault: false,
                     controls: { polygon: "' . $showPolygon . '", trash: "' . $showPolygon . '" }
                 });
-    
+            
                 map.addControl(Draw, "bottom-left");
 
                 const drawCtrl = document.querySelector(".mapboxgl-ctrl-group"); // the draw group
@@ -203,28 +204,9 @@ class SnappBoxMap
                     trashBtn.textContent = "حذف محدوده";
                 }
                 
-
+                
                 // Load saved polygon
-                const polyInputEl = document.querySelector(\'[name="woocommerce_snappbox_shipping_method_polygon_coords"]\');
-                const savedPolygon = polyInputEl ? polyInputEl.value : "";
-    
-                if (savedPolygon && savedPolygon !== "") {
-                    try {
-                        let coords = JSON.parse(savedPolygon);
-                        if (!Array.isArray(coords[0][0])) { coords = [coords]; }
-                        currentPolygonCoords = coords[0];
-    
-                        Draw.add({
-                            id: "saved-polygon",
-                            type: "Feature",
-                            properties: {},
-                            geometry: { type: "Polygon", coordinates: coords }
-                        });
-    
-                    } catch (e) {
-                        console.error("Invalid polygon_coords JSON", e);
-                    }
-                }
+                setPolygon();
     
                 map.on("draw.create", validatePolygon);
                 map.on("draw.update", validatePolygon);
@@ -251,12 +233,11 @@ class SnappBoxMap
                     const saved = savedMarker.getLngLat();
                     const lat = saved.lat;
                     const lng = saved.lng;
-                    console.log(typeof turf)
+                    
                     // Check inside polygon
                     if (typeof turf !== "undefined") {
                         const pt = turf.point([lng, lat]);
                         const poly = turf.polygon([polygon]);
-   
                         const inside = turf.booleanPointInPolygon(pt, poly);
     
                         if (!inside) {
@@ -267,8 +248,10 @@ class SnappBoxMap
                             return;
                         }
                         else{
-                            jQuery("#snapp-modal").css("display", "none");
-                            jQuery(".woocommerce-save-button").removeAttr("disabled");
+                            if(jQuery("#snapp-modal").length > 0){
+                                jQuery("#snapp-modal").css("display", "none");
+                                jQuery(".woocommerce-save-button").removeAttr("disabled");
+                            }
                         }
                         
                     }
@@ -277,14 +260,73 @@ class SnappBoxMap
                 }
     
                 function updateInputsPolygon(coords) {
-                    const polyInput = document.querySelector(\'[name="woocommerce_snappbox_shipping_method_polygon_coords"]\');
+                    
+                    let polyInput = document.querySelector(\'[name="woocommerce_snappbox_shipping_method_polygon_coords"]\');
+                    
+                    if(polyInput == null){
+                         polyInput = document.getElementById(\'woocommerce_snappbox_shipping_method_polygon_coords\');
+                        
+                    }
                     currentPolygonCoords = coords || null;
                     if (polyInput) {
                         polyInput.value = coords ? JSON.stringify(coords) : "";
                     }
                 }
+                
     
             });
+            function setPolygon(coordinates) {
+
+                if (!Draw) {
+                    console.warn("Draw is not initialized.");
+                    return false;
+                }
+
+                Draw.deleteAll();
+
+                const polyInput = document.querySelector(
+                    \'[id="polygon"]\'
+                );
+
+                const value = coordinates ?? "";
+
+                if (!value) {
+                    currentPolygonCoords = null;
+                    return false;
+                }
+
+                try {
+
+                    let coords = typeof value === "string"
+                        ? JSON.parse(value)
+                        : value;
+
+                    if (!Array.isArray(coords[0][0])) {
+                        coords = [coords];
+                    }
+
+                    currentPolygonCoords = coords[0];
+
+                    Draw.add({
+                        type: "Feature",
+                        properties: {},
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: coords
+                        }
+                    });
+
+                    if (polyInput) {
+                        polyInput.value = JSON.stringify(currentPolygonCoords);
+                    }
+
+                    return true;
+
+                } catch (e) {
+                    console.error("Invalid polygon_coords JSON", e);
+                    return false;
+                }
+            }
     
             // SAVE LOCATION BY BUTTON CLICK
             var centerPinBtn=document.getElementById("center-pin");

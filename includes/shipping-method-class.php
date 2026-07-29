@@ -182,12 +182,12 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $customerLat = isset($_POST['customer_latitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_latitude'])) : '';
         $customerLong = isset($_POST['customer_longitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_longitude'])) : '';
 
-
-        $polygon_json = $this->get_option('polygon_coords');
         if ($chosen_shipping_method === 'snappbox_shipping_method') {
             $pricingHandler = new \Snappbox\Api\SnappBoxPriceHandler();
             $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '', $defaultBranch);
-            $polygon_json = $this->get_option('polygon_coords');
+            $mainBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
+            $mainBranch = $mainBranchObj->snappb_branches_default()['response'] ?? "";
+            $polygon_json = ($mainBranch['polygon']) ? $mainBranchObj->snappbox_reverse_polygon($mainBranch['polygon']) : "";
             if (!empty($polygon_json) && !empty($result['data']['finalCustomerFare'])) {
                 $polygon = json_decode($polygon_json, true);
 
@@ -398,7 +398,8 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                     <p><strong><?php _e('Phone Number', 'snappbox'); ?>: </strong><?php echo ($phoneNumber); ?></p>
                 </div>
                 <div class="map-holder clearfix">
-                    <?php $map = new SnappBoxMap();
+                    <?php
+                    $map = new SnappBoxMap();
                     $latInputName = "woocommerce_snappbox_shipping_method_snappbox_latitude";
                     $longInputName = "woocommerce_snappbox_shipping_method_snappbox_longitude";
                     $map->snappbox_map([
@@ -412,7 +413,8 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                         'guidenceMap' => false,
                         'movable' => false,
                         'showPolygon' => false,
-                    ]); ?>
+                    ]);
+                    ?>
                 </div>
             </div>
 

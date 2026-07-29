@@ -29,7 +29,7 @@ class BranchListPage
     {
         add_menu_page(
             'Branch Management',
-            'Branches',
+            __('Branches', 'snappbox'),
             'manage_options',
             'branch-management',
             [$this, 'snappb_branches_render_page'],
@@ -102,11 +102,11 @@ class BranchListPage
                     <?php \esc_html_e('Add branch', 'snappbox'); ?>
                 </button>
             </div>
-            <div class="branch-toolbar">
+            <!-- <div class="branch-toolbar">
                 <div class="branch-search">
                     <input type="text" placeholder="جستجو با شماره شعبه">
                 </div>
-            </div>
+            </div> -->
             <div class="branch-table-wrapper">
                 <table class="branch-table">
                     <thead>
@@ -128,7 +128,6 @@ class BranchListPage
                         <?php if (!empty($items) && is_array($items)): ?>
 
                             <?php foreach ($items as $item): ?>
-                                <?php ?>
                                 <tr>
                                     <td>
                                         <a href="#" class="branch-name">
@@ -159,6 +158,7 @@ class BranchListPage
                                     <td>
                                         <span class="branch-status "><?php echo esc_attr($item['status']); ?></span>
                                     </td>
+
                                     <td>
                                         <?php if ($item['defaultAddress'] == true) {
                                         ?>
@@ -346,8 +346,9 @@ class BranchListPage
 
         try {
 
-            $token = SNAPPBOX_BUSINESS_TOKEN;
+            $token = SNAPPBOX_API_TOKEN;
             $mode = sanitize_text_field($_POST['mode'] ?? 'create');
+            $polygon = ($_POST['polygon']) ? $this->snappb_convert_polygon($_POST['polygon']) : "";
 
             $payload = [
                 'name' => sanitize_text_field($_POST['name'] ?? ''),
@@ -357,9 +358,11 @@ class BranchListPage
                 'longitude' => (float) ($_POST['longitude'] ?? 0),
                 'address' => sanitize_text_field($_POST['address'] ?? ''),
                 'plate' => sanitize_text_field($_POST['plate'] ?? ''),
+                'polygon' => $polygon,
                 'unit' => sanitize_text_field($_POST['unit'] ?? ''),
                 'comment' => sanitize_text_field($_POST['comment'] ?? ''),
-                'defaultAddress' => filter_var($_POST['defaultAddress'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'defaultAddress' => filter_var($_POST['defaultAddress'] ?? false, FILTER_VALIDATE_BOOLEAN)
+
             ];
 
             // =========================
@@ -390,6 +393,28 @@ class BranchListPage
             ], 500);
         }
     }
+
+    public function snappb_convert_polygon(string $polygon): string
+    {
+        $coordinates = json_decode($polygon, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($coordinates)) {
+            throw new \InvalidArgumentException('Invalid coordinates JSON.');
+        }
+
+        $points = array_map(function (array $point): string {
+            if (count($point) !== 2) {
+                throw new \InvalidArgumentException(
+                    'Each coordinate must contain [longitude, latitude].'
+                );
+            }
+
+            return "{$point[0]} {$point[1]}";
+        }, $coordinates);
+
+        return 'POLYGON ((' . implode(', ', $points) . '))';
+    }
+
     public function delete_branch()
     {
         check_ajax_referer('snappbox_branch_nonce', 'nonce');
@@ -410,7 +435,7 @@ class BranchListPage
                 ], 400);
             }
 
-            $token = SNAPPBOX_BUSINESS_TOKEN;
+            $token = SNAPPBOX_API_TOKEN;
 
             $api = new \Snappbox\Api\Branches\SnappboxBranchesDelete($token);
 

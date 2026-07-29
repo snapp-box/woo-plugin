@@ -98,7 +98,7 @@ class SnappBoxOrderAdmin
                     'height'  => '400px',
                     'guidenceMap' => false,
                     'movable' => false,
-                    'showPolygon' => false,
+                    'showPolygon' => false
                 ]);
                 // $this->snappb_display_map_in_admin_order($order);
                 $this->snappb_display_location_in_order_admin($order);
@@ -178,6 +178,8 @@ class SnappBoxOrderAdmin
             'contactPhoneNumber'         => $settings['snappbox_store_phone'],
             'status' => 'ACTIVE',
             'id' => 1,
+            'unit' => "",
+            'plate' => "",
             'contactName' => \get_option('snappbox_store_name', ''),
             'defaultAddress' => "",
         ];
@@ -205,11 +207,7 @@ class SnappBoxOrderAdmin
                 </div>
 
                 <div class="sb-modal" hidden>
-
                     <div class="sb-modal-content">
-
-
-
                         <div class="sb-header">
                             <button class="sb-close-btn">
                                 ✕
@@ -253,6 +251,8 @@ class SnappBoxOrderAdmin
                                                     data-address="<?php echo ($branch['address']); ?>"
                                                     data-contact-name="<?php echo ($branch['contactName']); ?>"
                                                     data-name="<?php echo ($branch['name']); ?>"
+                                                    data-plate="<?php echo ($branch['plate']); ?>"
+                                                    data-unit="<?php echo ($branch['unit']); ?>"
                                                     data-phone="<?php echo ($branch['contactPhoneNumber']); ?>">
                                                     <?php echo ($branch['name']); ?>
                                                 </option>
@@ -263,6 +263,8 @@ class SnappBoxOrderAdmin
                                         <input type="hidden" class="selected-longitude" value="<?php echo ($defaultBranch['longitude'] ?? ""); ?>" />
                                         <input type="hidden" class="selected-contact-name" value="<?php echo ($defaultBranch['contactName'] ?? ""); ?>" />
                                         <input type="hidden" class="selected-name" value="<?php echo ($defaultBranch['name'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-plate" value="<?php echo ($defaultBranch['plate'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-unit" value="<?php echo ($defaultBranch['unit'] ?? ""); ?>" />
                                         <input type="hidden" class="selected-contact-phonenumber" value="<?php echo ($defaultBranch['contactPhoneNumber'] ?? ""); ?>" />
                                     </select>
                                 </div>
@@ -483,6 +485,7 @@ class SnappBoxOrderAdmin
 
             if ($getResponse && isset($getResponse->status) && $echoText) {
                 echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->status) . '</p>';
+                echo '<p><b>' . \esc_html__('Tracking URL', 'snappbox') . '</b>: <a target="_blank" href="' . esc_html($getResponse->trackingUrl) . '">' . \esc_html($getResponse->trackingUrl) . '</a></p>';
             }
 
             if ($meta_order_id) {

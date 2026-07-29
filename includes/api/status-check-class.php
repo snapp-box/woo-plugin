@@ -1,6 +1,8 @@
 <?php
+
 namespace Snappbox\Api;
-if ( ! defined( 'ABSPATH' ) ) exit; 
+
+if (! defined('ABSPATH')) exit;
 
 class SnappOrderStatus
 {
@@ -33,7 +35,6 @@ class SnappOrderStatus
         }
 
         $body = \wp_remote_retrieve_body($response);
-
         return \json_decode($body, false);
     }
 
@@ -42,5 +43,3 @@ class SnappOrderStatus
         return $this->snappb_get_order_status($orderID);
     }
 }
-
-?>

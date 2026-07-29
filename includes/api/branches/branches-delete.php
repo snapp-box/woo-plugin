@@ -13,10 +13,10 @@ class SnappboxBranchesDelete
     private string $token;
     private string $base_url;
 
-    public function __construct(string $token)
+    public function __construct()
     {
-        $this->token = $token;
-        $this->base_url = EnvConfig::get('SNAPPBPX_BUSINESS_BASE_URL') . '/v1/customers/addresses/store';
+        global $snappb_api_base_url;
+        $this->base_url = $snappb_api_base_url . '/v1/customers/addresses/store';
     }
 
     public function delete_address(string $id, array $data)
@@ -25,7 +25,7 @@ class SnappboxBranchesDelete
         $response = wp_remote_request($url, [
             'method'  => 'DELETE',
             'headers' => [
-                'Authorization'    =>  $this->token,
+                'Authorization'    =>  SNAPPBOX_API_TOKEN,
                 'Content-Type'  => 'application/json',
             ],
             'body' => '',

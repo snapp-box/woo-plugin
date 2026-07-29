@@ -113,7 +113,6 @@
 
       function getLoading($scope) {
         var $el = $scope.find('.loading');
-        // if (!$el.length) $el = $('.loading');
         return $el;
       }
 
@@ -326,7 +325,7 @@
         var name = thisOption.attr('data-name');
         var phone = thisOption.attr('data-phone');
         var contactName = thisOption.attr('data-contact-name');
-        jQuery('.sb-address-text').html(address);
+        jQuery('.selected-address').html(address);
         jQuery('.selected-latitude').val(latitude);
         jQuery('.selected-longitude').val(longitude);
         jQuery('.selected-name').val(name);
@@ -388,6 +387,8 @@
           branchLatitude: jQuery('.selected-latitude').val(),
           branchLongitude: jQuery('.selected-longitude').val(),
           phoneNumber: jQuery('.selected-contact-phonenumber').val(),
+          branchPlate: jQuery('.selected-plate').val(),
+          branchUnit: jQuery('.selected-unit').val(),
         };
 
         var $resp = $modal.find('#snappbox-response, .snappbox-response').first();

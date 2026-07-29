@@ -73,7 +73,6 @@ $config = $configSettings->snappb_get_config();
 define('SNAPPBOX_MAP_URL', $mapTile);
 define('SNAPPBOX_REVERSE_URL', $reverseUrl);
 define('SNAPPBOX_NOMINATIM_URL', \Snappbox\EnvConfig::get('SNAPPBOX_MAP_NOMINATIM_URL'));
-define('SNAPPBOX_BUSINESS_TOKEN', 'eyJhbGciOiJIUzUxMiJ9.eyJjaWQiOjE4MzI4OTA5LCJjcmlkIjoiMjA0NTUxMDgyMSIsImUiOiIiLCJ3ZSI6ZmFsc2UsInN1YiI6IjA5MTI1Nzg0NTA3IiwiaXNfYjJiIjpmYWxzZSwiYXV0aCI6IlJPTEVfQ1VTVE9NRVIiLCJ0eXBlIjoiY3VzdG9tZXIifQ.zwAFAIqN-fGxmVrtDdRaVywUco6s8sA5Qub76VHwmnOfFI42AFC51jQN40f-z9UWcksRbGcAYyDUhSs6KpPlpA');
 ($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = "https://app-stg.snapp-box.com/api/v1/customer/nearby_biker_locations";
 
 

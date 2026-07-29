@@ -59,7 +59,7 @@ class BranchModal
                         <div class="branch-form-row">
                             <div class="branch-form-group">
                                 <label><?php \esc_html_e('Block No', 'snappbox'); ?></label>
-                                <input id="branch-plate" type="text">
+                                <input id="branch-plate" type="number">
                             </div>
 
                             <div class="branch-form-group">
@@ -78,7 +78,8 @@ class BranchModal
 
                         <div class="branch-form-group">
                             <label><?php \esc_html_e('Contact phone number', 'snappbox'); ?></label>
-                            <input id="branch-phone" type="text">
+                            <input id="branch-phone" type="number" pattern="^09[0-9]{9}$" placeholder="09123456789">
+                            <input type="hidden" id="polygon" name="woocommerce_snappbox_shipping_method_polygon_coords" />
                         </div>
 
                         <div class="branch-form-group switch-group gray-section">
@@ -88,9 +89,8 @@ class BranchModal
                             </label>
                             <label class="default-branch-set">
                                 <p><?php \esc_html_e('Default', 'snappbox'); ?></p>
-                                <p>این شعبه به عنوان شعبه اصلی در سایت و تماس‌ها نمایش داده می‌شود</p>
+                                <p><?php _e('Show this branch as the main branch in site and calls', 'snappbox') ?></p>
                             </label>
-
                         </div>
 
                     </div>
@@ -108,7 +108,7 @@ class BranchModal
                             'longInputName' => 'longitude',
                             'width'         => '100%',
                             'height'        => '400px',
-
+                            'showPolygon' => true,
                         ]);
                         ?>
                     </div>
@@ -139,6 +139,35 @@ class BranchModal
                 ajax_url: "<?php echo esc_url($ajax_url); ?>",
                 nonce: "<?php echo esc_attr($nonce); ?>"
             };
+
+            function polygonToCoordinates(wkt) {
+                if (typeof wkt !== "string") {
+                    throw new Error("Polygon must be a string.");
+                }
+
+                const match = wkt.trim().match(/^POLYGON\s*\(\((.+)\)\)$/i);
+
+                if (!match) {
+                    throw new Error("Invalid WKT polygon.");
+                }
+
+                return match[1]
+                    .split(",")
+                    .map(point => {
+                        const parts = point.trim().split(/\s+/);
+
+                        if (parts.length !== 2) {
+                            throw new Error(
+                                "Each coordinate must contain longitude and latitude."
+                            );
+                        }
+
+                        return [
+                            Number(parts[0]), // longitude
+                            Number(parts[1]), // latitude
+                        ];
+                    });
+            }
             jQuery(document).ready(function($) {
 
                 const modal = $('#branch-modal');
@@ -147,7 +176,15 @@ class BranchModal
 
                     modal.addClass('active');
                     const centerPin = jQuery("#center-pin");
+                    const mapObj = window.snappboxMaps["newMap"];
                     if (branch) {
+                        let polygon = "";
+                        if (branch.polygon) {
+                            polygon = JSON.stringify(polygonToCoordinates(branch.polygon));
+                        } else {
+                            polygon = "";
+                        }
+
                         $('#form-mode').val('edit');
                         $('#modal-title').text('<?php \esc_html_e('Edit Branch', 'snappbox'); ?>');
 
@@ -160,19 +197,24 @@ class BranchModal
                         $('#branch-unit').val(branch.unit || '');
                         $('#latitude').val(branch.latitude || '');
                         $('#longitude').val(branch.longitude || '');
+                        $('#polygon').val(polygon || '');
                         $('#branch-default').prop('checked', branch.defaultAddress === true);
                         $('#center-pin').hide();
                         $('#save-branch-btn').text('<?php \esc_html_e('Edit Branch', 'snappbox'); ?>');
                         const lat = parseFloat(branch.latitude);
                         const lng = parseFloat(branch.longitude);
-                        const mapObj = window.snappboxMaps["newMap"];
+
                         if (mapObj) {
+                            const coords = polygon ? JSON.parse(polygon) : null;
                             setTimeout(() => {
                                 mapObj.map.resize();
                                 mapObj.map.setCenter([lng, lat]);
                                 mapObj.map.setZoom(15);
                                 mapObj.marker.setLngLat([lng, lat]);
+
                             }, 10);
+                            mapObj.setPolygon(coords);
+
                         }
 
 
@@ -180,6 +222,7 @@ class BranchModal
                         $('#longitude').val(lng);
 
                     } else {
+                        mapObj.setPolygon(null);
                         $('#form-mode').val('create');
                         $('#modal-title').text('<?php \esc_html_e('Add New Branch', 'snappbox'); ?>');
                         $('#center-pin').show();
@@ -192,7 +235,7 @@ class BranchModal
                         $('#latitude').val('');
                         $('#longitude').val('');
                         $('#branch-default').prop('checked', false);
-
+                        $("#polygon").val('');
                         $('#save-branch-btn').text('<?php \esc_html_e('Add Branch', 'snappbox'); ?>');
                     }
                 }
@@ -249,6 +292,7 @@ class BranchModal
                             address: $('#branch-address').val(),
                             plate: $('#branch-plate').val(),
                             unit: $('#branch-unit').val(),
+                            polygon: $('#polygon').val(),
                             defaultAddress: $('#branch-default').is(':checked')
                         },
 

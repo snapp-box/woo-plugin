@@ -10,17 +10,16 @@ class SnappboxBranchesAdd
     private $endpoint;
     private $token;
 
-    public function __construct($token)
+    public function __construct()
     {
-        $this->token = $token;
-        $this->endpoint = EnvConfig::get('SNAPPBPX_BUSINESS_BASE_URL') . '/v1/customers/addresses/store';
+        global $snappb_api_base_url;
+        $this->endpoint = $snappb_api_base_url . '/v1/customers/addresses/store';
     }
 
     public function store_address($data = [])
     {
 
         $body = [
-            'id'                 => '12345',
             'name'               => (string) ($data['name'] ?? ''),
             'contactName'        => (string) ($data['contactName'] ?? ''),
             'contactPhoneNumber' => (string) ($data['contactPhoneNumber'] ?? ''),
@@ -31,17 +30,21 @@ class SnappboxBranchesAdd
             'unit'               => (string) ($data['unit'] ?? ''),
             'comment'            => (string) ($data['comment'] ?? ''),
             'defaultAddress'     => (bool) ($data['defaultAddress'] ?? true),
+            'polygon'            => (string) ($data['polygon'] ?? null),
         ];
-
-        $response = wp_remote_post($this->endpoint, [
-            'method'  => 'POST',
+        $json = \wp_json_encode($body);
+        $args = [
             'timeout' => 30,
             'headers' => [
-                'Authorization'    =>  $this->token,
+                'Authorization'    =>  SNAPPBOX_API_TOKEN,
                 'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json',
             ],
-            'body' => \wp_json_encode($body),
-        ]);
+            'body' => $json,
+            'data_format' => 'body',
+        ];
+
+        $response = \wp_remote_post($this->endpoint, $args);
 
         if (is_wp_error($response)) {
             return [
@@ -52,6 +55,7 @@ class SnappboxBranchesAdd
         $status_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
         $decodedResponse = json_decode($response_body);
+
         if ($status_code >= 400 && $status_code <= 500) {
             return [
                 'success' => false,

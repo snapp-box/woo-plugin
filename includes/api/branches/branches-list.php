@@ -15,8 +15,9 @@ class SnappBoxBranchesList
 
     public function __construct()
     {
-        $this->api_url = EnvConfig::get('SNAPPBPX_BUSINESS_BASE_URL') . '/v1/customers/addresses/store';
-        $this->auth_token = \SNAPPBOX_BUSINESS_TOKEN;
+        global $snappb_api_base_url;
+        $this->api_url = $snappb_api_base_url . '/v1/customers/addresses/store';
+        $this->auth_token = \SNAPPBOX_API_TOKEN;
     }
 
     public function snappb_branches_list(): array
@@ -29,10 +30,18 @@ class SnappBoxBranchesList
         ];
 
         $response = \wp_remote_get($this->api_url, $args);
+
         if (\is_wp_error($response)) {
             return [
                 'success' => false,
                 'error'   => $response->get_error_message(),
+            ];
+        }
+
+        if ($response['response']['code'] == 404) {
+            return [
+                'success' => false,
+                'error'   => $response['response']['message'],
             ];
         }
 
