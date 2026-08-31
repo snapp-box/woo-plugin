@@ -14,8 +14,7 @@ class SnappBoxCreateOrder
 
     public function __construct($api_key = \SNAPPBOX_API_TOKEN)
     {
-        global $snappb_api_base_url;
-        $this->api_url = $snappb_api_base_url . '/v1/orders';
+        $this->api_url = \SNAPPBOX_API_BASE_URL . '/v1/orders';
         $this->api_key = $api_key;
 
         \add_action('wp_ajax_snappbox_create_order',        [$this, 'snappb_handle_create_order']);
@@ -161,16 +160,20 @@ class SnappBoxCreateOrder
 
     private function snappb_get_pickup_details(): array
     {
+        if (! \check_ajax_referer(self::NONCE_ACTION, self::NONCE_FIELD, false)) {
+            return [];
+        }
+
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
         $contactPhoneNumber = $this->snappb_normalize_phone_number($settings['snappbox_store_phone']);
-        $branchLat = \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) ?? "";
-        $branchLong = \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) ?? "";
-        $branchPhoneNumber = \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) ?? "";
-        $branchContactName = \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) ?? "";
-        $branchAddress = \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) ?? "";
-        $branchPlate = \sanitize_text_field(\wp_unslash($_POST['branchPlate'])) ?? "";
-        $branchUnit = \sanitize_text_field(\wp_unslash($_POST['branchUnit'])) ?? "";
+        $branchLat = isset($_POST['branchLatitude']) ? \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) : '';
+        $branchLong = isset($_POST['branchLongitude']) ? \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) : '';
+        $branchPhoneNumber = isset($_POST['phoneNumber']) ? \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) : '';
+        $branchContactName = isset($_POST['branchContactName']) ? \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) : '';
+        $branchAddress = isset($_POST['branchAddress']) ? \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) : '';
+        $branchPlate = isset($_POST['branchPlate']) ? \sanitize_text_field(\wp_unslash($_POST['branchPlate'])) : '';
+        $branchUnit = isset($_POST['branchUnit']) ? \sanitize_text_field(\wp_unslash($_POST['branchUnit'])) : '';
 
         return [
             'contactName'         => ($branchContactName) ? $branchContactName : \get_option('snappbox_store_name', ''),

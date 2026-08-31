@@ -21,7 +21,6 @@ class SnappBoxWcOrderColumn
     public function __construct()
     {
         // HPOS (wc-orders screen)
-        \add_action('admin_enqueue_scripts', [$this, 'snappb_order_table_enqueue_assets']);
         \add_filter('manage_woocommerce_page_wc-orders_columns', [$this, 'snappb_add_columns'], 20);
         \add_action('manage_woocommerce_page_wc-orders_custom_column', [$this, 'snappb_render_hpos_column'], 20, 2);
 
@@ -33,43 +32,6 @@ class SnappBoxWcOrderColumn
         \add_filter('manage_edit-shop_order_sortable_columns', [$this, 'snappb_make_columns_sortable']);
         \add_action('pre_get_posts', [$this, 'snappb_handle_sorting']);
 
-        \add_action('admin_enqueue_scripts', [$this, 'snappb_order_table_enqueue_assets']);
-    }
-    public function snappb_order_table_enqueue_assets()
-    {
-        \wp_enqueue_style(
-            'snappbox-admin',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/css/admin-snappbox.css',
-            ['snappbox-style'],
-            \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/css/admin-snappbox.css')
-        );
-
-        \wp_enqueue_script(
-            'snappbox-admin',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/js/admin-snappbox.js',
-            ['jquery', 'maplibre-gl'],
-            \filemtime(\trailingslashit(SNAPPBOX_DIR) . 'assets/js/admin-snappbox.js'),
-            true
-        );
-
-        \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
-            'ajaxUrl'   => \admin_url('admin-ajax.php'),
-            'nonce'     => \wp_create_nonce('snappbox_admin_actions'),
-            'currency'  => function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : '',
-            'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            'mapStyleUrl'  => 'https://tile.snappmaps.ir/styles/snapp-style-v4.1.2/style.json',
-            'i18n'         => [
-                'priceFetching' => \__('Receiving price...', 'snappbox'),
-                'priceError'    => \__('Error in receiving price', 'snappbox'),
-                'requestError'  => \__('Error in sending request', 'snappbox'),
-                'unknownError'  => \__('Unknown error', 'snappbox'),
-                'cancelError'   => \__('Error cancelling order.', 'snappbox'),
-                'orderSendErr'  => \__('Error sending order.', 'snappbox'),
-                'popupCustomer' => \__('Customers location', 'snappbox'),
-                'close'         => \__('Close', 'snappbox'),
-                'created'       => \__('Order created successfully', 'snappbox'),
-            ],
-        ]);
     }
     public function snappb_add_columns($columns)
     {
@@ -79,9 +41,9 @@ class SnappBoxWcOrderColumn
             $new[$key] = $label;
 
             if ('order_total' === $key) {
-                $new[$this->date_column_id]  = esc_html__($this->date_column_label, 'snappbox');
-                $new[$this->column_id]       = esc_html__($this->column_label, 'snappbox');
-                $new[$this->quick_action_id] = esc_html__($this->quick_action_label, 'snappbox');
+                $new[$this->date_column_id]  = \esc_html__('SnappBox Date', 'snappbox');
+                $new[$this->column_id]       = \esc_html__('SnappBox', 'snappbox');
+                $new[$this->quick_action_id] = \esc_html__('SnappBox Action', 'snappbox');
             }
         }
 
@@ -126,14 +88,15 @@ class SnappBoxWcOrderColumn
     {
         $latitude  = \get_post_meta($order->get_id(), '_customer_latitude',  true);
         $longitude = \get_post_meta($order->get_id(), '_customer_longitude', true);
-        $orderButton = new SnappBoxOrderAdmin;
+        $orderButton = new SnappBoxOrderAdmin(SNAPPBOX_API_TOKEN, false);
         $nonce = \wp_create_nonce('snappbox_admin_actions');
         $snappboxOrder = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
-        $getResponse   = $snappboxOrder ? \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true) : null;
         if ($latitude && $longitude) {
-            $echoText = '';
-            $orderButton->snappb_check_order_status($order, $echoText);
-            echo $orderButton->snappb_pricing_modal($snappboxOrder, $getResponse, $order, $nonce);
+            $getResponse = $order->get_meta('_snappbox_last_api_response');
+            if (! $getResponse && $snappboxOrder) {
+                $getResponse = \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true);
+            }
+            $orderButton->snappb_pricing_modal($snappboxOrder, $getResponse, $order, $nonce);
         }
     }
 
@@ -157,7 +120,18 @@ class SnappBoxWcOrderColumn
         $order_id = $order->get_id();
         $status = '';
 
-        $meta = get_post_meta($order_id, $this->meta_key, true);
+        // Fetch the latest value before rendering. Previously the API request ran
+        // later in the action column, leaving this column one page load behind.
+        if (\get_post_meta($order_id, '_snappbox_order_id', true)) {
+            $order_button = new SnappBoxOrderAdmin(SNAPPBOX_API_TOKEN, false);
+            $echo_text = '';
+            $order_button->snappb_check_order_status($order, $echo_text);
+        }
+
+        $meta = $order->get_meta($this->meta_key);
+        if (empty($meta)) {
+            $meta = get_post_meta($order_id, $this->meta_key, true);
+        }
         if (empty($meta)) {
             $external_id = get_post_meta($order_id, '_snappbox_order_id', true);
             if ($external_id) {

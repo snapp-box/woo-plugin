@@ -2,13 +2,13 @@
 Contributors: @samooel, @snappbox
 Tags: woocommerce, shipping, delivery, tracking, orders
 Requires at least: 5.6
-Tested up to: 7.0.0
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The SnappBox WordPress plugin offers a fast and simple way to register and manage order deliveries. By installing this plugin, you can send your store orders directly through SnappBox without leaving your WordPress dashboard.
+Manage WooCommerce deliveries through SnappBox directly from your WordPress dashboard.
 
 == Description ==
 

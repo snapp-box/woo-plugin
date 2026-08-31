@@ -240,6 +240,9 @@ p.submit{
 	border-bottom: 1px solid #ccc;
 	padding-bottom: 7px;
 }
+.snappbox-order-address {
+	margin: 16px 0 20px;
+}
 .modal-box h3{
 	border-bottom: 0;
     margin-top: 20px !important;
@@ -282,6 +285,14 @@ button.snappbox-btn {
     border-radius: 10px !important;
 	color:#fff !important;
 	width:160px;
+}
+button.snappbox-btn:focus,
+button.snappbox-btn:active,
+.cancel-order:focus,
+.cancel-order:active {
+	border-color: transparent !important;
+	box-shadow: none !important;
+	outline: none !important;
 }
 #snappbox-response-victory{
 	display: block;
@@ -406,7 +417,7 @@ a.snappbox-token{
 #center-pin {
     position: absolute;
     left: 50%;
-    top: 50%;
+    top: 46%;
     transform: translate(-50%, -100%);
     width: 34px;
     height: 34px;

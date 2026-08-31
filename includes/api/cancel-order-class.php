@@ -11,8 +11,7 @@ class SnappBoxCancelOrder
 
     public function __construct()
     {
-        global $snappb_api_base_url;
-        $this->api_url   = $snappb_api_base_url . '/v1/orders/';
+        $this->api_url   = \SNAPPBOX_API_BASE_URL . '/v1/orders/';
         $this->api_token = \SNAPPBOX_API_TOKEN;
     }
 
@@ -37,18 +36,21 @@ class SnappBoxCancelOrder
             ];
         }
 
+        $status_code = \wp_remote_retrieve_response_code($response);
         $body = \json_decode(\wp_remote_retrieve_body($response), true);
 
-        if (!empty($body['apiStatus']) && $body['apiStatus'] == 'FAILURE') {
+        if ($status_code < 200 || $status_code >= 300 || (!empty($body['apiStatus']) && $body['apiStatus'] === 'FAILURE')) {
             return [
                 'success' => false,
-                'message' => $body['message'] ?? __('Delete request failed.', 'snappbox'),
-            ];
-        } else if (empty($body) && $body['success'] == null) {
-            return [
-                'success' => true,
-                'message' => __('Order deleted successfully', 'snappbox'),
+                'message' => is_array($body) && isset($body['message']) ? $body['message'] : __('Delete request failed.', 'snappbox'),
             ];
         }
+
+        return [
+            'success' => true,
+            'message' => is_array($body) && !empty($body['message'])
+                ? sanitize_text_field($body['message'])
+                : __('Order deleted successfully', 'snappbox'),
+        ];
     }
 }

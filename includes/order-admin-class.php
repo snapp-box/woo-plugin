@@ -5,7 +5,7 @@ namespace Snappbox;
 
 use Snappbox\Branches\BranchListPage;
 
-if (!\defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
     exit;
 }
 
@@ -57,6 +57,9 @@ class SnappBoxOrderAdmin
         \wp_localize_script('snappbox-admin', 'SNAPPBOX_GLOBAL', [
             'ajaxUrl'      => \admin_url('admin-ajax.php'),
             'nonce'        => \wp_create_nonce('snappbox_admin_actions'),
+            'currency'     => function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : '',
+            'rtlPluginUrl' => \trailingslashit(SNAPPBOX_URL) . 'assets/js/map/mapbox-gl-rtl-text.js',
+            'mapStyleUrl'  => \SNAPPBOX_MAP_URL,
             'i18n'         => [
                 'priceFetching' => \__('Receiving price...', 'snappbox'),
                 'priceError'    => \__('Error in receiving price', 'snappbox'),
@@ -103,7 +106,11 @@ class SnappBoxOrderAdmin
                 // $this->snappb_display_map_in_admin_order($order);
                 $this->snappb_display_location_in_order_admin($order);
 
-                echo '<b>' . \esc_html__('Address', 'snappbox') . '</b> : ' . \esc_html($order->get_shipping_address_1());
+                echo '<div class="snappbox-order-address"><strong>'
+                    . \esc_html__('Address', 'snappbox')
+                    . ':</strong> '
+                    . \esc_html($order->get_shipping_address_1())
+                    . '</div>';
 
                 $free_delivery = $order->get_meta('_free_delivery');
                 if ($free_delivery) {
@@ -136,7 +143,10 @@ class SnappBoxOrderAdmin
         $snappboxOrder = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
         $day           = $order->get_meta('_snappbox_day');
         $time          = $order->get_meta('_snappbox_time');
-        $getResponse   = $snappboxOrder ? \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true) : null;
+        $getResponse   = $order->get_meta('_snappbox_last_api_response');
+        if (! $getResponse && $snappboxOrder) {
+            $getResponse = \get_post_meta($snappboxOrder, '_snappbox_last_api_response', true);
+        }
         $onDeliver = \maybe_unserialize(\get_option('woocommerce_snappbox_shipping_method_settings'));
         if ($day && $time) {
             $ts        = $day ? \strtotime($day . ' 12:00:00') : false;
@@ -155,33 +165,39 @@ class SnappBoxOrderAdmin
                 </div>
             <?php
         }
-        echo ($this->snappb_pricing_modal($snappboxOrder, $getResponse, $order, $nonce));
+        $this->snappb_pricing_modal($snappboxOrder, $getResponse, $order, $nonce);
     }
 
 
     public function snappb_pricing_modal($snappBoxOrder, $getResponse, $order, $nonce)
     {
-        echo '<div id="snappbox-admin-context"
+        echo '<div class="snappbox-admin-context"
                      data-nonce="' . \esc_attr($nonce) . '"
                      data-currency="' . \esc_attr(\get_woocommerce_currency()) . '"
                      data-woo-order-id="' . (int) $order->get_id() . '"
+                     data-destination-lat="' . \esc_attr($order->get_meta('_customer_latitude')) . '"
+                     data-destination-long="' . \esc_attr($order->get_meta('_customer_longitude')) . '"
                    ></div>';
         $branchesObject = new BranchListPage();
         $branches = $branchesObject->snappb_branches_get_items();
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings            = \maybe_unserialize($settings_serialized);
+        $branches = \is_array($branches) && empty($branches['statusCode']) ? $branches : [];
+        // Keep the origin stored by older plugin versions available for
+        // merchants who have not migrated it to the branches API yet.
         $branches[] = [
-            'latitude'      => (string) $settings['snappbox_latitude'],
-            'longitude'     => (string) $settings['snappbox_longitude'],
-            'address'       =>  \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
-            'name'  => \get_option('snappbox_store_name', ''),
-            'contactPhoneNumber'         => $settings['snappbox_store_phone'],
-            'status' => 'ACTIVE',
-            'id' => 1,
-            'unit' => "",
-            'plate' => "",
-            'contactName' => \get_option('snappbox_store_name', ''),
-            'defaultAddress' => "",
+            'latitude'            => (string) ($settings['snappbox_latitude'] ?? ''),
+            'longitude'           => (string) ($settings['snappbox_longitude'] ?? ''),
+            'address'             => \WC()->countries->get_base_address() . ' ' . \WC()->countries->get_base_address_2(),
+            'name'                => ($settings['snappbox_store_name'] ?? \get_option('snappbox_store_name', '')) ?: \__('Default store', 'snappbox'),
+            'contactPhoneNumber'  => (string) ($settings['snappbox_store_phone'] ?? ''),
+            'status'              => 'ACTIVE',
+            'id'                  => 'legacy-default',
+            'unit'                => '',
+            'plate'               => '',
+            'polygon'             => '',
+            'contactName'         => ($settings['snappbox_store_name'] ?? \get_option('snappbox_store_name', '')),
+            'defaultAddress'      => empty($branches),
         ];
         if (
             ! $snappBoxOrder ||
@@ -241,31 +257,32 @@ class SnappBoxOrderAdmin
                                     }
                                     ?>
                                     <select class="address-selector">
-                                        <?php foreach ($branches as $branch) {
+                                        <?php foreach ($branches as $branch_index => $branch) {
                                             ($branch['defaultAddress'] == 1) ? $selected = "selected" : $selected = "";
                                             if ($branch['status'] == 'ACTIVE') {
                                         ?>
-                                                <option value="<?php echo ($branch['id']); ?>" <?php echo ($selected); ?>
-                                                    data-lat="<?php echo ($branch['latitude']); ?>"
-                                                    data-long="<?php echo ($branch['longitude']); ?>"
-                                                    data-address="<?php echo ($branch['address']); ?>"
-                                                    data-contact-name="<?php echo ($branch['contactName']); ?>"
-                                                    data-name="<?php echo ($branch['name']); ?>"
-                                                    data-plate="<?php echo ($branch['plate']); ?>"
-                                                    data-unit="<?php echo ($branch['unit']); ?>"
-                                                    data-phone="<?php echo ($branch['contactPhoneNumber']); ?>">
-                                                    <?php echo ($branch['name']); ?>
+                                                <option value="<?php echo \esc_attr($branch['id']); ?>" <?php echo \selected(!empty($branch['defaultAddress']) || $branch_index === 0, true, false); ?>
+                                                    data-lat="<?php echo \esc_attr($branch['latitude']); ?>"
+                                                    data-long="<?php echo \esc_attr($branch['longitude']); ?>"
+                                                    data-address="<?php echo \esc_attr($branch['address']); ?>"
+                                                    data-contact-name="<?php echo \esc_attr($branch['contactName']); ?>"
+                                                    data-name="<?php echo \esc_attr($branch['name']); ?>"
+                                                    data-plate="<?php echo \esc_attr($branch['plate']); ?>"
+                                                    data-unit="<?php echo \esc_attr($branch['unit']); ?>"
+                                                    data-polygon="<?php echo \esc_attr($branch['polygon'] ?? ''); ?>"
+                                                    data-phone="<?php echo \esc_attr($branch['contactPhoneNumber']); ?>">
+                                                    <?php echo \esc_html($branch['name']); ?>
                                                 </option>
                                         <?php }
                                         } ?>
-                                        <input type="hidden" class="selected-address" value="<?php echo ($defaultBranch['address'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-latitude" value="<?php echo ($defaultBranch['latitude'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-longitude" value="<?php echo ($defaultBranch['longitude'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-contact-name" value="<?php echo ($defaultBranch['contactName'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-name" value="<?php echo ($defaultBranch['name'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-plate" value="<?php echo ($defaultBranch['plate'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-unit" value="<?php echo ($defaultBranch['unit'] ?? ""); ?>" />
-                                        <input type="hidden" class="selected-contact-phonenumber" value="<?php echo ($defaultBranch['contactPhoneNumber'] ?? ""); ?>" />
+                                        <input type="hidden" class="selected-address" value="<?php echo \esc_attr($defaultBranch['address'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-latitude" value="<?php echo \esc_attr($defaultBranch['latitude'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-longitude" value="<?php echo \esc_attr($defaultBranch['longitude'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-contact-name" value="<?php echo \esc_attr($defaultBranch['contactName'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-name" value="<?php echo \esc_attr($defaultBranch['name'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-plate" value="<?php echo \esc_attr($defaultBranch['plate'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-unit" value="<?php echo \esc_attr($defaultBranch['unit'] ?? ''); ?>" />
+                                        <input type="hidden" class="selected-contact-phonenumber" value="<?php echo \esc_attr($defaultBranch['contactPhoneNumber'] ?? ''); ?>" />
                                     </select>
                                 </div>
 
@@ -275,11 +292,11 @@ class SnappBoxOrderAdmin
                                     </div>
                                     <div class="sb-wrap">
                                         <div class="sb-address-title">
-                                            <?php echo ($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?>
+                                            <?php echo \esc_html($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?>
                                         </div>
 
                                         <div class="sb-address-text">
-                                            <?php echo ($order->get_billing_address_1()); ?>
+                                            <?php echo \esc_html($order->get_billing_address_1()); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -290,7 +307,7 @@ class SnappBoxOrderAdmin
                                 <div class="sb-discount-header">
                                     <img src="<?php echo \esc_url(\trailingslashit(SNAPPBOX_URL) . 'assets/img/tag.svg'); ?>" alt="" />
                                     <span class="discount-text">کد تخفیف</span>
-                                    <span>❯</span>
+                                    <span></span>
                                 </div>
 
                                 <div class="sb-discount-body">
@@ -379,6 +396,12 @@ class SnappBoxOrderAdmin
                 \wp_send_json_error(\__('Permission denied.', 'snappbox'), 403);
             }
 
+            $order = \wc_get_order($order_id);
+            $branch_id = isset($_POST['branchId']) ? \sanitize_text_field(\wp_unslash($_POST['branchId'])) : '';
+            if (!$order || $branch_id === '' || !$this->snappb_admin_branch_serves_order($branch_id, $order)) {
+                \wp_send_json_error(\__('The selected store does not serve this destination.', 'snappbox'));
+            }
+
             $voucherCode = isset($_POST['voucher_code']) ? sanitize_text_field(wp_unslash($_POST['voucher_code'])) : '';
             $snappboxOrder = new \Snappbox\Api\SnappBoxCreateOrder();
             $response      = $snappboxOrder->snappb_handle_create_order($order_id, $voucherCode);
@@ -418,6 +441,13 @@ class SnappBoxOrderAdmin
                 \wp_send_json_error(\__('Order not found', 'snappbox'));
             }
 
+            // Admins may compare pricing from any active store. Polygon
+            // eligibility is enforced when the order is actually submitted.
+            $branch_id = isset($_POST['branchId']) ? \sanitize_text_field(\wp_unslash($_POST['branchId'])) : '';
+            if ($branch_id === '' || !$this->snappb_admin_branch_is_active($branch_id)) {
+                \wp_send_json_error(\__('The selected store is not available.', 'snappbox'));
+            }
+
             $city        = \get_post_meta($order->get_id(), 'customer_city', true);
             $state       = \strtolower($city);
             $voucherCode = isset($_POST['voucher_code']) ? sanitize_text_field(wp_unslash($_POST['voucher_code'])) : '';
@@ -430,7 +460,14 @@ class SnappBoxOrderAdmin
 
 
             $pricing_api = new \Snappbox\Api\SnappBoxPriceHandler();
-            $response    = $pricing_api->snappb_get_pricing($order_id, $state_code, '', '', '',  $voucherCode);
+            $branch_data = [
+                'latitude'    => isset($_POST['branchLatitude']) ? \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) : '',
+                'longitude'   => isset($_POST['branchLongitude']) ? \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) : '',
+                'phoneNumber' => isset($_POST['phoneNumber']) ? \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) : '',
+                'contactName' => isset($_POST['branchContactName']) ? \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) : '',
+                'address'     => isset($_POST['branchAddress']) ? \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) : '',
+            ];
+            $response = $pricing_api->snappb_get_pricing($order_id, $state_code, '', '', '', $voucherCode, '', $branch_data);
             if (! empty($response['success']) && isset($response['data']['finalCustomerFare'])) {
                 \wp_send_json_success([
                     'finalCustomerFare' => $response['data']['finalCustomerFare'],
@@ -438,8 +475,78 @@ class SnappBoxOrderAdmin
                 ]);
             }
 
-            $msg = isset($response['message']) ? $response['message'] : 'خطا در دریافت قیمت.';
+            $msg = $response['message']
+                ?? $response['data']['message']
+                ?? $response['data']['error']['message']
+                ?? \__('Unable to get pricing for the selected store.', 'snappbox');
             \wp_send_json_error($msg);
+        }
+
+        private function snappb_admin_branch_serves_order(string $branch_id, $order): bool
+        {
+            if ($branch_id === 'legacy-default') {
+                return true;
+            }
+
+            $latitude = $order->get_meta('_customer_latitude');
+            $longitude = $order->get_meta('_customer_longitude');
+            if (!\is_numeric($latitude) || !\is_numeric($longitude)) {
+                return false;
+            }
+
+            $branches = (new \Snappbox\Api\Branches\SnappBoxBranchesList())->snappb_branches_list()['response'] ?? [];
+            foreach ((array) $branches as $branch) {
+                if (!\is_array($branch) || (string) ($branch['id'] ?? '') !== $branch_id || ($branch['status'] ?? '') !== 'ACTIVE') {
+                    continue;
+                }
+                try {
+                    $points = \json_decode((new \Snappbox\Api\Branches\SnappBoxBranchesDefault())
+                        ->snappbox_reverse_polygon((string) ($branch['polygon'] ?? '')), true);
+                } catch (\Throwable $exception) {
+                    return false;
+                }
+                if (!\is_array($points) || \count($points) < 3) {
+                    return false;
+                }
+
+                $inside = false;
+                $x = (float) $longitude;
+                $y = (float) $latitude;
+                for ($i = 0, $j = \count($points) - 1; $i < \count($points); $j = $i++) {
+                    $xi = (float) $points[$i][0];
+                    $yi = (float) $points[$i][1];
+                    $xj = (float) $points[$j][0];
+                    $yj = (float) $points[$j][1];
+                    if ((($yi > $y) !== ($yj > $y))
+                        && ($x < (($xj - $xi) * ($y - $yi) / (($yj - $yi) ?: 0.0000001)) + $xi)
+                    ) {
+                        $inside = !$inside;
+                    }
+                }
+                return $inside;
+            }
+
+            return false;
+        }
+
+        private function snappb_admin_branch_is_active(string $branch_id): bool
+        {
+            if ($branch_id === 'legacy-default') {
+                return true;
+            }
+
+            $branches = (new \Snappbox\Api\Branches\SnappBoxBranchesList())->snappb_branches_list()['response'] ?? [];
+            foreach ((array) $branches as $branch) {
+                if (
+                    \is_array($branch)
+                    && (string) ($branch['id'] ?? '') === $branch_id
+                    && ($branch['status'] ?? '') === 'ACTIVE'
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public function snappb_handle_cancel_snappbox_order()
@@ -467,6 +574,13 @@ class SnappBoxOrderAdmin
             $response     = $snappbox_api->snappb_cancel_order($order_id);
 
             if (isset($response['success']) && $response['success'] === true) {
+                $order = \wc_get_order($woo_order_id);
+                if ($order) {
+                    $order->delete_meta_data('_snappbox_order_id');
+                    $order->delete_meta_data('_snappbox_last_api_response');
+                    $order->delete_meta_data('_snappbox_last_api_call');
+                    $order->save();
+                }
                 \delete_post_meta($woo_order_id, '_snappbox_order_id');
                 \delete_post_meta($woo_order_id, '_snappbox_last_api_response');
                 \delete_post_meta($woo_order_id, '_snappbox_last_api_call');
@@ -481,21 +595,34 @@ class SnappBoxOrderAdmin
         public function snappb_check_order_status($order, $echoText)
         {
             $meta_order_id = \get_post_meta($order->get_id(), '_snappbox_order_id', true);
-            $getResponse   = $meta_order_id ? \get_post_meta($meta_order_id, '_snappbox_last_api_response', true) : null;
-
-            if ($getResponse && isset($getResponse->status) && $echoText) {
-                echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->status) . '</p>';
-                echo '<p><b>' . \esc_html__('Tracking URL', 'snappbox') . '</b>: <a target="_blank" href="' . esc_html($getResponse->trackingUrl) . '">' . \esc_html($getResponse->trackingUrl) . '</a></p>';
-            }
 
             if ($meta_order_id) {
                 $statusCheck = new \Snappbox\Api\SnappOrderStatus();
                 $response    = $statusCheck->get_order_status($meta_order_id);
                 if (! \is_wp_error($response)) {
-                    \update_post_meta($meta_order_id, '_snappbox_last_api_response', $response);
-                    \update_post_meta($meta_order_id, '_snappbox_last_api_call', \time());
+                    // Save against the WooCommerce order.  Storing this on the
+                    // external Snappbox ID means it is unavailable to HPOS orders.
+                    $order->update_meta_data('_snappbox_last_api_response', $response);
+                    $order->update_meta_data('_snappbox_last_api_call', \time());
+                    $order->save();
                 } else {
                     echo \esc_html('API Error: ' . $response->get_error_message());
+                }
+            }
+
+            // The API response must be rendered after the request completes.
+            // Previously it was rendered first, which made the admin need a refresh.
+            $getResponse = $order->get_meta('_snappbox_last_api_response');
+            if (! $getResponse && $meta_order_id) {
+                // Keep displaying data saved by older plugin versions.
+                $getResponse = \get_post_meta($meta_order_id, '_snappbox_last_api_response', true);
+            }
+
+            if ($getResponse && isset($getResponse->status) && $echoText) {
+                echo '<p><b>' . \esc_html__('Status', 'snappbox') . '</b>: ' . \esc_html($getResponse->status) . '</p>';
+                if (! empty($getResponse->trackingUrl)) {
+                    $tracking_url = \esc_url($getResponse->trackingUrl);
+                    echo '<p><b>' . \esc_html__('Tracking URL', 'snappbox') . '</b>: <a target="_blank" rel="noopener noreferrer" href="' . $tracking_url . '">' . \esc_html($getResponse->trackingUrl) . '</a></p>';
                 }
             }
         }

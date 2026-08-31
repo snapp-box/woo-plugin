@@ -10,8 +10,7 @@ class SnappBoxWalletBalance
 
     public function __construct()
     {
-        global $snappb_api_base_url;
-        $this->api_url = $snappb_api_base_url . '/v1/wallets';
+        $this->api_url = \SNAPPBOX_API_BASE_URL . '/v1/wallets';
     }
 
     public function snappb_check_balance($apiKey)

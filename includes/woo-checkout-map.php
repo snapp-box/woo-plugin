@@ -9,6 +9,10 @@ if (! defined('ABSPATH')) {
 
 require_once(SNAPPBOX_DIR . 'includes/api/config-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/create-order-class.php');
+require_once(SNAPPBOX_DIR . 'includes/api/status-check-class.php');
+require_once(SNAPPBOX_DIR . 'includes/map/snappbox-map-class.php');
+
+use Snappbox\Map\SnappBoxMap;
 
 class SnappBoxCheckout
 {
@@ -34,32 +38,24 @@ class SnappBoxCheckout
     public function snappb_enqueue_map_scripts()
     {
         \wp_register_style(
-            'maplibre',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/css/leaflet.css',
+            'maplibre-gl',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/css/maplibre-gl.css',
             [],
-            '1.9.4'
+            '5.9.0'
         );
         \wp_register_script(
-            'maplibre',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
+            'maplibre-gl',
+            \trailingslashit(SNAPPBOX_URL) . 'assets/js/map/maplibre-gl.js',
             [],
-            '1.9.4',
+            '5.9.0',
             true
         );
 
         \wp_register_style(
             'snappbox-checkout',
             \trailingslashit(SNAPPBOX_URL) . 'assets/css/snappbox-checkout.css',
-            ['maplibre'],
+            ['maplibre-gl'],
             '1.0.0'
-        );
-
-        \wp_register_script(
-            'snappbox-map',
-            \trailingslashit(SNAPPBOX_URL) . 'assets/js/snappbox-map.js',
-            ['maplibre'],
-            '1.0.0',
-            true
         );
 
         \wp_register_script(
@@ -83,14 +79,7 @@ class SnappBoxCheckout
 ?>
         <div id="snappbox-map-section" style="display:none;">
             <h3><?php \esc_html_e('Select your location', 'snappbox'); ?></h3>
-            <?php if (!empty($mapTitle)) { ?>
-                <h3><?php esc_html($mapTitle); ?></h3>
-            <?php } ?>
 
-
-            <div id="osm-map" style="height:400px; margin-bottom:12px; z-index:1; position:relative;">
-                <button id="center-pin" type="button" aria-label="<?php \esc_attr_e('Set this location', 'snappbox'); ?>"></button>
-            </div>
 
             <input type="hidden" id="customer_latitude" name="customer_latitude" />
             <input type="hidden" id="customer_longitude" name="customer_longitude" />
@@ -100,6 +89,26 @@ class SnappBoxCheckout
             <input type="hidden" id="customer_state" name="customer_state" />
             <input type="hidden" id="customer_country" name="customer_country" />
 
+            <?php
+            $map = new SnappBoxMap();
+            $map->snappbox_map([
+                'latitude'       => (float) $settings['snappbox_latitude'],
+                'longitude'      => (float) $settings['snappbox_longitude'],
+                'mapName'        => 'osm-map',
+                'latInputName'   => 'customer_latitude',
+                'longInputName'  => 'customer_longitude',
+                'height'         => '400px',
+                'guidenceMap'    => false,
+                'movable'        => true,
+                'showPolygon'    => false,
+                'addressInputId'  => 'customer_address',
+                'autoFillInputId' => 'billing_address_1',
+                'autoFill'        => ! empty($settings['autofill']) ? (string) $settings['autofill'] : '',
+            ]);
+            ?>
+            <?php if (!empty($mapTitle)) { ?>
+                <h3><?php echo \esc_html($mapTitle); ?></h3>
+            <?php } ?>
             <?php \wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD); ?>
         </div>
 <?php
@@ -258,30 +267,10 @@ class SnappBoxCheckout
         \wp_enqueue_style('snappbox-checkout');
 
         \wp_enqueue_script('maplibre');
-        \wp_enqueue_script('snappbox-map');
         \wp_enqueue_script('snappbox-checkout');
 
         $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
         $settings = \maybe_unserialize($settings_serialized);
-        $defaultLat = ! empty($settings['snappbox_latitude'])  ? (float) $settings['snappbox_latitude']  : 0.0;
-        $defaultLng = ! empty($settings['snappbox_longitude']) ? (float) $settings['snappbox_longitude'] : 0.0;
-        $autoFill   = ! empty($settings['autofill']) ? (string) $settings['autofill'] : '';
-
-        \wp_localize_script('snappbox-map', 'SNAPPBOX_MAP', [
-            'defaultLat' => $defaultLat,
-            'defaultLng' => $defaultLng,
-            'autoFill'   => $autoFill,
-            'styleUrl'   => \SNAPPBOX_MAP_URL,
-            'rtlPlugin'  => \trailingslashit(SNAPPBOX_URL) . 'assets/js/mapbox-gl-rtl-text.js',
-            'reverseUrl' => \SNAPPBOX_REVERSE_URL,
-            'reverseHeaders' => [
-                'Accept'        => 'application/json',
-                'X-Smapp-Key'   => \SNAPPBOX_SMAPP_KEY,
-                'Authorization' => \SNAPPBOX_SMAPP_TOKEN,
-            ],
-            'nominatimUrl' => \SNAPPBOX_NOMINATIM_URL,
-        ]);
-
         $raw_schedule = \get_option('snappbox_schedule', []);
         $weekly = (\is_array($raw_schedule) && ! empty($raw_schedule)) ? $this->snappb_sb_normalize_schedule_to_w($raw_schedule) : [];
         $candidates    = [];
@@ -384,6 +373,33 @@ class SnappBoxCheckout
             $dateLabel = $ts ? \wp_date('l j F Y', $ts) : $dateIso;
             echo '<p><strong>' . \esc_html__('SnappBox Delivery:', 'snappbox') . '</strong><br>';
             echo \esc_html(\trim($dateLabel . ' - ' . $time, ' -')) . '</p>';
+        }
+
+        $snappbox_order_id = $order->get_meta('_snappbox_order_id');
+        if (! $snappbox_order_id) {
+            return;
+        }
+
+        // Request the current delivery data before rendering it, so customers see
+        // the status and tracking link on their first visit to the order page.
+        $status_check = new \Snappbox\Api\SnappOrderStatus();
+        $response = $status_check->get_order_status($snappbox_order_id);
+        if (! \is_wp_error($response)) {
+            $order->update_meta_data('_snappbox_last_api_response', $response);
+            $order->update_meta_data('_snappbox_last_api_call', \time());
+            $order->save();
+        } else {
+            $response = $order->get_meta('_snappbox_last_api_response');
+        }
+
+        if (! $response || empty($response->status)) {
+            return;
+        }
+
+        echo '<p><strong>' . \esc_html__('SnappBox Status:', 'snappbox') . '</strong> ' . \esc_html($response->status) . '</p>';
+        if (! empty($response->trackingUrl)) {
+            $tracking_url = \esc_url($response->trackingUrl);
+            echo '<p><strong>' . \esc_html__('Tracking URL:', 'snappbox') . '</strong> <a target="_blank" rel="noopener noreferrer" href="' . $tracking_url . '">' . \esc_html($response->trackingUrl) . '</a></p>';
         }
     }
 }

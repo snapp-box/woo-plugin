@@ -21,7 +21,6 @@ class BranchListPage
         add_action('admin_enqueue_scripts', [$this, 'snappb_branches_enqueue_assets']);
         add_action('wp_ajax_snappbox_save_branch', [$this, 'save_branch']);
         add_action('wp_ajax_snappbox_delete_branch', [$this, 'delete_branch']);
-        add_action('wp_ajax_nopriv_snappbox_save_branch', [$this, 'save_branch']);
     }
 
 
@@ -58,6 +57,27 @@ class BranchListPage
             [],
             '1.0.0'
         );
+        wp_enqueue_script(
+            'snappbox-branches-admin',
+            SNAPPBOX_URL . 'assets/js/branches-admin.js',
+            ['jquery'],
+            '1.0.1',
+            true
+        );
+        wp_localize_script('snappbox-branches-admin', 'SNAPPBOX_BRANCHES', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('snappbox_branch_nonce'),
+            'strings' => [
+                'addNewBranch'   => __('Add New Branch', 'snappbox'),
+                'addBranch'      => __('Add Branch', 'snappbox'),
+                'editBranch'     => __('Edit Branch', 'snappbox'),
+                'adding'         => __('Adding...', 'snappbox'),
+                'saved'          => __('Your branch has successfully saved', 'snappbox'),
+                'deleted'        => __('Your branch has successfully deleted', 'snappbox'),
+                'connectionError' => __('Error with establishing connection with server', 'snappbox'),
+                'error'          => __('Error', 'snappbox'),
+            ],
+        ]);
     }
 
 
@@ -69,18 +89,10 @@ class BranchListPage
         return ($list['response'] ?? []);
     }
 
-
     public function snappb_branches_render_page()
     {
 
-        if (
-            !isset($_GET['page']) ||
-            $_GET['page'] !== 'branch-management'
-        ) {
-            $items = "";
-        } else {
-            $items = $this->snappb_branches_get_items();
-        }
+        $items = $this->snappb_branches_get_items();
 
         if (class_exists("\Snappbox\Branches\BranchModal")) {
             new \Snappbox\Branches\BranchModal();
@@ -89,7 +101,17 @@ class BranchListPage
         $statusCode = $items['statusCode'] ?? "";
         if ($statusCode && $statusCode == "404") {
             $items = [];
-        };
+        } else {
+            usort($items, function ($a, $b) {
+                $order = [
+                    'ACTIVE'   => 1,
+                    'INACTIVE' => 2,
+                ];
+
+                return ($order[$a['status'] ?? ''] ?? 999)
+                    <=> ($order[$b['status'] ?? ''] ?? 999);
+            });
+        }
 
 ?>
         <div class="wrap branch-admin-wrap">
@@ -130,9 +152,9 @@ class BranchListPage
                             <?php foreach ($items as $item): ?>
                                 <tr>
                                     <td>
-                                        <a href="#" class="branch-name">
+                                        <span href="#" class="branch-name">
                                             <?php echo esc_html($item['name']); ?>
-                                        </a>
+                                        </span>
                                     </td>
 
                                     <td>
@@ -238,101 +260,6 @@ class BranchListPage
                 </div>
             </div>
         </div>
-        <script>
-            jQuery(document).ready(function($) {
-                function showMessage(type, text) {
-                    const box = $('#snappbox-message');
-                    box.removeClass('success error');
-                    box.addClass(type);
-                    box.find('.snappbox-message-text').text(text);
-                    box.addClass('show');
-                    setTimeout(() => {
-                        box.removeClass('show');
-                    }, 3000);
-                }
-                let selectedBranchId = null;
-                let selectedButton = null;
-                /*
-                 * Open confirmation modal
-                 */
-                jQuery(document).on('click', '.js-delete-branch', function(e) {
-                    e.preventDefault();
-                    selectedBranchId = jQuery(this).data('id');
-                    selectedButton = jQuery(this);
-                    jQuery('#delete-branch-modal').addClass('show');
-
-                });
-
-
-
-                /*
-                 * Close modal
-                 */
-                jQuery(document).on(
-                    'click',
-                    '.modal-close, .cancel-delete',
-                    function() {
-                        jQuery('#delete-branch-modal').removeClass('show');
-                        selectedBranchId = null;
-                        selectedButton = null;
-
-                    }
-                );
-
-                jQuery(document).on('click', '.confirm-delete', function() {
-                    if (!selectedBranchId || !selectedButton) {
-                        return;
-                    }
-                    const $btn = selectedButton;
-                    const loader = $btn.find(".loader");
-                    const deleteText = $btn.find(".delete-text");
-                    loader.removeAttr("hidden");
-                    deleteText.hide();
-                    $btn.prop('disabled', true);
-                    $.ajax({
-                        url: SNAPPBOX_AJAX.ajax_url,
-                        type: 'POST',
-                        dataType: 'json',
-                        data: {
-                            action: 'snappbox_delete_branch',
-                            nonce: SNAPPBOX_AJAX.nonce,
-                            id: selectedBranchId
-                        },
-                        success: function(response) {
-                            jQuery('#delete-branch-modal')
-                                .removeClass('show');
-                            if (response.success) {
-                                showMessage(
-                                    'success',
-                                    '<?php esc_html_e('Your branch has successfully deleted', 'snappbox'); ?>'
-                                );
-                                setTimeout(function() {
-
-                                    location.reload();
-
-                                }, 1000);
-                            } else {
-                                showMessage(
-                                    'error',
-                                    response.data?.message || 'Error'
-                                );
-                            }
-                        },
-                        error: function() {
-                            showMessage(
-                                'error',
-                                '<?php esc_html_e('Error with establishing connection with server', 'snappbox'); ?>'
-                            );
-                        },
-                        complete: function() {
-                            $btn.prop('disabled', false);
-                            loader.attr('hidden', true);
-                            deleteText.show();
-                        }
-                    });
-                });
-            });
-        </script>
 
 <?php
     }
@@ -347,21 +274,29 @@ class BranchListPage
         try {
 
             $token = SNAPPBOX_API_TOKEN;
-            $mode = sanitize_text_field($_POST['mode'] ?? 'create');
-            $polygon = ($_POST['polygon']) ? $this->snappb_convert_polygon($_POST['polygon']) : "";
+            $mode = isset($_POST['mode']) ? sanitize_key(wp_unslash($_POST['mode'])) : 'create';
+            $polygon_json = isset($_POST['polygon']) ? sanitize_text_field(wp_unslash($_POST['polygon'])) : '';
+            $polygon = $polygon_json !== '' ? $this->snappb_convert_polygon($polygon_json) : '';
+            $existing_branches = (new SnappBoxBranchesList())->snappb_branches_list()['response'] ?? [];
+            $existing_branches = is_array($existing_branches) && empty($existing_branches['statusCode']) ? $existing_branches : [];
+            $branch_name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+            if ($branch_name === '') {
+                $branch_name = sprintf(__('Store %d', 'snappbox'), count($existing_branches) + 1);
+            }
 
             $payload = [
-                'name' => sanitize_text_field($_POST['name'] ?? ''),
-                'contactName' => sanitize_text_field($_POST['contactName'] ?? ''),
-                'contactPhoneNumber' => sanitize_text_field($_POST['contactPhoneNumber'] ?? ''),
-                'latitude' => (float) ($_POST['latitude'] ?? 0),
-                'longitude' => (float) ($_POST['longitude'] ?? 0),
-                'address' => sanitize_text_field($_POST['address'] ?? ''),
-                'plate' => sanitize_text_field($_POST['plate'] ?? ''),
+                'name' => $branch_name,
+                'contactName' => isset($_POST['contactName']) ? sanitize_text_field(wp_unslash($_POST['contactName'])) : '',
+                'contactPhoneNumber' => isset($_POST['contactPhoneNumber']) ? sanitize_text_field(wp_unslash($_POST['contactPhoneNumber'])) : '',
+                'latitude' => isset($_POST['latitude']) ? (float) sanitize_text_field(wp_unslash($_POST['latitude'])) : 0,
+                'longitude' => isset($_POST['longitude']) ? (float) sanitize_text_field(wp_unslash($_POST['longitude'])) : 0,
+                'address' => isset($_POST['address']) ? sanitize_text_field(wp_unslash($_POST['address'])) : '',
+                'plate' => isset($_POST['plate']) ? sanitize_text_field(wp_unslash($_POST['plate'])) : '',
                 'polygon' => $polygon,
-                'unit' => sanitize_text_field($_POST['unit'] ?? ''),
-                'comment' => sanitize_text_field($_POST['comment'] ?? ''),
-                'defaultAddress' => filter_var($_POST['defaultAddress'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                'unit' => isset($_POST['unit']) ? sanitize_text_field(wp_unslash($_POST['unit'])) : '',
+                'comment' => isset($_POST['comment']) ? sanitize_text_field(wp_unslash($_POST['comment'])) : '',
+                'defaultAddress' => ($mode === 'create' && empty($existing_branches))
+                    || (isset($_POST['defaultAddress']) && filter_var(wp_unslash($_POST['defaultAddress']), FILTER_VALIDATE_BOOLEAN))
 
             ];
 
@@ -377,7 +312,7 @@ class BranchListPage
             // =========================
             // EDIT (PUT)
             // =========================
-            $id = sanitize_text_field($_POST['id'] ?? '');
+            $id = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : '';
 
             if (empty($id)) {
                 wp_send_json_error(['message' => 'Branch ID is required'], 400);
@@ -400,6 +335,10 @@ class BranchListPage
 
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($coordinates)) {
             throw new \InvalidArgumentException('Invalid coordinates JSON.');
+        }
+
+        if (count($coordinates) < 3) {
+            throw new \InvalidArgumentException(__('A polygon requires at least three points.', 'snappbox'));
         }
 
         $points = array_map(function (array $point): string {
@@ -427,7 +366,7 @@ class BranchListPage
 
         try {
 
-            $id = sanitize_text_field($_POST['id'] ?? '');
+            $id = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : '';
 
             if (empty($id)) {
                 wp_send_json_error([

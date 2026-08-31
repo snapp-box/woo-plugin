@@ -4,7 +4,7 @@ namespace Snappbox;
 
 use Snappbox\Map\SnappBoxMap;
 
-if (! \defined('ABSPATH')) {
+if (! defined('ABSPATH')) {
     exit;
 }
 
@@ -18,11 +18,15 @@ require_once(SNAPPBOX_DIR . 'includes/api/pricing-class.php');
 require_once(SNAPPBOX_DIR . 'includes/convert-woo-cities-to-snappbox.php');
 require_once(SNAPPBOX_DIR . 'includes/map/snappbox-map-class.php');
 require_once(SNAPPBOX_DIR . 'includes/api/branches/branches-default.php');
+require_once(SNAPPBOX_DIR . 'includes/api/branches/branches-list.php');
 
 class SnappBoxShippingMethod extends \WC_Shipping_Method
 {
     const API_NONCE_ACTION = 'snappbox_save_api_key';
     const API_NONCE_FIELD  = 'snappbox_api_nonce';
+
+    private $snappb_checkout_branches = null;
+    private $snappb_has_api_branches = false;
 
     public function __construct($instance_id = 0)
     {
@@ -145,12 +149,143 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         return $inside;
     }
 
+    /**
+     * Return the active branch whose polygon contains the destination. When
+     * polygons overlap, the closest matching branch is used.
+     */
+    private function snappb_match_customer_to_branch($customer_latitude, $customer_longitude): ?array
+    {
+        if (!\is_numeric($customer_latitude) || !\is_numeric($customer_longitude)) {
+            return null;
+        }
+
+        $branches = $this->snappb_get_active_checkout_branches();
+        if (!\is_array($branches) || empty($branches)) {
+            return null;
+        }
+
+        $nearest_branch = null;
+        $nearest_distance = null;
+        foreach ($branches as $branch) {
+            if (!\is_array($branch) || ($branch['status'] ?? 'ACTIVE') !== 'ACTIVE') {
+                continue;
+            }
+            if (!isset($branch['latitude'], $branch['longitude']) || !\is_numeric($branch['latitude']) || !\is_numeric($branch['longitude'])) {
+                continue;
+            }
+
+            // A store without a valid polygon is not eligible at checkout.
+            if (!$this->snappb_customer_is_in_branch_polygon($branch, $customer_latitude, $customer_longitude)) {
+                continue;
+            }
+
+            // Squared distance is sufficient for comparing matching origins.
+            $distance = \pow((float) $branch['latitude'] - (float) $customer_latitude, 2)
+                + \pow((float) $branch['longitude'] - (float) $customer_longitude, 2);
+
+            if ($nearest_distance === null || $distance < $nearest_distance) {
+                $nearest_branch = $branch;
+                $nearest_distance = $distance;
+            }
+        }
+
+        return $nearest_branch;
+    }
+
+    private function snappb_get_active_checkout_branches(): array
+    {
+        if ($this->snappb_checkout_branches !== null) {
+            return $this->snappb_checkout_branches;
+        }
+
+        $response = (new \Snappbox\Api\Branches\SnappBoxBranchesList())->snappb_branches_list();
+        $branches = $response['response'] ?? [];
+        $this->snappb_checkout_branches = [];
+
+        if (!\is_array($branches)) {
+            return $this->snappb_checkout_branches;
+        }
+
+        foreach ($branches as $branch) {
+            if (\is_array($branch)
+                && ($branch['status'] ?? 'ACTIVE') === 'ACTIVE'
+                && isset($branch['latitude'], $branch['longitude'])
+                && \is_numeric($branch['latitude'])
+                && \is_numeric($branch['longitude'])) {
+                $this->snappb_has_api_branches = true;
+            }
+
+            if (\is_array($branch)
+                && ($branch['status'] ?? 'ACTIVE') === 'ACTIVE'
+                && isset($branch['latitude'], $branch['longitude'])
+                && \is_numeric($branch['latitude'])
+                && \is_numeric($branch['longitude'])) {
+                $this->snappb_checkout_branches[] = $branch;
+            }
+        }
+
+        return $this->snappb_checkout_branches;
+    }
+
+    private function snappb_branches_have_polygon(array $branches): bool
+    {
+        foreach ($branches as $branch) {
+            if (\is_array($branch) && \trim((string) ($branch['polygon'] ?? '')) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function snappb_get_nearest_branch(array $branches, $customer_latitude, $customer_longitude): ?array
+    {
+        if (!\is_numeric($customer_latitude) || !\is_numeric($customer_longitude)) {
+            return null;
+        }
+
+        $nearest_branch = null;
+        $nearest_distance = null;
+        foreach ($branches as $branch) {
+            $distance = \pow((float) $branch['latitude'] - (float) $customer_latitude, 2)
+                + \pow((float) $branch['longitude'] - (float) $customer_longitude, 2);
+            if ($nearest_distance === null || $distance < $nearest_distance) {
+                $nearest_branch = $branch;
+                $nearest_distance = $distance;
+            }
+        }
+
+        return $nearest_branch;
+    }
+
+    private function snappb_customer_is_in_branch_polygon(array $branch, $customer_latitude, $customer_longitude): bool
+    {
+        if (empty($branch['polygon'])) {
+            return false;
+        }
+
+        try {
+            $polygon_json = (new \Snappbox\Api\Branches\SnappBoxBranchesDefault())
+                ->snappbox_reverse_polygon((string) $branch['polygon']);
+            $polygon = \json_decode($polygon_json, true);
+        } catch (\Throwable $exception) {
+            return false;
+        }
+
+        if (!\is_array($polygon) || \count($polygon) < 3) {
+            return false;
+        }
+
+        return $this->point_in_polygon([(float) $customer_longitude, (float) $customer_latitude], $polygon);
+    }
+
     public function snappb_order_register($order, $data)
     {
         global $woocommerce;
-        $defaultBranch = true;
         $chosen_shipping_methods = \WC()->session->get('chosen_shipping_methods');
         $chosen_shipping_method  = \is_array($chosen_shipping_methods) ? ($chosen_shipping_methods[0] ?? '') : '';
+        // Zone instances are stored as "snappbox_shipping_method:<instance_id>".
+        $is_snappbox_shipping = \strpos((string) $chosen_shipping_method, 'snappbox_shipping_method') === 0;
 
         $cart_subtotal = \WC()->cart ? (float) \WC()->cart->get_subtotal() : 0.0;
 
@@ -168,7 +303,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $allCities           = new \Snappbox\SnappBoxCityHelper();
         $stored_cities       = isset($settings['snappbox_cities']) ? (array) $settings['snappbox_cities'] : [];
 
-        if ($chosen_shipping_method === 'snappbox_shipping_method') {
+        if ($is_snappbox_shipping) {
             $nonce_field  = 'snappbox_geo_nonce';
             $nonce_action = 'snappbox_geo_meta';
             if (empty($_POST[$nonce_field]) || ! \wp_verify_nonce(\sanitize_text_field(\wp_unslash($_POST[$nonce_field])), $nonce_action)) {
@@ -182,36 +317,52 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
         $customerLat = isset($_POST['customer_latitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_latitude'])) : '';
         $customerLong = isset($_POST['customer_longitude']) ? \sanitize_text_field(\wp_unslash($_POST['customer_longitude'])) : '';
 
-        if ($chosen_shipping_method === 'snappbox_shipping_method') {
+        if ($is_snappbox_shipping) {
             $pricingHandler = new \Snappbox\Api\SnappBoxPriceHandler();
-            $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '', $defaultBranch);
-            $mainBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
-            $mainBranch = $mainBranchObj->snappb_branches_default()['response'] ?? "";
-            $polygon_json = ($mainBranch['polygon']) ? $mainBranchObj->snappbox_reverse_polygon($mainBranch['polygon']) : "";
-            if (!empty($polygon_json) && !empty($result['data']['finalCustomerFare'])) {
-                $polygon = json_decode($polygon_json, true);
+            $active_branches = $this->snappb_get_active_checkout_branches();
+            $has_polygons = $this->snappb_branches_have_polygon($active_branches);
+            $matched_branch = $has_polygons
+                ? $this->snappb_match_customer_to_branch($customerLat, $customerLong)
+                : $this->snappb_get_nearest_branch($active_branches, $customerLat, $customerLong);
 
-                if (isset($polygon[0][0]) && !is_array($polygon[0][0])) {
-                    $polygon = [$polygon];
-                }
+            if ($matched_branch !== null) {
+                $branch_data = [
+                    'latitude'    => $matched_branch['latitude'],
+                    'longitude'   => $matched_branch['longitude'],
+                    'phoneNumber' => $matched_branch['contactPhoneNumber'] ?? '',
+                    'contactName' => $matched_branch['contactName'] ?? '',
+                    'address'     => $matched_branch['address'] ?? '',
+                ];
+                $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '', false, $branch_data);
+                $order->update_meta_data('_snappbox_branch_id', $matched_branch['id'] ?? '');
+            } elseif (!$this->snappb_has_api_branches) {
+                // Backward compatibility for merchants that only have the
+                // original origin stored in WooCommerce shipping settings.
+                $result = $pricingHandler->snappb_get_pricing('', $city, $state_code, $customerLat, $customerLong, '', true);
+                $order->update_meta_data('_snappbox_branch_id', 'legacy-default');
+            } elseif ($has_polygons) {
+                throw new \Exception(\esc_html__('This location is outside all SnappBox delivery areas. Please choose another location on the map or select a different shipping method.', 'snappbox'));
+            } else {
+                throw new \Exception(\esc_html__('No active SnappBox origin is available for this order.', 'snappbox'));
+            }
 
-                $polygon = $polygon[0];
-                $is_inside = $this->point_in_polygon(
-                    [$customerLong, $customerLat],
-                    $polygon
-                );
-
-                if (!$is_inside) {
-                    throw new \Exception(\esc_html__('Delivery is not available for this address. Please select a location within the serviceable area.', 'snappbox'));
-                } else {
-                    $order->add_order_note('Order registered with SnappBox in ' . $shipping_city);
-                    $order->update_meta_data('_snappbox_city', $shipping_city);
-                }
-            } else if (!empty($result['data']['finalCustomerFare'])) {
+            $pricing_data = isset($result['data']) && \is_array($result['data']) ? $result['data'] : [];
+            if (!empty($result['success'])
+                && isset($pricing_data['finalCustomerFare'])
+                && \is_numeric($pricing_data['finalCustomerFare'])) {
                 $order->add_order_note('Order registered with SnappBox in ' . $shipping_city);
                 $order->update_meta_data('_snappbox_city', $shipping_city);
             } else {
-                throw new \Exception(\esc_html__('SnappBox is not available in your city', 'snappbox'));
+                $pricing_message = isset($pricing_data['message']) && \is_scalar($pricing_data['message'])
+                    ? (string) $pricing_data['message']
+                    : '';
+                if ($pricing_message === '' && isset($pricing_data['error']['message']) && \is_scalar($pricing_data['error']['message'])) {
+                    $pricing_message = (string) $pricing_data['error']['message'];
+                }
+                if ($pricing_message === '') {
+                    $pricing_message = \__('Unable to calculate SnappBox delivery pricing for this location. Please choose another location or shipping method.', 'snappbox');
+                }
+                throw new \Exception(\esc_html($pricing_message));
             }
         }
     }
@@ -310,13 +461,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 'description' => __('This option enables the address to be autofilled from SmappMap', 'snappbox'),
                 'default'     => 'no',
             ],
-            'polygon_coords' => [
-                'title'       => __('Polygon Coordinates', 'snappbox'),
-                'type'        => 'text',
-                'default'     => $settings['polygon_coords'],
-                'description' => 'Saved polygon area',
-                'class'       => 'snappbox-hidden-field'
-            ],
+
 
         ];
     }
@@ -349,8 +494,8 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
                 <h4><?php \esc_html_e('Set Store Location', 'snappbox'); ?></h4>
                 <a href="<?php echo esc_url(\admin_url('admin.php?page=branch-management')); ?>" style=" width:80px;">مدیریت شعب</a>
             </header>
-            <p><?php _e('This branch will be set as your default branch', 'snappbox'); ?></p>
-            <p><?php _e('For changing, adding, or deleting default branch, you must go to branch management page', 'snappbox'); ?></p>
+            <p><?php \esc_html_e('This branch will be set as your default branch', 'snappbox'); ?></p>
+            <p><?php \esc_html_e('For changing, adding, or deleting default branch, you must go to branch management page', 'snappbox'); ?></p>
             <?php
             $defaultBranchObj = new \Snappbox\Api\Branches\SnappBoxBranchesDefault();
             $defaultBranch = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
@@ -385,17 +530,17 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             ?>
             <div class="branch-wrapper">
                 <div class="default-branch">
-                    <p><strong><?php echo ($name); ?></strong></p>
-                    <p><?php echo ($address); ?></p>
+                    <p><strong><?php echo \esc_html($name); ?></strong></p>
+                    <p><?php echo \esc_html($address); ?></p>
                     <ul>
                         <li>
-                            <p><strong><?php _e('Plate', 'snappbox'); ?>: </strong><?php echo ($plate); ?></p>
+                            <p><strong><?php \esc_html_e('Plate', 'snappbox'); ?>: </strong><?php echo \esc_html($plate); ?></p>
                         </li>
                         <li>
-                            <p><strong><?php _e('Unit', 'snappbox'); ?>: </strong><?php echo ($unit); ?></p>
+                            <p><strong><?php \esc_html_e('Unit', 'snappbox'); ?>: </strong><?php echo \esc_html($unit); ?></p>
                         </li>
                     </ul>
-                    <p><strong><?php _e('Phone Number', 'snappbox'); ?>: </strong><?php echo ($phoneNumber); ?></p>
+                    <p><strong><?php \esc_html_e('Phone Number', 'snappbox'); ?>: </strong><?php echo \esc_html($phoneNumber); ?></p>
                 </div>
                 <div class="map-holder clearfix">
                     <?php
@@ -442,11 +587,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
             ? (float) $walletObjResult['response']['currentBalance']
             : 0.0;
 
-        $balanceDefaultResponse = \wp_remote_get(\Snappbox\EnvConfig::get('SNAPPBOX_WOO_CONFIG_URL'));
-        if (\is_wp_error($balanceDefaultResponse)) return;
-
-        $balanceDefault = \wp_remote_retrieve_body($balanceDefaultResponse);
-        $config         = \json_decode($balanceDefault);
+        $config = (new \Snappbox\Api\SnappBoxConfig())->snappb_get_config();
         if (! $config || ! isset($config->minWalletCredit)) return;
 
         $minCredit = (float) $config->minWalletCredit;
@@ -607,7 +748,7 @@ class SnappBoxShippingMethod extends \WC_Shipping_Method
     public function snappb_add_modal_box()
     {
         require_once(SNAPPBOX_DIR . 'includes/schedule-modal.php');
-        \wp_enqueue_script('schedule-scripts', \trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], null, true);
+        \wp_enqueue_script('schedule-scripts', \trailingslashit(SNAPPBOX_URL) . 'assets/js/scripts.js', [], '1.0.0', true);
     ?>
         <div id="snappbox-setup-modal" class="snappbox-modal">
             <div class="snappbox-modal-content" id="guide">

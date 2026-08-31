@@ -47,11 +47,6 @@ class EnvConfig
 
         self::$vars = self::defaults();
 
-        $env_file = rtrim($plugin_dir, '/\\') . '/.env';
-        if (is_readable($env_file)) {
-            self::parse_env_file($env_file);
-        }
-
         foreach (array_keys(self::$vars) as $key) {
             $value = getenv($key);
             if ($value !== false && $value !== '') {
@@ -60,40 +55,6 @@ class EnvConfig
         }
 
         self::$loaded = true;
-    }
-
-    private static function parse_env_file(string $path): void
-    {
-        $lines = file($path, FILE_IGNORE_NEW_LINES);
-        if ($lines === false) {
-            return;
-        }
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '' || $line[0] === '#') {
-                continue;
-            }
-
-            $equals_pos = strpos($line, '=');
-            if ($equals_pos === false) {
-                continue;
-            }
-
-            $key   = trim(substr($line, 0, $equals_pos));
-            $value = trim(substr($line, $equals_pos + 1));
-
-            if ($value !== '' && (
-                ($value[0] === '"' && substr($value, -1) === '"') ||
-                ($value[0] === "'" && substr($value, -1) === "'")
-            )) {
-                $value = substr($value, 1, -1);
-            }
-
-            if ($key !== '') {
-                self::$vars[$key] = $value;
-            }
-        }
     }
 
     public static function get(string $key, string $default = ''): string

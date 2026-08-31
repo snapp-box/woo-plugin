@@ -51,14 +51,16 @@
 
     if (isSnappBoxSelected()) {
       $section.show();
-      if (window.snappboxMap) {
+      var mapEntry = window.snappboxMaps && window.snappboxMaps["osm-map"];
+      var checkoutMap = mapEntry && mapEntry.map;
+      if (checkoutMap) {
         setTimeout(function () {
           try {
-            if (typeof window.snappboxMap.resize === "function") {
-              window.snappboxMap.resize();
+            if (typeof checkoutMap.resize === "function") {
+              checkoutMap.resize();
             }
-            if (typeof window.snappboxMap.invalidateSize === "function") {
-              window.snappboxMap.invalidateSize();
+            if (typeof checkoutMap.invalidateSize === "function") {
+              checkoutMap.invalidateSize();
             }
           } catch (e) { /* noop */ }
         }, 60);
@@ -210,13 +212,13 @@
       });
 
     var reapplyAll = function () {
-      toggleMapSection();
       positionMapSection();
+      toggleMapSection();
       mountRow();
     };
 
     $(document.body).on(
-      "updated_checkout updated_shipping_method updated_wc_div change",
+      "updated_checkout updated_shipping_method updated_wc_div",
       reapplyAll
     );
     $(document.body).on("change", 'input[name^="shipping_method["]', reapplyAll);

@@ -1,9 +1,9 @@
 <?php
 /*
- * Plugin Name:  snappbox
+ * Plugin Name:  SnappBox
  * Plugin URI: http://snapp-box.com/
  * Description: Official SnappBox WooCommerce Delivery Plugin
- * Version: 1.1.3
+ * Version: 1.2.1
  * Author: SnappBox Team
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,25 +33,25 @@ define('SNAPPBOX_API_BASE_URL_PRODUCTION', \Snappbox\EnvConfig::get('SNAPPBOX_AP
 define('SNAPPBOX_SMAPP_TOKEN', \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_AUTHORIZATION'));
 define('SNAPPBOX_SMAPP_KEY', \Snappbox\EnvConfig::get('SNAPPBOX_SMAPP_KEY'));
 
-global $snappb_api_base_url;
+$snappbox_settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
+$snappbox_settings = is_array($snappbox_settings_serialized) ? $snappbox_settings_serialized : maybe_unserialize($snappbox_settings_serialized);
 
-$snappb_settings_serialized = get_option('woocommerce_snappbox_shipping_method_settings');
-$settings = is_array($snappb_settings_serialized) ? $snappb_settings_serialized : maybe_unserialize($snappb_settings_serialized);
-
-if (is_array($settings)) {
-    define('SNAPPBOX_SANDBOX', isset($settings['sandbox']) ? $settings['sandbox'] : false);
-    define('SNAPPBOX_ONDELIVERY', isset($settings['ondelivery']) ? $settings['ondelivery'] : false);
+if (is_array($snappbox_settings)) {
+    define('SNAPPBOX_SANDBOX', isset($snappbox_settings['sandbox']) ? $snappbox_settings['sandbox'] : false);
+    define('SNAPPBOX_ONDELIVERY', isset($snappbox_settings['ondelivery']) ? $snappbox_settings['ondelivery'] : false);
 } else {
     define('SNAPPBOX_SANDBOX', false);
     define('SNAPPBOX_ONDELIVERY', false);
+    $snappbox_settings = [];
 }
 
-$snappb_api_base_url = (SNAPPBOX_SANDBOX === 'yes')
+$snappbox_api_base_url = (SNAPPBOX_SANDBOX === 'yes')
     ? SNAPPBOX_API_BASE_URL_STAGING
     : SNAPPBOX_API_BASE_URL_PRODUCTION;
+define('SNAPPBOX_API_BASE_URL', $snappbox_api_base_url);
 
-$snappb_api_key = $settings['snappbox_api'] ?? '';
-define('SNAPPBOX_API_TOKEN', $snappb_api_key);
+$snappbox_api_key = $snappbox_settings['snappbox_api'] ?? '';
+define('SNAPPBOX_API_TOKEN', $snappbox_api_key);
 
 
 require_once SNAPPBOX_DIR . 'includes/woo-checkout-map.php';
@@ -66,23 +66,30 @@ require_once SNAPPBOX_DIR . 'includes/branches/branch-list-class.php';
 require_once SNAPPBOX_DIR . 'includes/api/config-class.php';
 
 
-$configSettings = new \Snappbox\Api\SnappBoxConfig();
-$config = $configSettings->snappb_get_config();
-($config && !empty($config->tileAddress)) ? $mapTile = $config->tileAddress : $mapTile = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_STYLE_URL');
-($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_REVERSE_URL');
-define('SNAPPBOX_MAP_URL', $mapTile);
-define('SNAPPBOX_REVERSE_URL', $reverseUrl);
+$snappbox_config_settings = new \Snappbox\Api\SnappBoxConfig();
+$snappbox_config = $snappbox_config_settings->snappb_get_config();
+$snappbox_map_tile = \Snappbox\EnvConfig::get('SNAPPBOX_MAP_STYLE_URL');
+$snappbox_reverse_url = ($snappbox_config && !empty($snappbox_config->reversApiUrl)) ? $snappbox_config->reversApiUrl : \Snappbox\EnvConfig::get('SNAPPBOX_MAP_REVERSE_URL');
+define('SNAPPBOX_MAP_URL', $snappbox_map_tile);
+define('SNAPPBOX_REVERSE_URL', $snappbox_reverse_url);
 define('SNAPPBOX_NOMINATIM_URL', \Snappbox\EnvConfig::get('SNAPPBOX_MAP_NOMINATIM_URL'));
-($config && !empty($config->reversApiUrl)) ? $reverseUrl = $config->reversApiUrl : $reverseUrl = "https://app-stg.snapp-box.com/api/v1/customer/nearby_biker_locations";
 
+$snappbox_nearby_staging_url = ($snappbox_config && !empty($snappbox_config->nearByApiStage)) ? $snappbox_config->nearByApiStage : \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_STAGING');
+$snappbox_nearby_production_url = ($snappbox_config && !empty($snappbox_config->nearByApiProd)) ? $snappbox_config->nearByApiProd : \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_PRODUCTION');
+$snappbox_nearby_url = (SNAPPBOX_SANDBOX == "yes")
+    ? $snappbox_nearby_staging_url
+    : $snappbox_nearby_production_url;
 
-($config && !empty($config->nearByApiStage)) ? $nearByStgURL = $config->nearByApiStage : $nearByStgURL = \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_STAGING');
-($config && !empty($config->nearByApiProd)) ? $nearByProdURL = $config->nearByApiProd : $nearByProdURL = \Snappbox\EnvConfig::get('SNAPPBOX_NEARBY_API_PRODUCTION');
-$snappb_nearby_url = (isset($settings['sandbox']))
-    ? $nearByStgURL
-    : $nearByProdURL;
+define('SNAPPBOX_NEARBY_URL', $snappbox_nearby_url);
 
-define('SNAPPBOX_NEARBY_URL', $snappb_nearby_url);
+add_action(\Snappbox\Api\SnappBoxConfig::CRON_HOOK, function () {
+    $config = new \Snappbox\Api\SnappBoxConfig();
+    $config->snappb_refresh_config();
+});
+
+if (! wp_next_scheduled(\Snappbox\Api\SnappBoxConfig::CRON_HOOK)) {
+    wp_schedule_event(time() + MINUTE_IN_SECONDS, 'twicedaily', \Snappbox\Api\SnappBoxConfig::CRON_HOOK);
+}
 
 register_activation_hook(SNAPPBOX_DIR, [SnappboxActivator::class, 'snappbox_activate']);
 register_deactivation_hook(SNAPPBOX_DIR, [SnappboxActivator::class, 'snappbox_deactivate']);
@@ -133,6 +140,8 @@ add_action('wp_ajax_nopriv_snapp_nearby',  __NAMESPACE__ . '\\snappb_ajax_nearby
 
 function snappb_ajax_nearby()
 {
+    check_ajax_referer('snappbox_nearby', 'nonce');
+
     $lat = isset($_POST['lat']) ? floatval(sanitize_text_field(wp_unslash($_POST['lat']))) : null;
     $lng = isset($_POST['lng']) ? floatval(sanitize_text_field(wp_unslash($_POST['lng']))) : null;
 
@@ -211,19 +220,26 @@ add_action('before_woocommerce_init', function () {
 });
 
 
-add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\snappbox_enqueue_leaflet_map_js');
-function snappbox_enqueue_leaflet_map_js()
+add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\snappbox_enqueue_block_checkout_map');
+function snappbox_enqueue_block_checkout_map()
 {
     if (! is_checkout()) {
         return;
     }
 
     wp_enqueue_script(
-        'leaflet',
-        trailingslashit(SNAPPBOX_URL) . 'assets/js/leaflet.js',
+        'maplibre-gl',
+        trailingslashit(SNAPPBOX_URL) . 'assets/js/map/maplibre-gl.js',
         [],
-        '1.9.4',
+        '5.9.0',
         true
+    );
+
+    wp_enqueue_style(
+        'maplibre-gl',
+        trailingslashit(SNAPPBOX_URL) . 'assets/css/maplibre-gl.css',
+        [],
+        '5.9.0'
     );
 
     wp_enqueue_style(
@@ -235,13 +251,14 @@ function snappbox_enqueue_leaflet_map_js()
 
     wp_enqueue_script(
         'snappbox-map-checkout',
-        trailingslashit(SNAPPBOX_URL) . 'assets/js/gutenberg-map.js',
-        ['leaflet'],
-        '1.0',
+        trailingslashit(SNAPPBOX_URL) . 'assets/js/map/gutenberg-map.js',
+        ['maplibre-gl'],
+        '1.1.0',
         true
     );
-    wp_localize_script('snappbox-map-checkout', 'SNAPPBOX_LEAFLET', [
-        'rasterTileUrl' => \Snappbox\EnvConfig::get('SNAPPBOX_MAP_RASTER_TILE_URL'),
+    wp_localize_script('snappbox-map-checkout', 'SNAPPBOX_BLOCK_MAP', [
+        'styleUrl' => \SNAPPBOX_MAP_URL,
+        'title'    => __('Select your location', 'snappbox'),
     ]);
 }
 
@@ -312,9 +329,6 @@ function snappbox_remove_shipping_address_admin_order_page()
 }
 
 
-
-
-add_action('admin_head',  __NAMESPACE__ . '\\snappbox_yandex_script');
 function snappbox_yandex_script()
 {
 ?>

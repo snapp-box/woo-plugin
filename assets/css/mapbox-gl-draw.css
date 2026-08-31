@@ -86,3 +86,19 @@
     border: 2px dotted #fff;
     opacity: 0.5;
 }
+.map-helper{
+  background-color: #FFFFFF;
+  padding: 0px 11px;
+  position: absolute;
+  z-index: 10000;
+  left: 0;
+  right: 0;
+  top: 10px;
+  width: 77%;
+  margin: 0 auto;
+  box-shadow: 0px 1px 4px 1px #0000001A;
+  border: 1.05px solid #DCDCDE;
+}
+.map-helper p{
+  font-family: IRANSansX;
+}

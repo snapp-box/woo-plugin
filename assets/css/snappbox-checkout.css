@@ -1,5 +1,14 @@
 /* Map container & center pin */
-#osm-map { position: relative; }
+#snappbox-map-section,
+#osm-map {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+#osm-map { position: relative; overflow: hidden; }
+#osm-map .maplibregl-canvas-container,
+#osm-map .maplibregl-canvas { max-width: none; }
 #center-pin {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%);
   width: 34px; height: 34px; border: 0; padding: 0; cursor: pointer;

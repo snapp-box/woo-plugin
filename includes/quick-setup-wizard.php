@@ -5,6 +5,9 @@ namespace Snappbox;
 defined('ABSPATH') || exit;
 
 use \Snappbox\Api\SnappBoxWalletBalance;
+use \Snappbox\Map\SnappBoxMap;
+
+require_once SNAPPBOX_DIR . 'includes/map/snappbox-map-class.php';
 
 if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
   class SnappBox_Quick_Setup
@@ -80,14 +83,6 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
         $css_ver
       );
 
-      $step = $this->snappb_current_step();
-
-      // Map step is now step 2
-      if ($step === 2) {
-        \wp_enqueue_script('snappbox-leaflet', $base_url . 'assets/js/leaflet.js', [], false, true);
-        \wp_enqueue_style('snappbox-leaflet-css', $base_url . 'assets/css/leaflet.css', [], false);
-      }
-
       \wp_enqueue_script(
         'snappbox-quick-setup',
         $base_url . 'assets/js/quick-setup.js',
@@ -96,19 +91,6 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
         true
       );
 
-      \wp_localize_script(
-        'snappbox-quick-setup',
-        'SNAPPB_QS',
-        [
-          // Kept key name for compatibility; now true on step 2 (map step)
-          'isStep3'      => ($step === 2),
-          'mapStyle'     => \SNAPPBOX_MAP_URL,
-          'rtlPluginUrl' => \trailingslashit($base_url) . 'assets/js/mapbox-gl-rtl-text.js',
-          'i18n'         => [
-            'centerPinAria' => \_x('Set location to map center', 'Center pin button ARIA', 'snappbox'),
-          ],
-        ]
-      );
     }
 
     public function snappb_render_page(): void
@@ -285,11 +267,26 @@ if (! class_exists('\Snappbox\SnappBox_Quick_Setup')) {
     ?>
       <?php $this->snappb_zone_alert_modal(); ?>
       <div class="sbqs-map-wrap">
-        <div id="sbqs-map" class="sbqs-map"></div>
-        <button type="button" id="sbqs-center-pin"
-          aria-label="<?php echo \esc_attr_x('Set location to map center', 'ARIA', 'snappbox'); ?>">
-        </button>
-
+        <?php
+        $map = new SnappBoxMap();
+        $map->snappbox_map([
+          'latitude'             => $lat,
+          'longitude'            => $lng,
+          'mapName'              => 'sbqs-map',
+          'className'            => 'sbqs-map',
+          'latInputName'         => 'lat',
+          'longInputName'        => 'lng',
+          'height'               => '420px',
+          'guidenceMap'          => false,
+          'movable'              => true,
+          'showPolygon'          => false,
+          'centerPinId'          => 'sbqs-center-pin',
+          'addressInputId'       => 'sbqs-address',
+          'reverseGeocode'       => false,
+          'nearbySubmitSelector' => '.sbqs-btn[type="submit"]',
+          'validateInitialLocation' => true,
+        ]);
+        ?>
       </div>
       <div class="sbqs-two">
         <div class="sbqs-field">

@@ -11,8 +11,7 @@ class SnappOrderStatus
 
     public function __construct($accessToken = \SNAPPBOX_API_TOKEN)
     {
-        global $snappb_api_base_url;
-        $this->apiUrl = $snappb_api_base_url . '/v1/orders/';
+        $this->apiUrl = \SNAPPBOX_API_BASE_URL . '/v1/orders/';
         $this->headers = [
             'Content-Type' => 'application/json',
         ];
@@ -24,18 +23,31 @@ class SnappOrderStatus
 
     public function snappb_get_order_status($orderID)
     {
-        $url = $this->apiUrl . $orderID;
+        $url = $this->apiUrl . rawurlencode((string) $orderID);
 
         $response = \wp_remote_get($url, [
             'headers' => $this->headers,
         ]);
 
         if (\is_wp_error($response)) {
-            throw new \Exception('Request error: ' . \esc_html($response->get_error_message()));
+            return $response;
+        }
+
+        $status_code = \wp_remote_retrieve_response_code($response);
+        if ($status_code < 200 || $status_code >= 300) {
+            return new \WP_Error(
+                'snappbox_status_request_failed',
+                \sprintf('Snappbox API returned HTTP %d.', $status_code)
+            );
         }
 
         $body = \wp_remote_retrieve_body($response);
-        return \json_decode($body, false);
+        $decoded = \json_decode($body, false);
+        if (\json_last_error() !== JSON_ERROR_NONE) {
+            return new \WP_Error('snappbox_status_invalid_response', 'Invalid response from Snappbox API.');
+        }
+
+        return $decoded;
     }
 
     public function get_order_status($orderID)

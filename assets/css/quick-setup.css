@@ -68,12 +68,11 @@ body.woocommerce_page_snappbox-quick-setup.rtl #wpcontent { margin-right:0 !impo
 .sbqs-map-wrap { position: relative; }
 .sbqs-map { height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid #eee; margin: 6px 0 10px; }
 
-/* Center pin: slightly lower so it "sits" on the map */
+/* The SVG tip ends slightly above its box; compensate so the visible tip is centered. */
 #sbqs-center-pin {
   position: absolute;
   left: 50%;
-  top: 50%;
-  /* move a bit less up than -100% so it sits on the ground */
+  top: 44%;
   transform: translate(-50%, -92%);
   width: 34px; height: 34px;
   border: 0; padding: 0; background: transparent; cursor: pointer; z-index: 5;

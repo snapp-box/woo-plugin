@@ -255,3 +255,13 @@
 .default-branch-set p{
     margin:3px;
 }
+.blue-section{
+    background-color: #F0F6FC;
+    padding: 12px;
+    border-width: 1.05px;
+    border-color: #C5D9ED;
+    border-style:solid;
+}
+.blue-section ul li{
+    list-style: inside;
+}

@@ -2,18 +2,14 @@
 
 namespace Snappbox\Api\Branches;
 
-use \Snappbox\EnvConfig;
-
 class SnappboxBranchesAdd
 {
 
     private $endpoint;
-    private $token;
 
     public function __construct()
     {
-        global $snappb_api_base_url;
-        $this->endpoint = $snappb_api_base_url . '/v1/customers/addresses/store';
+        $this->endpoint = \SNAPPBOX_API_BASE_URL . '/v1/customers/addresses/store';
     }
 
     public function store_address($data = [])

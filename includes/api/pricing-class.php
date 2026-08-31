@@ -14,27 +14,27 @@ class SnappBoxPriceHandler
 
     public function __construct($api_key = \SNAPPBOX_API_TOKEN)
     {
-        global $snappb_api_base_url;
         $this->api_key = $api_key;
-        $this->apiUrl  = rtrim($snappb_api_base_url, '/') . '/v1/pricing';
+        $this->apiUrl  = rtrim(\SNAPPBOX_API_BASE_URL, '/') . '/v1/pricing';
 
         \add_action('wp_ajax_snappbox_get_pricing',  [$this, 'snappb_handle_create_order']);
         \add_action('wp_ajax_nopriv_snappbox_get_pricing', [$this, 'snappb_handle_create_order']);
     }
 
-    public function snappb_get_pricing($orderId, $cityName, $state_code, $customerLat, $customerLong, $voucherCode, $defaultBranch = "")
+    public function snappb_get_pricing($orderId, $cityName, $state_code, $customerLat, $customerLong, $voucherCode, $defaultBranch = "", array $branch_data = [])
     {
-
-        $branchLat = \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) ?? "";
-        $branchLong = \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) ?? "";
-        $branchPhoneNumber = \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) ?? "";
-        $branchContactName = \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) ?? "";
-        $branchAddress = \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) ?? "";
+        $branchLat = $branch_data['latitude'] ?? '';
+        $branchLong = $branch_data['longitude'] ?? '';
+        $branchPhoneNumber = $branch_data['phoneNumber'] ?? '';
+        $branchContactName = $branch_data['contactName'] ?? '';
+        $branchAddress = $branch_data['address'] ?? '';
         if ($defaultBranch == true) {
             $defaultBranchObj = new SnappBoxBranchesDefault();
             $defaultBranchItem = $defaultBranchObj->snappb_branches_default()['response'] ?? "";
 
-            if ($defaultBranchItem['statusCode'] > 400) {
+            if (!\is_array($defaultBranchItem)
+                || empty($defaultBranchItem)
+                || (!empty($defaultBranchItem['statusCode']) && (int) $defaultBranchItem['statusCode'] >= 400)) {
                 $settings_serialized = \get_option('woocommerce_snappbox_shipping_method_settings');
                 $settings            = \maybe_unserialize($settings_serialized);
                 $branchLat = (string) $settings['snappbox_latitude'];
@@ -107,12 +107,17 @@ class SnappBoxPriceHandler
         ]);
 
         if (\is_wp_error($response)) {
-            \wp_send_json_error(['message' => $response->get_error_message()], 400);
+            return [
+                'success' => false,
+                'data' => [
+                    'message' => $response->get_error_message(),
+                ],
+            ];
         }
 
         $response_body = \json_decode(\wp_remote_retrieve_body($response), true);
 
-        if (!empty($response_body['finalCustomerFare'])) {
+        if (isset($response_body['finalCustomerFare']) && \is_numeric($response_body['finalCustomerFare'])) {
             return [
                 'success' => true,
                 'data' => $response_body
@@ -149,6 +154,13 @@ class SnappBoxPriceHandler
         $customerLat = isset($_POST['_customer_latitude']) ? \sanitize_text_field(\wp_unslash($_POST['_customer_latitude'])) : '';
         $customerLong = isset($_POST['_customer_longitude']) ? \sanitize_text_field(\wp_unslash($_POST['_customer_longitude'])) : '';
         $cityName = isset($_POST['customer_city']) ? \sanitize_text_field(\wp_unslash($_POST['customer_city'])) : '';
-        return $this->snappb_get_pricing($order_id, $cityName, $state_code, $customerLat, $customerLong, $voucher_code);
+        $branch_data = [
+            'latitude'    => isset($_POST['branchLatitude']) ? \sanitize_text_field(\wp_unslash($_POST['branchLatitude'])) : '',
+            'longitude'   => isset($_POST['branchLongitude']) ? \sanitize_text_field(\wp_unslash($_POST['branchLongitude'])) : '',
+            'phoneNumber' => isset($_POST['phoneNumber']) ? \sanitize_text_field(\wp_unslash($_POST['phoneNumber'])) : '',
+            'contactName' => isset($_POST['branchContactName']) ? \sanitize_text_field(\wp_unslash($_POST['branchContactName'])) : '',
+            'address'     => isset($_POST['branchAddress']) ? \sanitize_text_field(\wp_unslash($_POST['branchAddress'])) : '',
+        ];
+        return $this->snappb_get_pricing($order_id, $cityName, $state_code, $customerLat, $customerLong, $voucher_code, '', $branch_data);
     }
 }

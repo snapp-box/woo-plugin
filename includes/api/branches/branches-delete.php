@@ -6,17 +6,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-use \Snappbox\EnvConfig;
-
 class SnappboxBranchesDelete
 {
-    private string $token;
     private string $base_url;
 
     public function __construct()
     {
-        global $snappb_api_base_url;
-        $this->base_url = $snappb_api_base_url . '/v1/customers/addresses/store';
+        $this->base_url = \SNAPPBOX_API_BASE_URL . '/v1/customers/addresses/store';
     }
 
     public function delete_address(string $id, array $data)
@@ -25,7 +21,7 @@ class SnappboxBranchesDelete
         $response = wp_remote_request($url, [
             'method'  => 'DELETE',
             'headers' => [
-                'Authorization'    =>  SNAPPBOX_API_TOKEN,
+                'Authorization'    =>  \SNAPPBOX_API_TOKEN,
                 'Content-Type'  => 'application/json',
             ],
             'body' => '',
@@ -33,7 +29,7 @@ class SnappboxBranchesDelete
         ]);
 
         if (is_wp_error($response)) {
-            throw new \Exception($response->get_error_message());
+            throw new \Exception(esc_html($response->get_error_message()));
         }
         $status_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
@@ -41,7 +37,7 @@ class SnappboxBranchesDelete
         if ($status_code >= 400 && $status_code <= 500) {
             return [
                 'success' => false,
-                'message' => $decodedResponse->message,
+                'message' => isset($decodedResponse->message) ? sanitize_text_field($decodedResponse->message) : __('The branch could not be deleted.', 'snappbox'),
             ];
         } else {
             return [

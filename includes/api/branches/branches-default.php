@@ -6,8 +6,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-use \Snappbox\EnvConfig;
-
 class SnappBoxBranchesDefault
 {
 
@@ -16,8 +14,7 @@ class SnappBoxBranchesDefault
 
     public function __construct()
     {
-        global $snappb_api_base_url;
-        $this->api_url = $snappb_api_base_url . '/v1/customers/addresses/store/default';
+        $this->api_url = \SNAPPBOX_API_BASE_URL . '/v1/customers/addresses/store/default';
         $this->auth_token = \SNAPPBOX_API_TOKEN;
     }
 

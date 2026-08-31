@@ -71,7 +71,9 @@
   box-shadow: none !important;
   margin-bottom: 30px;
 }
-
+.wp-core-ui .button-primary{
+  line-height: 20px;
+}
 .ct-order-loading[hidden],
 .cancel-order-loading[hidden],
 .loading[hidden],
@@ -200,6 +202,7 @@ html .mapbox-gl-draw_ctrl-draw-btn{
   border: 0;
   height: 40px;
   box-shadow: 0px 4px 23px 0px #00000026;
+  font-family: 'IRANSansX';
 }
 html .mapbox-gl-draw_polygon{
   background-image: url("../img/location.svg");
@@ -260,6 +263,7 @@ html .mapbox-gl-draw_ctrl-draw-btn.active, html .mapbox-gl-draw_ctrl-draw-btn.ac
 }
 .guidence-map a, .guidence-map p{
   color:#fff;
+  font-family: 'IRANSansX';
 }
 .guidence-map p{
   max-width: 50%;

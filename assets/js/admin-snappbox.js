@@ -41,7 +41,7 @@
      * ORDER UI
      * ========================================================= */
     (function () {
-      var $ctx = $('#snappbox-admin-context');
+      var $ctx = $('.snappbox-admin-context').first();
       if (!$ctx.length) return;
 
       var resolvedNonce =
@@ -126,6 +126,99 @@
         return $('.cancel-order-loading');
       }
 
+      function polygonContains(wkt, lng, lat) {
+        var match = /^POLYGON\s*\(\((.+)\)\)$/i.exec($.trim(wkt || ''));
+        if (!match) return false;
+        var points = match[1].split(',').map(function (point) {
+          return $.trim(point).split(/\s+/).map(Number);
+        }).filter(function (point) {
+          return point.length === 2 && isFinite(point[0]) && isFinite(point[1]);
+        });
+        if (points.length < 3) return false;
+
+        var inside = false;
+        for (var i = 0, j = points.length - 1; i < points.length; j = i++) {
+          var xi = points[i][0], yi = points[i][1];
+          var xj = points[j][0], yj = points[j][1];
+          if (((yi > lat) !== (yj > lat)) &&
+              (lng < ((xj - xi) * (lat - yi) / ((yj - yi) || 0.0000001)) + xi)) {
+            inside = !inside;
+          }
+        }
+        return inside;
+      }
+
+      function suggestAdminStore() {
+        $('.address-selector').each(function () {
+          var $select = $(this);
+          var $scope = $select.closest('.column-snappbox_action');
+          if (!$scope.length) $scope = $(document.body);
+          var $rowContext = $scope.find('.snappbox-admin-context').first();
+          var rawDestinationLat = $rowContext.attr('data-destination-lat');
+          var rawDestinationLng = $rowContext.attr('data-destination-long');
+          if ($.trim(rawDestinationLat || '') === '' || $.trim(rawDestinationLng || '') === '') return;
+          var destinationLat = Number(rawDestinationLat);
+          var destinationLng = Number(rawDestinationLng);
+          if (!isFinite(destinationLat) || !isFinite(destinationLng)) return;
+
+          var best = null, bestDistance = Infinity;
+          $select.find('option').each(function () {
+            var $option = $(this);
+            var matches = polygonContains($option.attr('data-polygon'), destinationLng, destinationLat);
+            $option.toggleClass('snappbox-store-match', matches)
+              .toggleClass('snappbox-store-nonmatch', !matches);
+            if (!matches) return;
+            var lat = Number($option.attr('data-lat'));
+            var lng = Number($option.attr('data-long'));
+            var distance = Math.pow(lat - destinationLat, 2) + Math.pow(lng - destinationLng, 2);
+            if (distance < bestDistance) {
+              best = $option;
+              bestDistance = distance;
+            }
+          });
+          if (best) {
+            best.prop('selected', true);
+            var $modal = $select.closest('.sb-modal, #sb-pricing-modal');
+            $modal.find('.selected-address').val(best.attr('data-address') || '');
+            $modal.find('.selected-latitude').val(best.attr('data-lat') || '');
+            $modal.find('.selected-longitude').val(best.attr('data-long') || '');
+            $modal.find('.selected-name').val(best.attr('data-name') || '');
+            $modal.find('.selected-contact-name').val(best.attr('data-contact-name') || '');
+            $modal.find('.selected-contact-phonenumber').val(best.attr('data-phone') || '');
+          }
+        });
+      }
+
+      function branchDataFromOption($option) {
+        if (!$option || !$option.length) return {};
+        return {
+          branchId: $option.val(),
+          branchAddress: $option.attr('data-address') || '',
+          branchName: $option.attr('data-name') || '',
+          branchContactName: $option.attr('data-contact-name') || '',
+          branchLatitude: $option.attr('data-lat') || '',
+          branchLongitude: $option.attr('data-long') || '',
+          phoneNumber: $option.attr('data-phone') || '',
+          branchPlate: $option.attr('data-plate') || '',
+          branchUnit: $option.attr('data-unit') || ''
+        };
+      }
+
+      function syncSelectedBranch($select) {
+        var $option = $select.find('option:selected').first();
+        var data = branchDataFromOption($option);
+        var $modal = $select.closest('.sb-modal, #sb-pricing-modal');
+        $modal.find('.selected-address').val(data.branchAddress);
+        $modal.find('.selected-latitude').val(data.branchLatitude);
+        $modal.find('.selected-longitude').val(data.branchLongitude);
+        $modal.find('.selected-name').val(data.branchName);
+        $modal.find('.selected-contact-name').val(data.branchContactName);
+        $modal.find('.selected-contact-phonenumber').val(data.phoneNumber);
+        $modal.find('.selected-plate').val(data.branchPlate);
+        $modal.find('.selected-unit').val(data.branchUnit);
+        return data;
+      }
+
       function openModal($btn) {
         var $scope = getRowOrPage($btn);
         var $modal = getModal($scope);
@@ -170,7 +263,12 @@
         show($loading);
         $btn.find('.button-text').hide();
 
-        $.ajax({
+        var previousRequest = $modal.data('snappboxPricingRequest');
+        if (previousRequest && previousRequest.readyState !== 4) {
+          previousRequest.abort();
+        }
+
+        var pricingRequest = $.ajax({
           url: ctx.ajaxUrl,
           type: 'POST',
           dataType: 'json',
@@ -303,6 +401,7 @@
           },
 
           error: function (jqXHR, textStatus, errorThrown) {
+            if (textStatus === 'abort') return;
             console.error('AJAX error:', textStatus, errorThrown, jqXHR);
 
             if ($pricingMsg.length) {
@@ -313,49 +412,51 @@
             }
 
             hide($loading);
+          },
+          complete: function () {
+            if ($modal.data('snappboxPricingRequest') === pricingRequest) {
+              $modal.removeData('snappboxPricingRequest');
+            }
           }
         });
+        $modal.data('snappboxPricingRequest', pricingRequest);
       }
 
-      jQuery(".address-selector").on('change', function () {
-        var thisOption = jQuery("option:selected", this);
-        var latitude = thisOption.attr('data-lat');
-        var longitude = thisOption.attr('data-long');
-        var address = thisOption.attr('data-address');
-        var name = thisOption.attr('data-name');
-        var phone = thisOption.attr('data-phone');
-        var contactName = thisOption.attr('data-contact-name');
-        jQuery('.selected-address').html(address);
-        jQuery('.selected-latitude').val(latitude);
-        jQuery('.selected-longitude').val(longitude);
-        jQuery('.selected-name').val(name);
-        jQuery('.selected-contact-name').val(contactName);
-        jQuery('.selected-contact-phonenumber').val(phone);
-        getSnappboxPricing(
-          {
-            branchAddress: address,
-            branchName: name,
-            branchContactName: contactName,
-            branchLatitude: latitude,
-            branchLongitude: longitude,
-            phoneNumber: phone,
-          },
-          jQuery(this)
-        );
+      $(document).on('change.snappboxBranch', '.address-selector', function () {
+        var $select = $(this);
+        getSnappboxPricing(syncSelectedBranch($select), $select);
       });
 
+      suggestAdminStore();
 
 
 
 
-      $(document).on('click', '.snappbox-pricing-order, #add-voucher-code', function (e) {
+
+      function handlePricingClick(e) {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         var $btn = $(this);
-        getSnappboxPricing(
-          {},
-          $btn
-        );
-      });
+        var $modal = getModal(getRowOrPage($btn));
+        var $option = $modal.find('.address-selector option:selected').first();
+        getSnappboxPricing(branchDataFromOption($option), $btn);
+        return false;
+      }
+
+      // Stop the event on the actual button before WooCommerce's clickable
+      // order-row handler can receive it.
+      $('.snappbox-pricing-order, #add-voucher-code')
+        .off('click.snappboxPricing')
+        .on('click.snappboxPricing', handlePricingClick)
+        .attr('data-snappbox-click-bound', '1');
+
+      // Keep support for rows that another plugin inserts after page load.
+      $(document).on(
+        'click.snappboxPricing',
+        '.snappbox-pricing-order:not([data-snappbox-click-bound]), #add-voucher-code:not([data-snappbox-click-bound])',
+        handlePricingClick
+      );
 
 
       $(document).on('click', '.snappbox-create-order, #snappbox-create-order', function (e) {
@@ -380,16 +481,9 @@
         if (!$victory.length) $victory = $('#snappbox-response-victory').first();
 
         var $footer = $modal.find(".sb-footer").first();
-        var extraData = {
-          branchAddress: jQuery('.selected-address').val(),
-          branchName: jQuery('.selected-name').val(),
-          branchContactName: jQuery('.selected-contact-name').val(),
-          branchLatitude: jQuery('.selected-latitude').val(),
-          branchLongitude: jQuery('.selected-longitude').val(),
-          phoneNumber: jQuery('.selected-contact-phonenumber').val(),
-          branchPlate: jQuery('.selected-plate').val(),
-          branchUnit: jQuery('.selected-unit').val(),
-        };
+        var extraData = branchDataFromOption(
+          $modal.find('.address-selector option:selected').first()
+        );
 
         var $resp = $modal.find('#snappbox-response, .snappbox-response').first();
         if (!$resp.length) $resp = $('#snappbox-response').first();
@@ -486,8 +580,13 @@
             if (response && response.success == true) {
               $('#snappbox-cancel-response').html('<span class="sb-success">' + response.data + '</span>');
               hide($cancelLoading);
-              ym(105087875, 'reachGoal', 'order-cancelation')
-              window.location.reload();
+              $btn.hide();
+              if (typeof window.ym === 'function') {
+                window.ym(105087875, 'reachGoal', 'order-cancelation');
+              }
+              window.setTimeout(function () {
+                window.location.reload();
+              }, 1800);
             } else {
               var msg = (response && response.data) ? response.data : 'خطا';
               $('#snappbox-cancel-response').html('<span class="sb-error">Error: ' + msg + '</span>');

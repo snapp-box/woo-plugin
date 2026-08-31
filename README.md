@@ -79,7 +79,7 @@ Track the delivery status from the WordPress panel or the SnappBox mobile app.
 This plugin includes minified JavaScript and CSS files for optimal performance. The source code for all compressed files is available within the plugin:
 
 **JavaScript Source Files:**
-- `assets/js/mapbox-gl-rtl-text.source.js` - Source code for the minified `mapbox-gl-rtl-text.js` file
+- `assets/js/map/mapbox-gl-rtl-text.source.js` - Source code for the minified `mapbox-gl-rtl-text.js` file
 
 All minified files have corresponding source files with `.source.js` extension for code review and development purposes.
 

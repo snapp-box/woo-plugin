@@ -13,11 +13,16 @@ class SnappboxActivator
     {
         update_option(self::REDIRECT_OPTION, 'yes');
         delete_transient('woocommerce_shipping_zones_cache');
+
+        if (! wp_next_scheduled(SnappBoxConfig::CRON_HOOK)) {
+            wp_schedule_event(time() + MINUTE_IN_SECONDS, 'twicedaily', SnappBoxConfig::CRON_HOOK);
+        }
     }
 
     public static function snappbox_deactivate()
     {
         delete_option(self::REDIRECT_OPTION);
+        wp_clear_scheduled_hook(SnappBoxConfig::CRON_HOOK);
     }
 
     public static function snappbox_maybe_redirect()
@@ -65,7 +70,8 @@ class SnappboxActivator
 
     public static function snappbox_goal_script()
     {
-        if (!isset($_GET['page']) || $_GET['page'] !== 'snappbox') {
+        $page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_SPECIAL_CHARS);
+        if ($page !== 'snappbox') {
             return;
         }
 
